@@ -5,9 +5,7 @@ import type { Route, Phase, Lang } from "@/types/metro";
 import { Marquee } from "./Marquee";
 import { StationReadings } from "./StationReadings";
 import { NumPlate } from "./NumPlate";
-
-const HALFTONE =
-	"radial-gradient(rgba(255,255,255,.13) 1.4px, transparent 1.5px)";
+import { HALFTONE } from "./const";
 
 interface TopBoardProps {
 	route: Route;
@@ -35,7 +33,12 @@ export function TopBoard({
 	const st = route.stations[pos];
 	const isAt = phase === "at";
 	const isEnglishName = stationNameMode === "en";
-	const stationName = stationNameMode === "hiragana" ? st.hira || st.ja : isEnglishName ? st.en : st.ja;
+	const stationName =
+		stationNameMode === "hiragana"
+			? st.hira || st.ja
+			: isEnglishName
+				? st.en
+				: st.ja;
 	const eyebrowJa = isAt ? "ただいま" : "つぎは";
 	const eyebrowEn = isAt ? "Now at" : "Next";
 	return (
@@ -52,7 +55,10 @@ export function TopBoard({
 			/>
 			{/* toward + service type */}
 			<div className="relative min-w-37.5">
-				<div className="inline-block font-mono font-bold text-label tracking-[0.12em] py-1 px-2.25 rounded-sm" style={{ background: L.color, color: L.textOnColor }}>
+				<div
+					className="inline-block font-mono font-bold text-label tracking-[0.12em] py-1 px-2.25 rounded-sm"
+					style={{ background: L.color, color: L.textOnColor }}
+				>
 					LOCAL
 				</div>
 				<div className="font-body font-bold text-[28px] leading-[1.18] mt-2 text-white whitespace-nowrap">
@@ -64,7 +70,12 @@ export function TopBoard({
 			</div>
 			{/* number plate */}
 			<div className="relative">
-				<NumPlate lineId={route.line} idx={pos} scale={1.15} active={true} />
+				<NumPlate
+					lineId={route.line}
+					idx={pos}
+					scale={1.15}
+					active={true}
+				/>
 			</div>
 			{/* eyebrow + huge name (bilingual flip) — fixed height so the flip never shifts layout */}
 			<div className="relative overflow-hidden h-38.5 flex flex-col justify-center">

@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import type { Lang } from "@/types/metro";
+import { HALFTONE } from "../display/const";
 
 interface TickerProps {
 	items: string[];
@@ -38,7 +39,8 @@ export function Ticker({
 		? separateAlertLanguages
 			? [activeAlertMessage as string]
 			: alertMessages!.map(
-					(message, index) => `${index ? "お知らせ" : "ALERT"} · ${message}`,
+					(message, index) =>
+						`${index ? "お知らせ" : "ALERT"} · ${message}`,
 				)
 		: items;
 	const contentKey = seq.join(" ¦ ");
@@ -53,7 +55,10 @@ export function Ticker({
 			return () => clearTimeout(id);
 		}
 		const clearId = setTimeout(() => setScrollingKey(null), 0);
-		const id = setTimeout(() => setScrollingKey(contentKey), stillOnNewContent);
+		const id = setTimeout(
+			() => setScrollingKey(contentKey),
+			stillOnNewContent,
+		);
 		return () => {
 			clearTimeout(clearId);
 			clearTimeout(id);
@@ -79,14 +84,17 @@ export function Ticker({
 			);
 			const viewport = contentViewportRef.current;
 			setContentOverflows(
-				!splitAlert || !viewport || groupWidth > viewport.clientWidth + 2,
+				!splitAlert ||
+					!viewport ||
+					groupWidth > viewport.clientWidth + 2,
 			);
 		};
 		measure();
 		if (typeof ResizeObserver === "undefined") return undefined;
 		const observer = new ResizeObserver(measure);
 		observer.observe(track);
-		if (contentViewportRef.current) observer.observe(contentViewportRef.current);
+		if (contentViewportRef.current)
+			observer.observe(contentViewportRef.current);
 		return () => observer.disconnect();
 	}, [contentKey, splitAlert, duplicateGroups]);
 
@@ -143,13 +151,22 @@ export function Ticker({
 					: "none",
 			}}
 		>
+			<div
+				className="absolute inset-0 opacity-50 pointer-events-none"
+				style={{
+					backgroundImage: HALFTONE,
+					backgroundSize: "11px 11px",
+				}}
+			/>
 			{splitAlert ? (
 				<div className="flex w-full min-w-0">
 					<div className="flex flex-none items-center border-r-[3px] border-r-ink bg-ink px-3 font-mono text-[11px] font-bold tracking-[.12em] text-paper w-28">
 						<span
 							key={`${alertLabel}-${lang}`}
 							className="inline-block"
-							style={{ animation: "swipeIn .35s var(--ease-pop) both" }}
+							style={{
+								animation: "swipeIn .35s var(--ease-pop) both",
+							}}
 						>
 							{alertLabel}
 						</span>

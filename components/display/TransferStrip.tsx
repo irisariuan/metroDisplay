@@ -17,8 +17,6 @@ export function TransferStrip({ route, pos, lang }: TransferStripProps) {
 	const contentRef = React.useRef<HTMLDivElement>(null);
 	const [overflows, setOverflows] = React.useState(false);
 
-
-
 	const transferKey = `${lang}:${st.xf.map((lid) => `${lid}-${lang === "ja" ? LINES[lid].ja : LINES[lid].en}`).join("|")}`;
 	React.useLayoutEffect(() => {
 		const viewport = viewportRef.current;
@@ -37,15 +35,9 @@ export function TransferStrip({ route, pos, lang }: TransferStripProps) {
 	if (!st.xf || !st.xf.length) return null;
 
 	const content = (key: string) => (
-				<div
-					key={key}
-			className="inline-flex items-center gap-3 w-max pr-8"
-		>
+		<div key={key} className="inline-flex items-center gap-3 w-max pr-8">
 			{st.xf.map((lid) => (
-				<div
-					key={lid}
-					className="flex flex-none items-center gap-1.5"
-				>
+				<div key={lid} className="flex flex-none items-center gap-1.5">
 					<LineChip lineId={lid} size={28} />
 					<span className="font-body font-semibold text-[15px] whitespace-nowrap">
 						{lang === "ja" ? LINES[lid].ja : LINES[lid].en}
@@ -64,14 +56,11 @@ export function TransferStrip({ route, pos, lang }: TransferStripProps) {
 			<span className="flex-none font-mono text-label tracking-[0.12em] text-muted">
 				{lang === "ja" ? "乗換" : "TRANSFER"}
 			</span>
-			<div
-				ref={viewportRef}
-				className="flex-1 min-w-0 overflow-hidden"
-			>
+			<div ref={viewportRef} className="flex-1 min-w-0 overflow-hidden">
 				{overflows ? (
 					<div className="inline-flex items-center w-max animate-xfmove will-change-transform">
 						<div ref={contentRef}>{content("first")}</div>
-													{content("repeat")}
+						{content("repeat")}
 					</div>
 				) : (
 					<div ref={contentRef}>{content("static")}</div>

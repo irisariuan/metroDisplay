@@ -18,7 +18,9 @@ export function LineButton({ lineId, active, onClick }: LineButtonProps) {
 			style={{
 				background: active ? L.color : "var(--paper)",
 				color: active ? L.textOnColor : "var(--ink)",
-				boxShadow: active ? "var(--shadow-hard-s)" : "2px 2px 0 rgba(0,0,0,.25)",
+				boxShadow: active
+					? "var(--shadow-hard-s)"
+					: "2px 2px 0 rgba(0,0,0,.25)",
 			}}
 		>
 			<span

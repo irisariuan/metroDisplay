@@ -11,7 +11,13 @@ interface DoorIndicatorProps {
 }
 
 // ——— door-open indicator with animated chevrons
-export function DoorIndicator({ side, phase, lang, noticeMs = 2400, waitMs = 2400 }: DoorIndicatorProps) {
+export function DoorIndicator({
+	side,
+	phase,
+	lang,
+	noticeMs = 2400,
+	waitMs = 2400,
+}: DoorIndicatorProps) {
 	const [visible, setVisible] = React.useState(phase === "at");
 	const [leaving, setLeaving] = React.useState(false);
 	const [pulseVisible, setPulseVisible] = React.useState(true);
@@ -88,10 +94,10 @@ export function DoorIndicator({ side, phase, lang, noticeMs = 2400, waitMs = 240
 			<span className="font-display text-[26px] animate-chev-fast">
 				{arrows}
 			</span>
-			<div className={`leading-[1.05] ${left ? "text-left" : "text-right"}`}>
-				<div className="font-body font-bold text-[15px]">
-					{txtJa}
-				</div>
+			<div
+				className={`leading-[1.05] ${left ? "text-left" : "text-right"}`}
+			>
+				<div className="font-body font-bold text-[15px]">{txtJa}</div>
 				<div className="font-mono text-[11px] tracking-[0.08em]">
 					{txtEn.toUpperCase()}
 				</div>

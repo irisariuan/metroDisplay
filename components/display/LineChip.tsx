@@ -14,7 +14,7 @@ export function LineChip({ lineId, size = 26 }: LineChipProps) {
 	return (
 		<span
 			title={L.en}
-			className="inline-flex items-center justify-center flex-none rounded-s font-mono font-bold border-[2px] border-[rgba(0,0,0,0.25)]"
+			className="inline-flex items-center justify-center flex-none rounded-s font-mono font-bold border-2 border-[rgba(0,0,0,0.25)]"
 			style={{
 				width: size,
 				height: size,

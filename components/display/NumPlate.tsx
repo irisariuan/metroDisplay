@@ -16,7 +16,7 @@ export function NumPlate({ lineId, idx, scale = 1, active }: NumPlateProps) {
 	return (
 		<div
 			className={[
-				"inline-flex flex-col items-center justify-center leading-none font-mono font-bold flex-none transition-all duration-[350ms] ease-pop",
+				"inline-flex flex-col items-center justify-center leading-none font-mono font-bold flex-none transition-all duration-350 ease-pop",
 				active ? "shadow-[3px_3px_0_rgba(0,0,0,0.35)]" : "shadow-none",
 			].join(" ")}
 			style={{
@@ -28,7 +28,12 @@ export function NumPlate({ lineId, idx, scale = 1, active }: NumPlateProps) {
 				color: active ? L.textOnColor : L.color,
 			}}
 		>
-			<span className="tracking-[0.02em]" style={{ fontSize: 15 * scale }}>{L.code}</span>
+			<span
+				className="tracking-[0.02em]"
+				style={{ fontSize: 15 * scale }}
+			>
+				{L.code}
+			</span>
 			<span style={{ fontSize: 24 * scale, marginTop: 2 * scale }}>
 				{String(idx + 1).padStart(2, "0")}
 			</span>

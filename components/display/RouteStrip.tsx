@@ -64,37 +64,51 @@ export function RouteStrip({
 		phase === "approach" &&
 		typeof remainingDistance === "number" &&
 		Number.isFinite(remainingDistance);
-	const distanceValue = Number(Math.max(0, remainingDistance || 0).toFixed(1));
+	const distanceValue = Number(
+		Math.max(0, remainingDistance || 0).toFixed(1),
+	);
 	const distanceLabel = hasRemainingDistance
 		? lang === "ja"
 			? `次駅まで ${distanceValue} KM`
 			: `${distanceValue} KM TO NEXT`
 		: null;
-	const speedLabel = typeof speedIndicator === "number" && Number.isFinite(speedIndicator)
-		? lang === "ja"
-			? `速度 · ${speedIndicator} KM/H`
-			: `SPEED · ${speedIndicator} KM/H`
-		: null;
-	const stayLabel = typeof stationStayRemaining === "number" && Number.isFinite(stationStayRemaining) && phase === "at"
-		? lang === "ja"
-			? `発車まで ${Math.ceil(stationStayRemaining / 1000)}秒`
-			: `DEPARTS IN ${Math.ceil(stationStayRemaining / 1000)}S`
-		: null;
+	const speedLabel =
+		typeof speedIndicator === "number" && Number.isFinite(speedIndicator)
+			? lang === "ja"
+				? `速度 · ${speedIndicator} KM/H`
+				: `SPEED · ${speedIndicator} KM/H`
+			: null;
+	const stayLabel =
+		typeof stationStayRemaining === "number" &&
+		Number.isFinite(stationStayRemaining) &&
+		phase === "at"
+			? lang === "ja"
+				? `発車まで ${Math.ceil(stationStayRemaining / 1000)}秒`
+				: `DEPARTS IN ${Math.ceil(stationStayRemaining / 1000)}S`
+			: null;
 	const PAGE_SIZE = Math.max(2, Math.floor(Number(pageSize) || 8));
 	const pageCount = Math.ceil(route.stations.length / PAGE_SIZE);
 	const targetPage = Math.floor(pos / PAGE_SIZE);
 
 	const isCircularForwardWrap =
-		pageCount > 1 && route.circular && !isReverse && pos === 0 &&
+		pageCount > 1 &&
+		route.circular &&
+		!isReverse &&
+		pos === 0 &&
 		fromPos === route.stations.length - 1;
 	const isCircularReverseWrap =
-		pageCount > 1 && route.circular && isReverse && pos === route.stations.length - 1 &&
+		pageCount > 1 &&
+		route.circular &&
+		isReverse &&
+		pos === route.stations.length - 1 &&
 		fromPos === 0;
 	// Split travel into the first station of a page across both page views:
 	// the departing page gets the first half, then the arriving page gets the second.
 	const isPageBoundaryTravel =
 		hasTravelProgress &&
-			(isCircularForwardWrap || isCircularReverseWrap || (isReverse
+		(isCircularForwardWrap ||
+			isCircularReverseWrap ||
+			(isReverse
 				? pos < route.stations.length - 1 && (pos + 1) % PAGE_SIZE === 0
 				: pos > 0 && pos % PAGE_SIZE === 0));
 	const boundaryOldPage = isCircularForwardWrap
@@ -106,7 +120,8 @@ export function RouteStrip({
 		isPageBoundaryTravel && (approachProgress as number) < 0.5
 			? boundaryOldPage
 			: targetPage;
-	const singlePageWrap = pageCount === 1 && pos === 0 && fromPos === route.stations.length - 1;
+	const singlePageWrap =
+		pageCount === 1 && pos === 0 && fromPos === route.stations.length - 1;
 
 	// pageState bundles the displayed page + exit flag + current line so a line
 	// switch always resets everything atomically in one setState call.
@@ -123,17 +138,27 @@ export function RouteStrip({
 	// Line or page capacity changed → reset the displayed page immediately.
 	React.useEffect(() => {
 		if (pageState.line !== route.line || pageState.pageSize !== PAGE_SIZE) {
-			setTimeout(() => setPageState({
-				line: route.line,
-				pageSize: PAGE_SIZE,
-				displayPage: desiredPage,
-				exiting: false,
-				retreating: false,
-				resetToken: 0,
-				direction: "forward",
-			}), 0);
+			setTimeout(
+				() =>
+					setPageState({
+						line: route.line,
+						pageSize: PAGE_SIZE,
+						displayPage: desiredPage,
+						exiting: false,
+						retreating: false,
+						resetToken: 0,
+						direction: "forward",
+					}),
+				0,
+			);
 		}
-	}, [desiredPage, pageState.line, pageState.pageSize, route.line, PAGE_SIZE]);
+	}, [
+		desiredPage,
+		pageState.line,
+		pageState.pageSize,
+		route.line,
+		PAGE_SIZE,
+	]);
 
 	// Cross-page navigation completes or clears the departing trail before handoff.
 	React.useEffect(() => {
@@ -142,7 +167,16 @@ export function RouteStrip({
 		// A direction change cancels a pending forward completion at the current station.
 		// The next leg begins from the trail's current fill rather than jumping to an edge.
 		if (isReverse && pageState.exiting) {
-			setTimeout(() => setPageState((s) => ({ ...s, exiting: false, retreating: false, direction: "backward" })), 0);
+			setTimeout(
+				() =>
+					setPageState((s) => ({
+						...s,
+						exiting: false,
+						retreating: false,
+						direction: "backward",
+					})),
+				0,
+			);
 			return;
 		}
 
@@ -154,26 +188,40 @@ export function RouteStrip({
 				pageState.exiting ||
 				pageState.retreating
 			) {
-				setTimeout(() => setPageState((s) => ({
-					...s,
-					displayPage: desiredPage,
-					exiting: false,
-					retreating: false,
-					direction: "forward",
-				})), 0);
+				setTimeout(
+					() =>
+						setPageState((s) => ({
+							...s,
+							displayPage: desiredPage,
+							exiting: false,
+							retreating: false,
+							direction: "forward",
+						})),
+					0,
+				);
 			}
 			return;
 		}
 
-		const wrapsToFirstPage = pageCount > 1 && route.circular && pos === 0 && pageState.displayPage === pageCount - 1;
+		const wrapsToFirstPage =
+			pageCount > 1 &&
+			route.circular &&
+			pos === 0 &&
+			pageState.displayPage === pageCount - 1;
 		const needsForwardHandoff = wrapsToFirstPage || singlePageWrap;
 		if (desiredPage < pageState.displayPage && !needsForwardHandoff) {
 			if (!pageState.retreating) {
-				setTimeout(() => setPageState((s) => ({ ...s, retreating: true })), 0);
+				setTimeout(
+					() => setPageState((s) => ({ ...s, retreating: true })),
+					0,
+				);
 			}
 			return;
 		}
-		if ((desiredPage > pageState.displayPage || needsForwardHandoff) && !pageState.exiting) {
+		if (
+			(desiredPage > pageState.displayPage || needsForwardHandoff) &&
+			!pageState.exiting
+		) {
 			setTimeout(() => setPageState((s) => ({ ...s, exiting: true })), 0);
 		}
 	}, [
@@ -195,7 +243,8 @@ export function RouteStrip({
 	const handleFillEnd = React.useCallback(() => {
 		setPageState((s) => ({
 			...s,
-			displayPage: s.displayPage === pageCount - 1 ? 0 : s.displayPage + 1,
+			displayPage:
+				s.displayPage === pageCount - 1 ? 0 : s.displayPage + 1,
 			exiting: false,
 			resetToken: pageCount === 1 ? s.resetToken + 1 : s.resetToken,
 			direction: "forward",
@@ -233,7 +282,11 @@ export function RouteStrip({
 					? "end"
 					: "center";
 	const visualNodeLayout = flipView
-		? nodeLayout === "start" ? "end" : nodeLayout === "end" ? "start" : nodeLayout
+		? nodeLayout === "start"
+			? "end"
+			: nodeLayout === "end"
+				? "start"
+				: nodeLayout
 		: nodeLayout;
 	const stationFraction = (localIndex: number) => {
 		if (nodeLayout === "full") return localIndex / (stations.length - 1);
@@ -243,28 +296,42 @@ export function RouteStrip({
 	};
 	// During an approach, travel between the same visual positions used by station nodes.
 	const followsTravelProgress = hasTravelProgress && !exiting && !retreating;
-	const isBoundaryOldPage = isPageBoundaryTravel && displayPage === boundaryOldPage;
-	const isBoundaryNewPage = isPageBoundaryTravel && displayPage === targetPage;
+	const isBoundaryOldPage =
+		isPageBoundaryTravel && displayPage === boundaryOldPage;
+	const isBoundaryNewPage =
+		isPageBoundaryTravel && displayPage === targetPage;
 	let localFrac;
 	if (followsTravelProgress && isBoundaryOldPage) {
 		const sourceFrac = stationFraction(isReverse ? 0 : stations.length - 1);
 		const edgeFrac = isReverse ? 0 : 1;
-		localFrac = sourceFrac + (edgeFrac - sourceFrac) * Math.min(1, (approachProgress as number) * 2);
+		localFrac =
+			sourceFrac +
+			(edgeFrac - sourceFrac) *
+				Math.min(1, (approachProgress as number) * 2);
 	} else if (followsTravelProgress && isBoundaryNewPage) {
 		const targetFrac = stationFraction(pos - pageStart);
 		const edgeFrac = isReverse ? 1 : 0;
-		localFrac = edgeFrac + (targetFrac - edgeFrac) * Math.max(0, ((approachProgress as number) - 0.5) * 2);
+		localFrac =
+			edgeFrac +
+			(targetFrac - edgeFrac) *
+				Math.max(0, ((approachProgress as number) - 0.5) * 2);
 	} else if (followsTravelProgress) {
 		let sourceIndex = isReverse
 			? (pos + 1) % route.stations.length
 			: (pos - 1 + route.stations.length) % route.stations.length;
 		if (!route.circular && !isReverse && pos === 0) sourceIndex = 0;
-		if (!route.circular && isReverse && pos === route.stations.length - 1) sourceIndex = pos;
-		const sourceFrac = sourceIndex >= pageStart && sourceIndex <= pageEnd
-			? stationFraction(sourceIndex - pageStart)
-			: isReverse ? 1 : 0;
+		if (!route.circular && isReverse && pos === route.stations.length - 1)
+			sourceIndex = pos;
+		const sourceFrac =
+			sourceIndex >= pageStart && sourceIndex <= pageEnd
+				? stationFraction(sourceIndex - pageStart)
+				: isReverse
+					? 1
+					: 0;
 		const targetFrac = stationFraction(pos - pageStart);
-		localFrac = sourceFrac + (targetFrac - sourceFrac) * (approachProgress as number);
+		localFrac =
+			sourceFrac +
+			(targetFrac - sourceFrac) * (approachProgress as number);
 	} else {
 		localFrac = stationFraction(pagePos);
 	}
@@ -308,7 +375,11 @@ export function RouteStrip({
 				<div
 					className={[
 						"absolute top-3 inline-flex items-center py-1 px-2 border-2 border-ink rounded-sm bg-orange text-ink font-mono text-[11px] font-bold tracking-[0.08em] leading-none z-3",
-						distanceLabel && speedLabel ? "left-90" : (distanceLabel || speedLabel ? "left-51.5" : "left-15"),
+						distanceLabel && speedLabel
+							? "left-90"
+							: distanceLabel || speedLabel
+								? "left-51.5"
+								: "left-15",
 					].join(" ")}
 				>
 					{stayLabel}
@@ -333,9 +404,14 @@ export function RouteStrip({
 								key={i}
 								className="w-1.75 h-1.75 rounded-pill"
 								style={{
-									background: i === displayPage ? L.color : "#d8d6cc",
-									transition: "background .35s ease, transform .35s var(--ease-pop)",
-									transform: i === displayPage ? "scale(1.25)" : "scale(1)",
+									background:
+										i === displayPage ? L.color : "#d8d6cc",
+									transition:
+										"background .35s ease, transform .35s var(--ease-pop)",
+									transform:
+										i === displayPage
+											? "scale(1.25)"
+											: "scale(1)",
 								}}
 							/>
 						))}
@@ -346,7 +422,12 @@ export function RouteStrip({
 			<div
 				key={`rail-${displayPage}`}
 				className="absolute left-15 right-15 top-23 h-3 rounded-pill bg-[#d8d6cc]"
-				style={{ animation: pageCount > 1 ? "swipeIn .42s var(--ease-out) both" : "none" }}
+				style={{
+					animation:
+						pageCount > 1
+							? "swipeIn .42s var(--ease-out) both"
+							: "none",
+				}}
 			/>
 			{/* colored progress rail — separate component so useLayoutEffect fires on each page mount */}
 			<ProgressRail
@@ -378,16 +459,27 @@ export function RouteStrip({
 				reverseFill={reverseFill}
 				layout={visualNodeLayout}
 				reverse={isReverse && !flipView}
-				continueForward={(!isReverse && displayPage < pageCount - 1) || (flipView && displayPage > 0)}
+				continueForward={
+					(!isReverse && displayPage < pageCount - 1) ||
+					(flipView && displayPage > 0)
+				}
 				continueBackward={isReverse && !flipView && displayPage > 0}
 			/>
 			{/* station nodes */}
 			<div
 				key={`nodes-${displayPage}`}
 				className="relative flex justify-between"
-				style={{ animation: pageCount > 1 ? "swipeIn .42s var(--ease-out) both" : "none" }}
+				style={{
+					animation:
+						pageCount > 1
+							? "swipeIn .42s var(--ease-out) both"
+							: "none",
+				}}
 			>
-				{(flipView ? stations.map((st, i) => ({ st, i })).reverse() : stations.map((st, i) => ({ st, i }))).map(({ st, i }, visualIndex) => {
+				{(flipView
+					? stations.map((st, i) => ({ st, i })).reverse()
+					: stations.map((st, i) => ({ st, i }))
+				).map(({ st, i }, visualIndex) => {
 					const stationIndex = pageStart + i;
 					const isPast = isReverse
 						? stationIndex > displayPos
@@ -395,35 +487,43 @@ export function RouteStrip({
 					const current = stationIndex === displayPos;
 					const arrived = current && displayPhase === "at";
 					const cellPosition = (visualIndex + 0.5) / stations.length;
-					const stationPosition = visualNodeLayout === "full" && stations.length > 1
-						? visualIndex / (stations.length - 1)
-						: visualNodeLayout === "start"
-							? visualIndex / stations.length
-							: visualNodeLayout === "end"
-								? (visualIndex + 1) / stations.length
-								: cellPosition;
-					const nodeOffset = (stationPosition - cellPosition) * stations.length * 100;
+					const stationPosition =
+						visualNodeLayout === "full" && stations.length > 1
+							? visualIndex / (stations.length - 1)
+							: visualNodeLayout === "start"
+								? visualIndex / stations.length
+								: visualNodeLayout === "end"
+									? (visualIndex + 1) / stations.length
+									: cellPosition;
+					const nodeOffset =
+						(stationPosition - cellPosition) *
+						stations.length *
+						100;
 					let node: {
 						className: string;
 						borderColor?: string;
 					};
 					if (isPast)
 						node = {
-							className: "w-[15px] h-[15px] border-[3px] bg-[#bdbbb0] shadow-none",
+							className:
+								"w-[15px] h-[15px] border-[3px] bg-[#bdbbb0] shadow-none",
 							borderColor: L.color,
 						};
 					else if (arrived)
 						node = {
-							className: "w-[30px] h-7.5 border-[6px] border-ink bg-acid shadow-[0_0_0_5px_rgba(214,255,63,0.55)]",
+							className:
+								"w-[30px] h-7.5 border-[6px] border-ink bg-acid shadow-[0_0_0_5px_rgba(214,255,63,0.55)]",
 						};
 					else if (current)
 						node = {
-							className: "w-[26px] h-[26px] border-[4px] bg-white shadow-[0_0_0_5px_rgba(214,255,63,0.5)]",
+							className:
+								"w-[26px] h-[26px] border-[4px] bg-white shadow-[0_0_0_5px_rgba(214,255,63,0.5)]",
 							borderColor: L.color,
 						};
 					else
 						node = {
-							className: "w-[20px] h-[20px] border-[3px] bg-white shadow-none",
+							className:
+								"w-[20px] h-[20px] border-[3px] bg-white shadow-none",
 							borderColor: L.color,
 						};
 					return (
@@ -432,26 +532,39 @@ export function RouteStrip({
 							className="flex flex-col items-center min-w-0"
 							style={{
 								width: `${100 / stations.length}%`,
-								transform: nodeOffset ? `translateX(${nodeOffset}%)` : "none",
+								transform: nodeOffset
+									? `translateX(${nodeOffset}%)`
+									: "none",
 							}}
 						>
 							{/* station name */}
 							<div
 								key={`label-${displayPage}-${stationIndex}-${stationNameMode}`}
 								className="w-full"
-								style={{ animation: "swipeIn .42s var(--ease-out) both" }}
+								style={{
+									animation:
+										"swipeIn .42s var(--ease-out) both",
+								}}
 							>
 								<div
 									// Keep label height + gap at 37px: the station-dot centre then
 									// remains on the fixed rail centre (top: 92px) in every script phase.
 									className={[
 										"flex flex-col items-center justify-end w-full transition-transform duration-350 ease-pop",
-										showStationReadings ? "h-8.25 mb-1" : "h-5.75 mb-3.5",
+										showStationReadings
+											? "h-8.25 mb-1"
+											: "h-5.75 mb-3.5",
 										current ? "scale-[1.04]" : "scale-100",
 									].join(" ")}
 								>
 									<Marquee
-										text={stationNameMode === "hiragana" ? st.hira || st.ja : isEnglishName ? st.en : st.ja}
+										text={
+											stationNameMode === "hiragana"
+												? st.hira || st.ja
+												: isEnglishName
+													? st.en
+													: st.ja
+										}
 										textStyle={{
 											fontFamily: "var(--font-body)",
 											fontWeight: current ? 700 : 500,
@@ -472,9 +585,18 @@ export function RouteStrip({
 									/>
 									<StationReadings
 										station={st}
-										visible={stationNameMode === "kanji" && showKatakana}
+										visible={
+											stationNameMode === "kanji" &&
+											showKatakana
+										}
 										compact={true}
-										color={current ? "var(--ink)" : isPast ? "#a7a59a" : "var(--text-muted)"}
+										color={
+											current
+												? "var(--ink)"
+												: isPast
+													? "#a7a59a"
+													: "var(--text-muted)"
+										}
 									/>
 								</div>
 							</div>
@@ -490,7 +612,11 @@ export function RouteStrip({
 												? "animate-next-station-ring"
 												: "",
 									].join(" ")}
-									style={node.borderColor ? { borderColor: node.borderColor } : undefined}
+									style={
+										node.borderColor
+											? { borderColor: node.borderColor }
+											: undefined
+									}
 								/>
 							</div>
 							{/* station number */}

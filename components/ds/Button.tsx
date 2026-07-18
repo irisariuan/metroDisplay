@@ -43,7 +43,9 @@ export function Button({
 			className={[
 				"inline-flex items-center gap-2 rounded-pill border-[3px] border-ink font-body font-bold tracking-[-0.01em]",
 				"transition-transform duration-120 ease-pop active:translate-x-0.75 active:translate-y-0.75",
-				disabled ? "cursor-not-allowed opacity-45 shadow-none" : "cursor-pointer",
+				disabled
+					? "cursor-not-allowed opacity-45 shadow-none"
+					: "cursor-pointer",
 				sizeClasses[size],
 				variantClasses[variant],
 				className,

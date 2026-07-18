@@ -52,12 +52,13 @@ export function MetroSimulator() {
 	const [stationNameMode, setStationNameMode] = useState("kanji");
 	const [alertText, setAlertText] = useState("Service update in progress");
 	const [alertSecondText, setAlertSecondText] = useState("");
-	const [alertScope, setAlertScope] = useState<"marquee" | "lower" | "monitor">(
-		"marquee",
-	); // marquee | lower | monitor
+	const [alertScope, setAlertScope] = useState<
+		"marquee" | "lower" | "monitor"
+	>("marquee"); // marquee | lower | monitor
 	const [alertActive, setAlertActive] = useState(false);
 	const [alertLeaving, setAlertLeaving] = useState(false);
-	const [delayNextMarqueeMessage, setDelayNextMarqueeMessage] = useState(true);
+	const [delayNextMarqueeMessage, setDelayNextMarqueeMessage] =
+		useState(true);
 	const [nextMarqueeThreshold, setNextMarqueeThreshold] = useState(70);
 	const [marqueeContent, setMarqueeContent] = useState<any[]>(() =>
 		DEFAULT_MARQUEE_CONTENT.map((item) => ({ ...item, enabled: true })),
@@ -221,7 +222,10 @@ export function MetroSimulator() {
 		const id = setInterval(() => {
 			setJourney((j) => {
 				if (j.phase !== "approach") return j;
-				const progress = Math.min(1, j.progress + tickMs / travelDuration);
+				const progress = Math.min(
+					1,
+					j.progress + tickMs / travelDuration,
+				);
 				if (
 					pauseAtPageBreak &&
 					isPageBoundaryLeg &&
@@ -276,7 +280,9 @@ export function MetroSimulator() {
 			setStationNameMode(langMode === "en" ? "en" : "kanji");
 			return undefined;
 		}
-		const modes = showHiragana ? ["kanji", "hiragana", "en"] : ["kanji", "en"];
+		const modes = showHiragana
+			? ["kanji", "hiragana", "en"]
+			: ["kanji", "en"];
 		let modeIndex = 0;
 		setLang("ja");
 		setStationNameMode(modes[modeIndex]);
@@ -325,7 +331,8 @@ export function MetroSimulator() {
 			// Keep line codes and controls legible against the selected brand color.
 			const brightness = (red * 299 + green * 587 + blue * 114) / 1000;
 			(LINES as any)[lineId].color = value;
-			(LINES as any)[lineId].textOnColor = brightness > 160 ? "#111" : "#fff";
+			(LINES as any)[lineId].textOnColor =
+				brightness > 160 ? "#111" : "#fff";
 		} else {
 			(LINES as any)[lineId][field] = value;
 		}
@@ -341,14 +348,9 @@ export function MetroSimulator() {
 		const code =
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 				.split("")
-				.find((candidate) => !usedCodes.has(candidate)) || `L${lineNumber}`;
-		const colors = [
-			"#0b7a75",
-			"#c23c52",
-			"#5b4bb7",
-			"#b05d14",
-			"#1677a8",
-		];
+				.find((candidate) => !usedCodes.has(candidate)) ||
+			`L${lineNumber}`;
+		const colors = ["#0b7a75", "#c23c52", "#5b4bb7", "#b05d14", "#1677a8"];
 		(LINES as any)[id] = {
 			id,
 			code,
@@ -395,7 +397,8 @@ export function MetroSimulator() {
 	};
 	const setStationField = (i: number, f: string, v: any) =>
 		editRoute((r) => {
-			r.stations[i][f] = f === "distance" ? Math.max(0, Number(v) || 0) : v;
+			r.stations[i][f] =
+				f === "distance" ? Math.max(0, Number(v) || 0) : v;
 		});
 	const toggleSide = (i: number) =>
 		editRoute((r) => {
@@ -464,7 +467,8 @@ export function MetroSimulator() {
 			},
 		]);
 
-	const annColor = journey.phase === "at" ? "var(--acid)" : "var(--magenta-2)";
+	const annColor =
+		journey.phase === "at" ? "var(--acid)" : "var(--magenta-2)";
 
 	return (
 		<div className="relative z-1 mx-auto max-w-310 px-5.5 pt-6.5 pb-10">
@@ -480,7 +484,9 @@ export function MetroSimulator() {
 				</div>
 				<div className="text-right font-mono text-[12px] tracking-[.14em] text-paper-2 opacity-70">
 					<div>
-						{journey.phase === "at" ? "STOPPED · ドア開" : "RUNNING · 走行中"}
+						{journey.phase === "at"
+							? "STOPPED · ドア開"
+							: "RUNNING · 走行中"}
 					</div>
 					<div>{auto ? "AUTO-PLAY" : "MANUAL"}</div>
 				</div>
@@ -519,12 +525,18 @@ export function MetroSimulator() {
 							followDirectionView={followDirectionView}
 							pageSize={pageSize}
 							remainingDistance={
-								showDistanceIndicator ? (remainingDistance ?? undefined) : undefined
+								showDistanceIndicator
+									? (remainingDistance ?? undefined)
+									: undefined
 							}
 							stationStayRemaining={
-								showStationStayIndicator ? stationStayRemainingMs : undefined
+								showStationStayIndicator
+									? stationStayRemainingMs
+									: undefined
 							}
-							speedIndicator={showSpeedIndicator ? speedKmh : undefined}
+							speedIndicator={
+								showSpeedIndicator ? speedKmh : undefined
+							}
 							dwellMs={travelDuration}
 							lang={lang}
 							showKatakana={showKatakana}
@@ -538,12 +550,19 @@ export function MetroSimulator() {
 						<div className="flex min-w-0 flex-none w-70 items-center overflow-hidden border-r-[3px] border-r-ink bg-paper-2 px-4.5 py-2">
 							{route.stations[journey.pos].xf &&
 							route.stations[journey.pos].xf.length ? (
-								<TransferStrip route={route} pos={journey.pos} lang={lang} />
+								<TransferStrip
+									route={route}
+									pos={journey.pos}
+									lang={lang}
+								/>
 							) : (
 								<span
 									key={`no-transfer-${journey.pos}-${lang}`}
 									className="font-mono text-[12px] tracking-[.12em] text-muted"
-									style={{ animation: "swipeIn .35s var(--ease-out) both" }}
+									style={{
+										animation:
+											"swipeIn .35s var(--ease-out) both",
+									}}
 								>
 									{lang === "ja" ? "乗換なし" : "NO TRANSFER"}
 								</span>
@@ -551,12 +570,17 @@ export function MetroSimulator() {
 						</div>
 						<Ticker
 							items={tickerItems}
-							color={nextMarqueeMessageVisible ? annColor : "var(--paper)"}
+							color={
+								nextMarqueeMessageVisible
+									? annColor
+									: "var(--paper)"
+							}
 							alertMessages={
 								activeAlert && alertScope === "marquee"
-									? ([activeAlert.primary, activeAlert.secondary].filter(
-											Boolean,
-										) as string[])
+									? ([
+											activeAlert.primary,
+											activeAlert.secondary,
+										].filter(Boolean) as string[])
 									: undefined
 							}
 							alertLeaving={alertLeaving}
@@ -573,9 +597,10 @@ export function MetroSimulator() {
 									separateAlertLanguages={true}
 									lang={lang}
 									alertMessages={
-										[activeAlert.primary, activeAlert.secondary].filter(
-											Boolean,
-										) as string[]
+										[
+											activeAlert.primary,
+											activeAlert.secondary,
+										].filter(Boolean) as string[]
 									}
 									alertLeaving={alertLeaving}
 								/>
@@ -606,7 +631,11 @@ export function MetroSimulator() {
 							<button
 								className="lc-btn"
 								onClick={addLine}
-								style={{ background: "var(--acid)", color: "var(--ink)", fontSize: 12 }}
+								style={{
+									background: "var(--acid)",
+									color: "var(--ink)",
+									fontSize: 12,
+								}}
 							>
 								+ ADD LINE
 							</button>
@@ -614,7 +643,9 @@ export function MetroSimulator() {
 								className="lc-btn"
 								onClick={() => setShowEditor((v) => !v)}
 								style={{
-									background: showEditor ? "var(--acid)" : "var(--paper)",
+									background: showEditor
+										? "var(--acid)"
+										: "var(--paper)",
 									color: "var(--ink)",
 									fontSize: 12,
 								}}
@@ -700,21 +731,29 @@ export function MetroSimulator() {
 							SPEED
 						</div>
 						<div className="grid grid-cols-3 gap-1.5">
-							{Object.entries(SPEED_PRESETS).map(([preset, kmh]) => (
-								<button
-									key={preset}
-									className="lc-btn whitespace-nowrap uppercase"
-									onClick={() => setSpeedKmh(kmh)}
-									style={{
-										background: speedKmh === kmh ? "var(--ink)" : "var(--paper)",
-										color: speedKmh === kmh ? "var(--paper)" : "var(--ink)",
-										padding: "8px 4px",
-										fontSize: 10,
-									}}
-								>
-									{`${kmh} KM/H`}
-								</button>
-							))}
+							{Object.entries(SPEED_PRESETS).map(
+								([preset, kmh]) => (
+									<button
+										key={preset}
+										className="lc-btn whitespace-nowrap uppercase"
+										onClick={() => setSpeedKmh(kmh)}
+										style={{
+											background:
+												speedKmh === kmh
+													? "var(--ink)"
+													: "var(--paper)",
+											color:
+												speedKmh === kmh
+													? "var(--paper)"
+													: "var(--ink)",
+											padding: "8px 4px",
+											fontSize: 10,
+										}}
+									>
+										{`${kmh} KM/H`}
+									</button>
+								),
+							)}
 						</div>
 						<div className="mt-2.5 flex items-center gap-2">
 							<input
@@ -725,9 +764,13 @@ export function MetroSimulator() {
 								step={5}
 								value={speedKmh}
 								aria-label="Train speed in kilometres per hour"
-								onChange={(ev) => setSpeedKmh(Number(ev.target.value))}
+								onChange={(ev) =>
+									setSpeedKmh(Number(ev.target.value))
+								}
 								style={
-									{ "--range-fill": `${((speedKmh - 10) / 130) * 100}%` } as React.CSSProperties
+									{
+										"--range-fill": `${((speedKmh - 10) / 130) * 100}%`,
+									} as React.CSSProperties
 								}
 							/>
 							<output
@@ -756,9 +799,13 @@ export function MetroSimulator() {
 							step={1}
 							value={simulationSpeed}
 							aria-label="Simulation playback speed"
-							onChange={(ev) => setSimulationSpeed(Number(ev.target.value))}
+							onChange={(ev) =>
+								setSimulationSpeed(Number(ev.target.value))
+							}
 							style={
-								{ "--range-fill": `${((simulationSpeed - 1) / 99) * 100}%` } as React.CSSProperties
+								{
+									"--range-fill": `${((simulationSpeed - 1) / 99) * 100}%`,
+								} as React.CSSProperties
 							}
 						/>
 					</div>
@@ -783,8 +830,14 @@ export function MetroSimulator() {
 									className="lc-btn"
 									onClick={() => setLangMode(m)}
 									style={{
-										background: langMode === m ? "var(--violet)" : "var(--paper)",
-										color: langMode === m ? "#fff" : "var(--ink)",
+										background:
+											langMode === m
+												? "var(--violet)"
+												: "var(--paper)",
+										color:
+											langMode === m
+												? "#fff"
+												: "var(--ink)",
 										fontSize: 12,
 									}}
 								>
@@ -796,7 +849,8 @@ export function MetroSimulator() {
 							className="mt-3 border-t-[3px] border-t-ink pt-2.5"
 							style={{
 								opacity: langMode === "auto" ? 1 : 0.4,
-								pointerEvents: langMode === "auto" ? "auto" : "none",
+								pointerEvents:
+									langMode === "auto" ? "auto" : "none",
 							}}
 						>
 							<div className="mb-2 flex items-center justify-between gap-3">
@@ -805,7 +859,9 @@ export function MetroSimulator() {
 								</div>
 								<output
 									className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-[12px] font-bold text-ink"
-									style={{ boxShadow: "2px 2px 0 var(--ink)" }}
+									style={{
+										boxShadow: "2px 2px 0 var(--ink)",
+									}}
 								>
 									{`${(langMs / 1000).toFixed(0)}S`}
 								</output>
@@ -818,9 +874,13 @@ export function MetroSimulator() {
 								step={1000}
 								value={langMs}
 								aria-label="Language switch interval"
-								onChange={(ev) => setLangMs(Number(ev.target.value))}
+								onChange={(ev) =>
+									setLangMs(Number(ev.target.value))
+								}
 								style={
-									{ "--range-fill": `${(langMs - 1000) / 590}%` } as React.CSSProperties
+									{
+										"--range-fill": `${(langMs - 1000) / 590}%`,
+									} as React.CSSProperties
 								}
 							/>
 							<div className="mt-1 flex w-full justify-between font-mono text-[10px] tracking-[.08em] text-paper">
@@ -843,7 +903,9 @@ export function MetroSimulator() {
 									<span>STATIONS PER PAGE</span>
 									<output
 										className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-[12px] font-bold text-ink"
-										style={{ boxShadow: "2px 2px 0 var(--ink)" }}
+										style={{
+											boxShadow: "2px 2px 0 var(--ink)",
+										}}
 									>
 										{pageSize}
 									</output>
@@ -856,9 +918,13 @@ export function MetroSimulator() {
 									step={1}
 									value={pageSize}
 									aria-label="Maximum stations per page"
-									onChange={(ev) => setPageSize(Number(ev.target.value))}
+									onChange={(ev) =>
+										setPageSize(Number(ev.target.value))
+									}
 									style={
-										{ "--range-fill": `${((pageSize - 4) / 8) * 100}%` } as React.CSSProperties
+										{
+											"--range-fill": `${((pageSize - 4) / 8) * 100}%`,
+										} as React.CSSProperties
 									}
 								/>
 								<div className="mt-1 flex w-55 justify-between font-mono text-[10px] tracking-[.08em] text-muted">
@@ -872,7 +938,10 @@ export function MetroSimulator() {
 										<span>DOOR POP-UP TIME</span>
 										<output
 											className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-[12px] font-bold text-ink"
-											style={{ boxShadow: "2px 2px 0 var(--ink)" }}
+											style={{
+												boxShadow:
+													"2px 2px 0 var(--ink)",
+											}}
 										>
 											{`${(doorNoticeMs / 1000).toFixed(0)}S`}
 										</output>
@@ -885,9 +954,15 @@ export function MetroSimulator() {
 										step={1000}
 										value={doorNoticeMs}
 										aria-label="Door pop-up visible duration"
-										onChange={(ev) => setDoorNoticeMs(Number(ev.target.value))}
+										onChange={(ev) =>
+											setDoorNoticeMs(
+												Number(ev.target.value),
+											)
+										}
 										style={
-											{ "--range-fill": `${(doorNoticeMs - 1000) / 590}%` } as React.CSSProperties
+											{
+												"--range-fill": `${(doorNoticeMs - 1000) / 590}%`,
+											} as React.CSSProperties
 										}
 									/>
 									<div className="mt-1 flex w-55 justify-between font-mono text-[10px] tracking-[.08em] text-muted">
@@ -900,7 +975,11 @@ export function MetroSimulator() {
 										<span>WAIT BEFORE POP-UP</span>
 										<output
 											className="rounded-md border-2 border-ink bg-blue px-1.75 py-1 text-center font-mono text-[12px] font-bold text-paper"
-											style={{ boxShadow: "2px 2px 0 var(--ink)", minWidth: 54 }}
+											style={{
+												boxShadow:
+													"2px 2px 0 var(--ink)",
+												minWidth: 54,
+											}}
 										>
 											{`${(doorNoticeWaitMs / 1000).toFixed(0)}S`}
 										</output>
@@ -913,7 +992,11 @@ export function MetroSimulator() {
 										step={1000}
 										value={doorNoticeWaitMs}
 										aria-label="Seconds to wait before the door pop-up returns"
-										onChange={(ev) => setDoorNoticeWaitMs(Number(ev.target.value))}
+										onChange={(ev) =>
+											setDoorNoticeWaitMs(
+												Number(ev.target.value),
+											)
+										}
 										style={
 											{
 												"--range-fill": `${(doorNoticeWaitMs - 1000) / 590}%`,
@@ -931,7 +1014,9 @@ export function MetroSimulator() {
 									<span>STAY AT STATION</span>
 									<output
 										className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-[12px] font-bold text-ink"
-										style={{ boxShadow: "2px 2px 0 var(--ink)" }}
+										style={{
+											boxShadow: "2px 2px 0 var(--ink)",
+										}}
 									>
 										{`${(stationStayMs / 1000).toFixed(0)}S`}
 									</output>
@@ -944,7 +1029,11 @@ export function MetroSimulator() {
 									step={5000}
 									value={stationStayMs}
 									aria-label="Stay time at station"
-									onChange={(ev) => setStationStayMs(Number(ev.target.value))}
+									onChange={(ev) =>
+										setStationStayMs(
+											Number(ev.target.value),
+										)
+									}
 									style={
 										{
 											"--range-fill": `${(stationStayMs - 5000) / 5950}%`,
@@ -1005,7 +1094,10 @@ export function MetroSimulator() {
 						</div>
 						<div
 							className="grid items-start gap-4"
-							style={{ gridTemplateColumns: "minmax(230px, 1fr) minmax(260px, 2fr)" }}
+							style={{
+								gridTemplateColumns:
+									"minmax(230px, 1fr) minmax(260px, 2fr)",
+							}}
 						>
 							<div
 								className="flex flex-col gap-2.5 rounded-lg border-[3px] border-ink bg-paper p-3 text-ink"
@@ -1018,15 +1110,22 @@ export function MetroSimulator() {
 								/>
 								<div
 									style={{
-										opacity: delayNextMarqueeMessage ? 1 : 0.45,
-										pointerEvents: delayNextMarqueeMessage ? "auto" : "none",
+										opacity: delayNextMarqueeMessage
+											? 1
+											: 0.45,
+										pointerEvents: delayNextMarqueeMessage
+											? "auto"
+											: "none",
 									}}
 								>
 									<div className="mb-1.75 flex justify-between gap-2 font-mono text-[11px] font-bold tracking-[.08em]">
 										<span>SHOW NEXT AFTER</span>
 										<output
 											className="rounded-sm border-2 border-ink bg-acid px-1.5 py-0.75 font-mono font-bold text-ink"
-											style={{ boxShadow: "2px 2px 0 var(--ink)" }}
+											style={{
+												boxShadow:
+													"2px 2px 0 var(--ink)",
+											}}
 										>
 											{`${nextMarqueeThreshold}% OF LEG`}
 										</output>
@@ -1040,15 +1139,20 @@ export function MetroSimulator() {
 										value={nextMarqueeThreshold}
 										aria-label="Next station marquee threshold"
 										onChange={(ev) =>
-											setNextMarqueeThreshold(Number(ev.target.value))
+											setNextMarqueeThreshold(
+												Number(ev.target.value),
+											)
 										}
 										style={
-											{ "--range-fill": `${nextMarqueeThreshold}%` } as React.CSSProperties
+											{
+												"--range-fill": `${nextMarqueeThreshold}%`,
+											} as React.CSSProperties
 										}
 									/>
 									<p className="mt-1.75 font-body text-[12px] leading-[1.3] text-muted">
-										Ads and Metro notices hold the ticker until this share of the
-										current leg is complete.
+										Ads and Metro notices hold the ticker
+										until this share of the current leg is
+										complete.
 									</p>
 								</div>
 							</div>
@@ -1058,7 +1162,8 @@ export function MetroSimulator() {
 							>
 								<div className="mb-1.75 flex items-center justify-between gap-2.5">
 									<span className="font-mono text-[11px] font-bold tracking-widest text-ink">
-										CONTENT PLAYLIST · ENGLISH + OPTIONAL JAPANESE
+										CONTENT PLAYLIST · ENGLISH + OPTIONAL
+										JAPANESE
 									</span>
 									<button
 										className="lc-btn"
@@ -1081,13 +1186,18 @@ export function MetroSimulator() {
 											style={{
 												gridTemplateColumns:
 													"auto 70px minmax(170px, 1fr) minmax(170px, 1fr) auto",
-												boxShadow: "2px 2px 0 var(--ink)",
+												boxShadow:
+													"2px 2px 0 var(--ink)",
 											}}
 										>
 											<Switch
 												checked={item.enabled}
 												onChange={(enabled: boolean) =>
-													updateMarqueeContent(index, "enabled", enabled)
+													updateMarqueeContent(
+														index,
+														"enabled",
+														enabled,
+													)
 												}
 												label=""
 											/>
@@ -1095,19 +1205,29 @@ export function MetroSimulator() {
 												value={item.type}
 												aria-label="Marquee content type"
 												onChange={(ev) =>
-													updateMarqueeContent(index, "type", ev.target.value)
+													updateMarqueeContent(
+														index,
+														"type",
+														ev.target.value,
+													)
 												}
 												className="w-full rounded-[5px] border-2 border-ink bg-paper p-1.5 font-mono text-[10px] font-bold text-ink"
 											>
 												<option value="ad">AD</option>
-												<option value="notice">NOTICE</option>
+												<option value="notice">
+													NOTICE
+												</option>
 											</select>
 											<input
 												value={item.en}
 												placeholder="English message"
 												aria-label={`English marquee item ${index + 1}`}
 												onChange={(ev) =>
-													updateMarqueeContent(index, "en", ev.target.value)
+													updateMarqueeContent(
+														index,
+														"en",
+														ev.target.value,
+													)
 												}
 												className="w-full min-w-0 rounded-[5px] border-2 border-ink bg-paper px-2 py-1.5 font-body font-semibold text-ink"
 											/>
@@ -1116,13 +1236,19 @@ export function MetroSimulator() {
 												placeholder="日本語（任意）"
 												aria-label={`Japanese marquee item ${index + 1}`}
 												onChange={(ev) =>
-													updateMarqueeContent(index, "ja", ev.target.value)
+													updateMarqueeContent(
+														index,
+														"ja",
+														ev.target.value,
+													)
 												}
 												className="w-full min-w-0 rounded-[5px] border-2 border-ink bg-paper px-2 py-1.5 font-body font-semibold text-ink"
 											/>
 											<button
 												className="lc-btn"
-												onClick={() => removeMarqueeContent(index)}
+												onClick={() =>
+													removeMarqueeContent(index)
+												}
 												title="Remove playlist item"
 												aria-label={`Remove marquee item ${index + 1}`}
 												style={{
@@ -1150,7 +1276,10 @@ export function MetroSimulator() {
 						</div>
 						<div
 							className="grid items-center gap-3"
-							style={{ gridTemplateColumns: "minmax(240px, 1fr) repeat(3, auto)" }}
+							style={{
+								gridTemplateColumns:
+									"minmax(240px, 1fr) repeat(3, auto)",
+							}}
 						>
 							<div className="flex items-center justify-between gap-2 rounded-md border-2 border-ink bg-paper p-2">
 								<span className="font-mono text-[10px] font-bold tracking-widest">
@@ -1161,8 +1290,14 @@ export function MetroSimulator() {
 										onClick={() => setTravelDirection(1)}
 										className="cursor-pointer rounded-[5px] border-2 border-ink px-1.75 py-1.25 font-mono text-[10px] font-bold"
 										style={{
-											background: travelDirection > 0 ? "var(--blue)" : "var(--paper)",
-											color: travelDirection > 0 ? "#fff" : "var(--ink)",
+											background:
+												travelDirection > 0
+													? "var(--blue)"
+													: "var(--paper)",
+											color:
+												travelDirection > 0
+													? "#fff"
+													: "var(--ink)",
 										}}
 									>
 										FORWARD ››
@@ -1171,8 +1306,14 @@ export function MetroSimulator() {
 										onClick={() => setTravelDirection(-1)}
 										className="cursor-pointer rounded-[5px] border-2 border-ink px-1.75 py-1.25 font-mono text-[10px] font-bold"
 										style={{
-											background: travelDirection < 0 ? "var(--violet)" : "var(--paper)",
-											color: travelDirection < 0 ? "#fff" : "var(--ink)",
+											background:
+												travelDirection < 0
+													? "var(--violet)"
+													: "var(--paper)",
+											color:
+												travelDirection < 0
+													? "#fff"
+													: "var(--ink)",
 										}}
 									>
 										‹‹ REVERSE
@@ -1189,7 +1330,10 @@ export function MetroSimulator() {
 					{/* alert system — a high-contrast broadcast console */}
 					<section
 						className="col-span-full overflow-hidden rounded-xl border-[3px] border-ink bg-paper"
-						style={{ boxShadow: "6px 6px 0 var(--ink)", minWidth: 310 }}
+						style={{
+							boxShadow: "6px 6px 0 var(--ink)",
+							minWidth: 310,
+						}}
 					>
 						<div
 							className="relative border-b-[3px] border-b-ink bg-magenta p-[12px_14px] text-ink"
@@ -1210,7 +1354,11 @@ export function MetroSimulator() {
 								</div>
 								<span
 									className="border-2 border-ink px-1.75 py-1 font-mono text-[10px] font-bold tracking-[.08em]"
-									style={{ background: alertActive ? "var(--acid)" : "var(--paper)" }}
+									style={{
+										background: alertActive
+											? "var(--acid)"
+											: "var(--paper)",
+									}}
 								>
 									{alertActive ? "LIVE" : "STANDBY"}
 								</span>
@@ -1221,7 +1369,9 @@ export function MetroSimulator() {
 								PRIMARY MESSAGE
 								<input
 									value={alertText}
-									onChange={(ev) => setAlertText(ev.target.value)}
+									onChange={(ev) =>
+										setAlertText(ev.target.value)
+									}
 									placeholder="ALERT MESSAGE"
 									aria-label="Primary alert message"
 									className="w-full rounded-md border-[3px] border-ink bg-paper-2 px-2.5 py-2.25 font-body font-bold text-ink"
@@ -1231,7 +1381,9 @@ export function MetroSimulator() {
 								SECOND LANGUAGE · OPTIONAL
 								<input
 									value={alertSecondText}
-									onChange={(ev) => setAlertSecondText(ev.target.value)}
+									onChange={(ev) =>
+										setAlertSecondText(ev.target.value)
+									}
 									placeholder="SECOND LANGUAGE MESSAGE"
 									aria-label="Second language alert message"
 									className="w-full rounded-md border-[3px] border-ink bg-paper-2 px-2.5 py-2.25 font-body font-bold text-ink"
@@ -1255,10 +1407,19 @@ export function MetroSimulator() {
 										style={{
 											minHeight: 46,
 											background:
-												alertScope === scope ? "var(--violet)" : "var(--paper-2)",
-											color: alertScope === scope ? "#fff" : "var(--ink)",
-											boxShadow: alertScope === scope ? "3px 3px 0 var(--ink)" : "none",
-											transition: "transform var(--dur-fast) var(--ease-pop)",
+												alertScope === scope
+													? "var(--violet)"
+													: "var(--paper-2)",
+											color:
+												alertScope === scope
+													? "#fff"
+													: "var(--ink)",
+											boxShadow:
+												alertScope === scope
+													? "3px 3px 0 var(--ink)"
+													: "none",
+											transition:
+												"transform var(--dur-fast) var(--ease-pop)",
 										}}
 									>
 										{label}
@@ -1273,15 +1434,26 @@ export function MetroSimulator() {
 										setAlertActive(true);
 									}}
 									disabled={!alertText.trim()}
-									style={{ background: "var(--acid)", color: "var(--ink)", fontSize: 12 }}
+									style={{
+										background: "var(--acid)",
+										color: "var(--ink)",
+										fontSize: 12,
+									}}
 								>
-									{alertActive ? "UPDATE ALERT" : "SEND ALERT"}
+									{alertActive
+										? "UPDATE ALERT"
+										: "SEND ALERT"}
 								</button>
 								<button
 									className="lc-btn"
 									onClick={clearAlert}
 									disabled={!alertActive || alertLeaving}
-									style={{ padding: "9px 12px", background: "var(--ink)", color: "var(--paper)", fontSize: 11 }}
+									style={{
+										padding: "9px 12px",
+										background: "var(--ink)",
+										color: "var(--paper)",
+										fontSize: 11,
+									}}
 								>
 									CLEAR
 								</button>

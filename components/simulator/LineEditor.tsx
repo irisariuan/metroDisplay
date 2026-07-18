@@ -70,8 +70,16 @@ export function LineEditor({
 				<span className="font-mono text-[11px] tracking-[.1em] text-muted">
 					LINE NAME 路線名
 				</span>
-				<EdInput value={L.ja} onChange={(v) => setLineField("ja", v)} w={130} />
-				<EdInput value={L.en} onChange={(v) => setLineField("en", v)} w={180} />
+				<EdInput
+					value={L.ja}
+					onChange={(v) => setLineField("ja", v)}
+					w={130}
+				/>
+				<EdInput
+					value={L.en}
+					onChange={(v) => setLineField("en", v)}
+					w={180}
+				/>
 				<span className="font-mono text-[11px] tracking-[.1em] text-muted">
 					DEST 行先
 				</span>
@@ -104,7 +112,8 @@ export function LineEditor({
 			<div
 				className="grid items-center px-2 pb-[2px] font-mono text-[10px] tracking-[.1em] text-muted"
 				style={{
-					gridTemplateColumns: "24px 105px 145px 105px 105px 74px 70px 1fr 88px",
+					gridTemplateColumns:
+						"24px 105px 145px 105px 105px 74px 70px 1fr 88px",
 					gap: 8,
 				}}
 			>
@@ -158,11 +167,15 @@ export function LineEditor({
 							w="100%"
 						/>
 						{i === 0 && !route.circular ? (
-							<span className="font-mono text-[12px] text-muted">—</span>
+							<span className="font-mono text-[12px] text-muted">
+								—
+							</span>
 						) : (
 							<EdInput
 								value={st.distance ?? 1}
-								onChange={(v) => setStationField(i, "distance", v)}
+								onChange={(v) =>
+									setStationField(i, "distance", v)
+								}
 								w="100%"
 								mono
 								type="number"
@@ -174,7 +187,10 @@ export function LineEditor({
 							onClick={() => toggleSide(i)}
 							className="lc-btn px-[10px] py-1 text-[12px] text-white"
 							style={{
-								background: st.side === "L" ? "var(--blue)" : "var(--orange)",
+								background:
+									st.side === "L"
+										? "var(--blue)"
+										: "var(--orange)",
 							}}
 						>
 							{st.side === "L" ? "◀ L" : "R ▶"}
@@ -184,19 +200,27 @@ export function LineEditor({
 							{Object.keys(LINES)
 								.filter((lid) => lid !== lineId)
 								.map((lid) => {
-									const on = (st.xf || []).includes(lid as LineId);
+									const on = (st.xf || []).includes(
+										lid as LineId,
+									);
 									return (
 										<button
 											key={lid}
-											onClick={() => toggleXfer(i, lid as LineId)}
+											onClick={() =>
+												toggleXfer(i, lid as LineId)
+											}
 											title={LINES[lid as LineId].en}
 											className="h-[26px] w-[26px] cursor-pointer rounded-[6px] font-mono text-[12px] font-bold"
 											style={{
 												border: `2px solid ${LINES[lid as LineId].color}`,
-												background: on ? LINES[lid as LineId].color : "transparent",
+												background: on
+													? LINES[lid as LineId].color
+													: "transparent",
 												color: on
-													? LINES[lid as LineId].textOnColor
-													: LINES[lid as LineId].color,
+													? LINES[lid as LineId]
+															.textOnColor
+													: LINES[lid as LineId]
+															.color,
 												opacity: on ? 1 : 0.5,
 											}}
 										>
@@ -207,7 +231,11 @@ export function LineEditor({
 						</div>
 						{/* row actions */}
 						<div className="flex justify-end gap-1">
-							<IconBtn label="↑" onClick={() => moveStation(i, -1)} disabled={i === 0} />
+							<IconBtn
+								label="↑"
+								onClick={() => moveStation(i, -1)}
+								disabled={i === 0}
+							/>
 							<IconBtn
 								label="↓"
 								onClick={() => moveStation(i, 1)}

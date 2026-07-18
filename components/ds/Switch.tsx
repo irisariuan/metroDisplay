@@ -20,8 +20,8 @@ export function Switch({ checked, onChange, label }: SwitchProps) {
 			>
 				<span
 					className={[
-						"absolute top-px h-[18px] w-[18px] rounded-full bg-ink transition-[left] duration-[120ms] ease-pop",
-						checked ? "left-[22px]" : "left-px",
+						"absolute top-px h-4.5 w-4.5 rounded-full bg-ink transition-[left] duration-120 ease-pop",
+						checked ? "left-5.5" : "left-px",
 					].join(" ")}
 				/>
 			</span>
