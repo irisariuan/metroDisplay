@@ -41,6 +41,11 @@ export function TopBoard({
 				: st.ja;
 	const eyebrowJa = isAt ? "ただいま" : "つぎは";
 	const eyebrowEn = isAt ? "Now at" : "Next";
+	// Katakana only rides along under the kanji name. When it isn't shown
+	// (English/hiragana mode, or katakana toggled off), the readings row is
+	// omitted entirely rather than reserved empty — otherwise the empty row is
+	// swept into justify-center and the name reads optically high.
+	const hasKatakana = stationNameMode === "kanji" && showKatakana;
 	return (
 		<div
 			className="relative grid items-center gap-7 py-5.5 px-8.5 bg-ink text-paper border-b-4 border-b-acid overflow-hidden"
@@ -104,12 +109,14 @@ export function TopBoard({
 						}}
 					/>
 				</div>
-				<StationReadings
-					station={st}
-					visible={stationNameMode === "kanji" && showKatakana}
-					align="left"
-					color="var(--paper-2)"
-				/>
+				{hasKatakana && (
+					<StationReadings
+						station={st}
+						visible={true}
+						align="left"
+						color="var(--paper-2)"
+					/>
+				)}
 			</div>
 			{/* clock + car */}
 			<div className="relative text-right">

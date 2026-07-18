@@ -48,7 +48,6 @@ export function RouteStrip({
 }: RouteStripProps) {
 	const L = LINES[route.line];
 	const isEnglishName = stationNameMode === "en";
-	const showStationReadings = true;
 	const travelDirection = direction === -1 ? -1 : 1;
 	const isReverse = travelDirection < 0;
 	const flipView = followDirectionView && isReverse;
@@ -349,6 +348,7 @@ export function RouteStrip({
 		: retreating
 			? "backward"
 			: travelMotionDirection;
+	const showStationReadings = stationNameMode === "kanji" && showKatakana;
 
 	return (
 		<div className="relative pt-11.5 px-15 pb-5">
@@ -550,10 +550,7 @@ export function RouteStrip({
 									// Keep label height + gap at 37px: the station-dot centre then
 									// remains on the fixed rail centre (top: 92px) in every script phase.
 									className={[
-										"flex flex-col items-center justify-end w-full transition-transform duration-350 ease-pop",
-										showStationReadings
-											? "h-8.25 mb-1"
-											: "h-5.75 mb-3.5",
+										"flex flex-col items-center justify-end w-full transition-transform duration-350 ease-pop h-8.25 mb-1",
 										current ? "scale-[1.04]" : "scale-100",
 									].join(" ")}
 								>
@@ -583,21 +580,20 @@ export function RouteStrip({
 											lineHeight: 1,
 										}}
 									/>
-									<StationReadings
-										station={st}
-										visible={
-											stationNameMode === "kanji" &&
-											showKatakana
-										}
-										compact={true}
-										color={
-											current
-												? "var(--ink)"
-												: isPast
-													? "#a7a59a"
-													: "var(--text-muted)"
-										}
-									/>
+									{showStationReadings && (
+										<StationReadings
+											station={st}
+											visible
+											compact={true}
+											color={
+												current
+													? "var(--ink)"
+													: isPast
+														? "#a7a59a"
+														: "var(--text-muted)"
+											}
+										/>
+									)}
 								</div>
 							</div>
 							{/* node dot */}
