@@ -14,7 +14,7 @@ export function Switch({ checked, onChange, label }: SwitchProps) {
 			<span
 				onClick={() => onChange && onChange(!checked)}
 				className={[
-					"relative inline-block h-[26px] w-[46px] rounded-pill border-[3px] border-ink transition-colors duration-[120ms]",
+					"relative inline-block h-6.5 w-11.5 rounded-pill border-[3px] border-ink transition-colors duration-120",
 					checked ? "bg-accent" : "bg-paper",
 				].join(" ")}
 			>

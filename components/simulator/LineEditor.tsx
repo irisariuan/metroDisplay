@@ -33,7 +33,7 @@ function IconBtn({ label, onClick, disabled }: IconBtnProps) {
 		<button
 			onClick={onClick}
 			disabled={disabled}
-			className="lc-btn bg-paper px-[9px] py-1 text-[13px] text-ink"
+			className="lc-btn bg-paper px-2.25 py-1 text-[13px] text-ink"
 		>
 			{label}
 		</button>
@@ -56,18 +56,18 @@ export function LineEditor({
 	const L = LINES[lineId];
 
 	return (
-		<div className="flex flex-col gap-3 rounded-[14px] border-[3px] border-ink bg-paper-2 p-[14px]">
+		<div className="flex flex-col gap-3 rounded-[14px] border-[3px] border-ink bg-paper-2 p-3.5">
 			{/* header + destination */}
 			<div className="flex flex-wrap items-center gap-3">
 				<span
-					className="inline-flex items-center gap-2 rounded-[8px] px-[10px] py-1 font-body font-bold"
+					className="inline-flex items-center gap-2 rounded-lg px-2.5 py-1 font-body font-bold"
 					style={{ background: L.color, color: L.textOnColor }}
 				>
 					<span className="font-mono">{L.code}</span>
 					{lineId}
 					{" EDITOR"}
 				</span>
-				<span className="font-mono text-[11px] tracking-[.1em] text-muted">
+				<span className="font-mono text-[11px] tracking-widest text-muted">
 					LINE NAME 路線名
 				</span>
 				<EdInput
@@ -80,7 +80,7 @@ export function LineEditor({
 					onChange={(v) => setLineField("en", v)}
 					w={180}
 				/>
-				<span className="font-mono text-[11px] tracking-[.1em] text-muted">
+				<span className="font-mono text-[11px] tracking-widest text-muted">
 					DEST 行先
 				</span>
 				<EdInput
@@ -100,7 +100,7 @@ export function LineEditor({
 				onChange={(color) => setLineField("color", color)}
 			/>
 
-			<div className="flex items-center rounded-[8px] border-2 border-ink bg-acid px-[10px] py-2">
+			<div className="flex items-center rounded-lg border-2 border-ink bg-acid px-2.5 py-2">
 				<Switch
 					checked={!!route.circular}
 					onChange={toggleCircular}
@@ -110,7 +110,7 @@ export function LineEditor({
 
 			{/* column headers */}
 			<div
-				className="grid items-center px-2 pb-[2px] font-mono text-[10px] tracking-[.1em] text-muted"
+				className="grid items-center px-2 pb-0.5 font-mono text-[10px] tracking-widest text-muted"
 				style={{
 					gridTemplateColumns:
 						"24px 105px 145px 105px 105px 74px 70px 1fr 88px",
@@ -129,11 +129,11 @@ export function LineEditor({
 			</div>
 
 			{/* station rows */}
-			<div className="flex max-h-[320px] flex-col gap-2 overflow-y-auto">
+			<div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
 				{route.stations.map((st, i) => (
 					<div
 						key={i}
-						className="grid items-center rounded-[8px] border-2 border-ink bg-paper px-2 py-[6px]"
+						className="grid items-center rounded-lg border-2 border-ink bg-paper px-2 py-1.5"
 						style={{
 							gridTemplateColumns:
 								"24px 105px 145px 105px 105px 74px 70px 1fr 88px",
@@ -185,7 +185,7 @@ export function LineEditor({
 						)}
 						<button
 							onClick={() => toggleSide(i)}
-							className="lc-btn px-[10px] py-1 text-[12px] text-white"
+							className="lc-btn px-2.5 py-1 text-[12px] text-white"
 							style={{
 								background:
 									st.side === "L"
@@ -210,7 +210,7 @@ export function LineEditor({
 												toggleXfer(i, lid as LineId)
 											}
 											title={LINES[lid as LineId].en}
-											className="h-[26px] w-[26px] cursor-pointer rounded-[6px] font-mono text-[12px] font-bold"
+											className="h-6.5 w-6.5 cursor-pointer rounded-md font-mono text-[12px] font-bold"
 											style={{
 												border: `2px solid ${LINES[lid as LineId].color}`,
 												background: on

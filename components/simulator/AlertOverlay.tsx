@@ -18,7 +18,8 @@ export function AlertOverlay({
 	leaving = false,
 	lang = "en",
 }: AlertOverlayProps) {
-	const displayMessage = lang === "ja" && secondMessage ? secondMessage : message;
+	const displayMessage =
+		lang === "ja" && secondMessage ? secondMessage : message;
 	const alertLabel = lang === "ja" ? "お知らせ" : "ALERT";
 	const serviceLabel =
 		lang === "ja" ? "水下地鐵 · 運行情報" : "SHUIKA METRO · SERVICE ALERT";
@@ -38,7 +39,12 @@ export function AlertOverlay({
 		return (
 			<div
 				className="absolute inset-0 z-30 box-border flex items-center justify-center border-none bg-magenta px-5 py-2 text-center font-display text-ink"
-				style={{ fontSize: 26, lineHeight: 0.95, letterSpacing: ".02em", animation }}
+				style={{
+					fontSize: 26,
+					lineHeight: 0.95,
+					letterSpacing: ".02em",
+					animation,
+				}}
 			>
 				<span
 					key={`${lang}-${displayMessage}`}

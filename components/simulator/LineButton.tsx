@@ -24,7 +24,7 @@ export function LineButton({ lineId, active, onClick }: LineButtonProps) {
 			}}
 		>
 			<span
-				className="rounded-[5px] px-[6px] py-px font-mono text-[12px] font-bold"
+				className="rounded-[5px] px-1.5 py-px font-mono text-[12px] font-bold"
 				style={{
 					background: active ? "rgba(0,0,0,.22)" : L.color,
 					color: active ? "#fff" : L.textOnColor,
