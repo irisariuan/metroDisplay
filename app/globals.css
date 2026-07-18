@@ -1,0 +1,490 @@
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Kiwi+Maru:wght@400;500&display=swap");
+@import "tailwindcss";
+
+/*
+ * Design tokens registered as Tailwind v4 theme variables so the palette,
+ * type stack, radii, shadows and easing curves are available as first-class
+ * utilities (bg-ink, font-display, rounded-pill, shadow-hard-s, ease-pop, …)
+ * instead of being reached for via arbitrary-value classes everywhere.
+ * Values are still defined once in :root below and referenced with var() —
+ * @theme inline just re-exposes them to the utility generator.
+ */
+@theme inline {
+	--color-ink: var(--ink);
+	--color-ink-2: var(--ink-2);
+	--color-paper: var(--paper);
+	--color-paper-2: var(--paper-2);
+	--color-acid: var(--acid);
+	--color-acid-2: var(--acid-2);
+	--color-magenta: var(--magenta);
+	--color-magenta-2: var(--magenta-2);
+	--color-blue: var(--blue);
+	--color-blue-2: var(--blue-2);
+	--color-orange: var(--orange);
+	--color-orange-2: var(--orange-2);
+	--color-violet: var(--violet);
+	--color-violet-2: var(--violet-2);
+	--color-primary: var(--color-primary);
+	--color-secondary: var(--color-secondary);
+	--color-accent: var(--color-accent);
+	--color-warn: var(--color-warn);
+	--color-alt: var(--color-alt);
+	--color-muted: var(--text-muted);
+
+	--font-display: var(--font-display);
+	--font-body: var(--font-body);
+	--font-mono: var(--font-mono);
+
+	--text-display-xl: var(--size-display-xl);
+	--text-display-l: var(--size-display-l);
+	--text-display-m: var(--size-display-m);
+	--text-h1: var(--size-h1);
+	--text-h2: var(--size-h2);
+	--text-h3: var(--size-h3);
+	--text-body-l: var(--size-body-l);
+	--text-body: var(--size-body);
+	--text-body-s: var(--size-body-s);
+	--text-label: var(--size-label);
+
+	--tracking-display: var(--tracking-display);
+	--tracking-label: var(--tracking-label);
+	--leading-display: var(--lh-display);
+	--leading-heading: var(--lh-heading);
+	--leading-body: var(--lh-body);
+
+	--radius-s: var(--radius-s);
+	--radius-m: var(--radius-m);
+	--radius-l: var(--radius-l);
+	--radius-pill: var(--radius-pill);
+
+	--shadow-hard: var(--shadow-hard);
+	--shadow-hard-s: var(--shadow-hard-s);
+	--shadow-soft: var(--shadow-soft);
+
+	/* renamed from --ease-out to avoid overriding Tailwind's built-in ease-out */
+	--ease-pop: var(--ease-pop);
+	--ease-brand-out: var(--ease-out);
+
+	/* fixed-duration, non-parameterized animations get real animate-* utilities;
+	   ones whose duration/easing depend on runtime props stay inline. */
+	--animate-flash: flash 1s ease-in-out infinite;
+	--animate-now-at-ring: nowAtRing 1.1s ease-in-out infinite;
+	--animate-next-station-ring: nextStationRing 1.4s ease-in-out infinite;
+	--animate-bob: bob 2.4s ease-in-out infinite;
+	--animate-chev: chev 1.4s ease-in-out infinite;
+	--animate-door-notice-left-loop: doorNoticeLeftLoop 2.4s ease-in-out infinite;
+	--animate-door-notice-right-loop: doorNoticeRightLoop 2.4s ease-in-out infinite;
+
+	/* additional fixed-duration animations used by components/display/*.tsx —
+	   distinct names from the ones above because those already carry a
+	   different fixed duration used elsewhere. */
+	--animate-chev-fast: chev .9s ease-in-out infinite;
+	--animate-bob-fast: bob .8s ease-in-out infinite;
+	--animate-door-notice-left-in: doorNoticeLeftIn .32s ease-out both;
+	--animate-door-notice-left-out: doorNoticeLeftOut .32s ease-out both;
+	--animate-door-notice-right-in: doorNoticeRightIn .32s ease-out both;
+	--animate-door-notice-right-out: doorNoticeRightOut .32s ease-out both;
+	--animate-xfmove: xfmove 12s linear infinite;
+}
+
+:root {
+	--ink: #0e0e12;
+	--ink-2: #1b1b22;
+	--paper: #fafaf5;
+	--paper-2: #f0efe6;
+	--acid: #d6ff3f;
+	--acid-2: #eeffa8;
+	--magenta: #ff3e8e;
+	--magenta-2: #ff7fb8;
+	--blue: #1e96ff;
+	--blue-2: #7fc4ff;
+	--orange: #ff6a2c;
+	--orange-2: #ffa36b;
+	--violet: #8c5cff;
+	--violet-2: #c3a8ff;
+	--color-primary: var(--magenta);
+	--color-primary-ink: var(--ink);
+	--color-secondary: var(--blue);
+	--color-accent: var(--acid);
+	--color-warn: var(--orange);
+	--color-alt: var(--violet);
+	--surface-canvas: var(--paper);
+	--surface-canvas-dim: var(--paper-2);
+	--surface-ink: var(--ink);
+	--surface-ink-2: var(--ink-2);
+	--text-primary: var(--ink);
+	--text-inverse: var(--paper);
+	--text-muted: #57565f;
+	--border-ink: var(--ink);
+	--border-soft: #00000024;
+
+	--font-display: "Anton", "Kiwi Maru", Impact, sans-serif;
+	--font-body: "Space Grotesk", "Kiwi Maru", system-ui, sans-serif;
+	--font-mono: "Space Mono", "Kiwi Maru", monospace;
+	--size-display-xl: clamp(64px, 12vw, 168px);
+	--size-display-l: clamp(48px, 8vw, 96px);
+	--size-display-m: clamp(32px, 5vw, 56px);
+	--size-h1: 40px;
+	--size-h2: 28px;
+	--size-h3: 22px;
+	--size-body-l: 19px;
+	--size-body: 16px;
+	--size-body-s: 14px;
+	--size-label: 12px;
+	--lh-display: 0.92;
+	--lh-heading: 1.05;
+	--lh-body: 1.5;
+	--tracking-display: -0.01em;
+	--tracking-label: 0.14em;
+
+	--space-1: 4px;
+	--space-2: 8px;
+	--space-3: 12px;
+	--space-4: 16px;
+	--space-5: 24px;
+	--space-6: 32px;
+	--space-7: 48px;
+	--space-8: 64px;
+	--space-9: 96px;
+	--space-10: 144px;
+	--radius-s: 6px;
+	--radius-m: 14px;
+	--radius-l: 28px;
+	--radius-pill: 999px;
+	--radius-0: 0px;
+	--border-w: 2px;
+	--border-w-thick: 3px;
+	--shadow-hard: 6px 6px 0 var(--ink);
+	--shadow-hard-s: 3px 3px 0 var(--ink);
+	--shadow-soft: 0 12px 32px rgba(14, 14, 18, 0.18);
+	--ease-pop: cubic-bezier(0.2, 1.6, 0.4, 1);
+	--ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+	--dur-fast: 120ms;
+	--dur-med: 220ms;
+}
+
+* {
+	box-sizing: border-box;
+}
+body {
+	margin: 0;
+	background: var(--ink);
+	min-height: 100vh;
+	color: var(--text-primary);
+	font-family: var(--font-body);
+}
+a,
+a:hover {
+	color: var(--magenta);
+}
+#root {
+	min-height: 100vh;
+}
+.stage-bg {
+	position: fixed;
+	inset: 0;
+	background:
+		radial-gradient(rgba(255, 255, 255, 0.05) 1.4px, transparent 1.5px) 0 0 /
+			16px 16px,
+		linear-gradient(135deg, #141420, #0b0b12);
+	z-index: 0;
+}
+
+@keyframes nameIn {
+	from {
+		opacity: 0;
+		transform: translateY(14px) scale(0.97);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+@keyframes swipeIn {
+	from {
+		opacity: 0;
+		transform: translateX(28px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+@keyframes swipeOut {
+	from {
+		opacity: 1;
+		transform: translateX(0);
+	}
+	to {
+		opacity: 0;
+		transform: translateX(-28px);
+	}
+}
+@keyframes swipeVerticalIn {
+	from {
+		opacity: 0;
+		transform: translateY(28px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+@keyframes swipeVerticalOut {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	to {
+		opacity: 0;
+		transform: translateY(-28px);
+	}
+}
+@keyframes mq {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(var(--mq, 0));
+	}
+}
+@keyframes doorPop {
+	from {
+		opacity: 0;
+		transform: scale(0.7);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+@keyframes doorNoticeLeftLoop {
+	0%,
+	100% {
+		opacity: 0;
+		transform: translateX(-18px) scale(0.96);
+	}
+	15%,
+	72% {
+		opacity: 1;
+		transform: translateX(0) scale(1);
+	}
+	86% {
+		opacity: 0;
+		transform: translateX(-10px) scale(0.98);
+	}
+}
+@keyframes doorNoticeRightLoop {
+	0%,
+	100% {
+		opacity: 0;
+		transform: translateX(18px) scale(0.96);
+	}
+	15%,
+	72% {
+		opacity: 1;
+		transform: translateX(0) scale(1);
+	}
+	86% {
+		opacity: 0;
+		transform: translateX(10px) scale(0.98);
+	}
+}
+@keyframes doorNoticeLeftIn {
+	from {
+		opacity: 0;
+		transform: translateX(-18px) scale(0.96);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0) scale(1);
+	}
+}
+@keyframes doorNoticeRightIn {
+	from {
+		opacity: 0;
+		transform: translateX(18px) scale(0.96);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0) scale(1);
+	}
+}
+@keyframes doorNoticeLeftOut {
+	from {
+		opacity: 1;
+		transform: translateX(0) scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: translateX(-12px) scale(0.92);
+	}
+}
+@keyframes doorNoticeRightOut {
+	from {
+		opacity: 1;
+		transform: translateX(0) scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: translateX(12px) scale(0.92);
+	}
+}
+@keyframes chev {
+	0%,
+	100% {
+		opacity: 0.35;
+		transform: translateX(0);
+	}
+	50% {
+		opacity: 1;
+		transform: translateX(3px);
+	}
+}
+@keyframes bob {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-5px);
+	}
+}
+@keyframes tickmove {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(-50%);
+	}
+}
+@keyframes xfmove {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(-50%);
+	}
+}
+@keyframes tickfade {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+@keyframes flash {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.25;
+	}
+}
+@keyframes nowAtRing {
+	0%,
+	100% {
+		box-shadow: 0 0 0 4px rgba(214, 255, 63, 0.2);
+	}
+	50% {
+		box-shadow: 0 0 0 9px rgba(214, 255, 63, 0.75);
+	}
+}
+@keyframes nextStationRing {
+	0%,
+	100% {
+		box-shadow: 0 0 0 4px rgba(214, 255, 63, 0.12);
+	}
+	50% {
+		box-shadow: 0 0 0 6px rgba(214, 255, 63, 0.32);
+	}
+}
+
+.lc-btn {
+	font-family: var(--font-body);
+	font-weight: 700;
+	cursor: pointer;
+	border: 3px solid var(--ink);
+	border-radius: 999px;
+	padding: 9px 16px;
+	font-size: 14px;
+	box-shadow: var(--shadow-hard-s);
+	transition:
+		transform var(--dur-fast) var(--ease-pop),
+		box-shadow var(--dur-fast);
+	color: var(--ink);
+}
+.lc-btn:active {
+	transform: translate(3px, 3px);
+	box-shadow: none;
+}
+.lc-btn[disabled] {
+	opacity: 0.4;
+	cursor: not-allowed;
+	box-shadow: none;
+}
+.switch-range {
+	appearance: none;
+	width: 220px;
+	height: 26px;
+	margin: 0;
+	cursor: pointer;
+	background: transparent;
+	--range-fill: 50%;
+}
+.switch-range:focus-visible {
+	outline: 3px solid var(--acid);
+	outline-offset: 4px;
+	border-radius: 999px;
+}
+.switch-range::-webkit-slider-runnable-track {
+	height: 12px;
+	border: 3px solid var(--ink);
+	border-radius: 999px;
+	background: linear-gradient(
+		90deg,
+		var(--magenta) 0 var(--range-fill),
+		var(--paper) var(--range-fill) 100%
+	);
+	box-shadow: 3px 3px 0 var(--ink);
+}
+.switch-range::-webkit-slider-thumb {
+	appearance: none;
+	width: 24px;
+	height: 24px;
+	margin-top: -9px;
+	border: 3px solid var(--ink);
+	border-radius: 50%;
+	background: var(--acid);
+	box-shadow: 3px 3px 0 var(--ink);
+	transition:
+		transform var(--dur-fast) var(--ease-pop),
+		box-shadow var(--dur-fast);
+}
+.switch-range:active::-webkit-slider-thumb {
+	transform: translate(3px, 3px);
+	box-shadow: none;
+}
+.switch-range::-moz-range-track {
+	height: 12px;
+	border: 3px solid var(--ink);
+	border-radius: 999px;
+	background: var(--paper);
+	box-shadow: 3px 3px 0 var(--ink);
+}
+.switch-range::-moz-range-progress {
+	height: 12px;
+	border: 3px solid var(--ink);
+	border-radius: 999px;
+	background: var(--magenta);
+}
+.switch-range::-moz-range-thumb {
+	width: 18px;
+	height: 18px;
+	border: 3px solid var(--ink);
+	border-radius: 50%;
+	background: var(--acid);
+	box-shadow: 3px 3px 0 var(--ink);
+}

@@ -1,0 +1,166 @@
+"use client";
+import React from "react";
+import type { Lang } from "@/types/metro";
+
+interface TickerProps {
+	items: string[];
+	color: string;
+	alertMessages?: string[];
+	alertLeaving?: boolean;
+	stillOnNewContent?: number;
+	separateAlertLanguages?: boolean;
+	lang?: Lang;
+	background?: string;
+	borderTop?: string;
+}
+
+export function Ticker({
+	items,
+	color,
+	alertMessages,
+	alertLeaving = false,
+	stillOnNewContent = 1000,
+	separateAlertLanguages = false,
+	lang = "en",
+	background = "var(--ink)",
+	borderTop = "3px solid var(--ink)",
+}: TickerProps) {
+	// An in-marquee alert replaces only the ticker copy; transfer information stays visible.
+	const isAlert = !!(alertMessages && alertMessages.length);
+	const isJapaneseAlert = lang === "ja" && alertMessages && alertMessages[1];
+	const activeAlertMessage = isAlert
+		? isJapaneseAlert
+			? alertMessages![1]
+			: alertMessages![0]
+		: null;
+	const alertLabel = isJapaneseAlert ? "お知らせ" : "ALERT";
+	const seq = isAlert
+		? separateAlertLanguages
+			? [activeAlertMessage as string]
+			: alertMessages!.map(
+					(message, index) => `${index ? "お知らせ" : "ALERT"} · ${message}`,
+				)
+		: items;
+	const contentKey = seq.join(" ¦ ");
+	const splitAlert = separateAlertLanguages && isAlert;
+	const [scrollingKey, setScrollingKey] = React.useState<string | null>(null);
+
+	// New copy is mounted at the start of the ticker and explicitly held there.
+	// Using state rather than CSS delay makes the dwell reliable after every remount.
+	React.useEffect(() => {
+		if (!stillOnNewContent) {
+			setScrollingKey(contentKey);
+			return;
+		}
+		setScrollingKey(null);
+		const id = setTimeout(() => setScrollingKey(contentKey), stillOnNewContent);
+		return () => clearTimeout(id);
+	}, [contentKey, stillOnNewContent]);
+
+	// key = displayed content so the track restarts only after a scheduled copy change.
+	const trackRef = React.useRef<HTMLDivElement>(null);
+	const contentViewportRef = React.useRef<HTMLDivElement>(null);
+	const [contentOverflows, setContentOverflows] = React.useState(true);
+	const duplicateGroups = !splitAlert || contentOverflows;
+	const [duration, setDuration] = React.useState(22);
+	React.useLayoutEffect(() => {
+		const track = trackRef.current;
+		if (!track) return undefined;
+		const measure = () => {
+			// tickmove advances exactly one of the two duplicate groups (half the track width).
+			// Deriving duration from that distance keeps the physical ticker speed at 72 px/s.
+			const groupWidth = track.scrollWidth / (duplicateGroups ? 2 : 1);
+			const nextDuration = Math.max(8, groupWidth / 72);
+			setDuration((current) =>
+				Math.abs(current - nextDuration) < 0.1 ? current : nextDuration,
+			);
+			const viewport = contentViewportRef.current;
+			setContentOverflows(
+				!splitAlert || !viewport || groupWidth > viewport.clientWidth + 2,
+			);
+		};
+		measure();
+		if (typeof ResizeObserver === "undefined") return undefined;
+		const observer = new ResizeObserver(measure);
+		observer.observe(track);
+		if (contentViewportRef.current) observer.observe(contentViewportRef.current);
+		return () => observer.disconnect();
+	}, [contentKey, splitAlert, duplicateGroups]);
+
+	const group = (k: string) => (
+		<span key={k} className="inline-flex items-center">
+			{seq.map((t, i) => (
+				<span
+					key={i}
+					className="flex-none whitespace-nowrap font-body text-[20px] font-semibold leading-none"
+					style={{
+						paddingRight: 90,
+						wordBreak: "keep-all",
+						overflowWrap: "normal",
+						color,
+					}}
+				>
+					{t}
+				</span>
+			))}
+		</span>
+	);
+
+	const trackAnimation =
+		!splitAlert && isAlert && alertLeaving
+			? "swipeOut .3s var(--ease-out) both"
+			: scrollingKey === contentKey
+				? !splitAlert || contentOverflows
+					? `tickmove ${duration}s linear infinite`
+					: "none"
+				: "swipeIn .35s var(--ease-pop) both";
+
+	const track = (
+		<div
+			key={contentKey}
+			ref={trackRef}
+			className="inline-flex items-center"
+			style={{ animation: trackAnimation, willChange: "transform" }}
+		>
+			{group("a")}
+			{duplicateGroups ? group("b") : null}
+		</div>
+	);
+
+	return (
+		<div
+			className="relative flex flex-1 min-w-0 items-stretch overflow-hidden whitespace-nowrap text-paper"
+			style={{
+				background,
+				borderTop,
+				animation: splitAlert
+					? alertLeaving
+						? "swipeOut .3s var(--ease-out) both"
+						: "swipeIn .35s var(--ease-pop) both"
+					: "none",
+			}}
+		>
+			{splitAlert ? (
+				<div className="flex w-full min-w-0">
+					<div className="flex flex-none items-center border-r-[3px] border-r-ink bg-ink px-3 font-mono text-[11px] font-bold tracking-[.12em] text-paper w-[112px]">
+						<span
+							key={`${alertLabel}-${lang}`}
+							className="inline-block"
+							style={{ animation: "swipeIn .35s var(--ease-pop) both" }}
+						>
+							{alertLabel}
+						</span>
+					</div>
+					<div
+						ref={contentViewportRef}
+						className="flex flex-1 min-w-0 items-center overflow-hidden"
+					>
+						{track}
+					</div>
+				</div>
+			) : (
+				track
+			)}
+		</div>
+	);
+}
