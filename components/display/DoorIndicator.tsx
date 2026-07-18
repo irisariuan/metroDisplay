@@ -19,18 +19,23 @@ export function DoorIndicator({ side, phase, lang, noticeMs = 2400, waitMs = 240
 
 	React.useEffect(() => {
 		if (phase === "at") {
-			setNotice({ side, lang });
-			setVisible(true);
-			setLeaving(false);
-			return undefined;
+			const id = setTimeout(() => {
+				setNotice({ side, lang });
+				setVisible(true);
+				setLeaving(false);
+			}, 0);
+			return () => clearTimeout(id);
 		}
 		if (!visible) return undefined;
-		setLeaving(true);
-		const id = setTimeout(() => {
+		const leaveId = setTimeout(() => setLeaving(true), 0);
+		const hideId = setTimeout(() => {
 			setVisible(false);
 			setLeaving(false);
 		}, 320);
-		return () => clearTimeout(id);
+		return () => {
+			clearTimeout(leaveId);
+			clearTimeout(hideId);
+		};
 	}, [phase, side, lang, visible]);
 
 	// Pop-up and wait durations are separate so the door notice can stay visible
@@ -48,7 +53,7 @@ export function DoorIndicator({ side, phase, lang, noticeMs = 2400, waitMs = 240
 				}, waitMs);
 			}, noticeMs);
 		};
-		setPulseVisible(true);
+		showId = setTimeout(() => setPulseVisible(true), 0);
 		cycle();
 		return () => {
 			clearTimeout(hideId);
@@ -75,8 +80,8 @@ export function DoorIndicator({ side, phase, lang, noticeMs = 2400, waitMs = 240
 	return (
 		<div
 			className={[
-				"absolute top-[14px] z-[5] flex items-center gap-3 bg-magenta text-ink border-[3px] border-ink rounded-pill py-2 px-4 shadow-hard-s pointer-events-none",
-				left ? "left-[14px] flex-row" : "right-[14px] flex-row-reverse",
+				"absolute top-3.5 z-5 flex items-center gap-3 bg-magenta text-ink border-[3px] border-ink rounded-pill py-2 px-4 shadow-hard-s pointer-events-none",
+				left ? "left-3.5 flex-row" : "right-3.5 flex-row-reverse",
 				noticeAnimClass,
 			].join(" ")}
 		>

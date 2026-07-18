@@ -49,12 +49,15 @@ export function Ticker({
 	// Using state rather than CSS delay makes the dwell reliable after every remount.
 	React.useEffect(() => {
 		if (!stillOnNewContent) {
-			setScrollingKey(contentKey);
-			return;
+			const id = setTimeout(() => setScrollingKey(contentKey), 0);
+			return () => clearTimeout(id);
 		}
-		setScrollingKey(null);
+		const clearId = setTimeout(() => setScrollingKey(null), 0);
 		const id = setTimeout(() => setScrollingKey(contentKey), stillOnNewContent);
-		return () => clearTimeout(id);
+		return () => {
+			clearTimeout(clearId);
+			clearTimeout(id);
+		};
 	}, [contentKey, stillOnNewContent]);
 
 	// key = displayed content so the track restarts only after a scheduled copy change.
@@ -142,7 +145,7 @@ export function Ticker({
 		>
 			{splitAlert ? (
 				<div className="flex w-full min-w-0">
-					<div className="flex flex-none items-center border-r-[3px] border-r-ink bg-ink px-3 font-mono text-[11px] font-bold tracking-[.12em] text-paper w-[112px]">
+					<div className="flex flex-none items-center border-r-[3px] border-r-ink bg-ink px-3 font-mono text-[11px] font-bold tracking-[.12em] text-paper w-28">
 						<span
 							key={`${alertLabel}-${lang}`}
 							className="inline-block"

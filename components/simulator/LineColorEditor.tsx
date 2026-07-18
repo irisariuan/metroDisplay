@@ -39,11 +39,14 @@ export function LineColorEditor({ color, onChange }: LineColorEditorProps) {
 		return next;
 	};
 
-	React.useEffect(() => setDraft(color), [color]);
+	React.useEffect(() => {
+		const id = setTimeout(() => setDraft(color), 0);
+		return () => clearTimeout(id);
+	}, [color]);
 
 	return (
 		<div className="flex flex-wrap items-center gap-2">
-			<span className="font-mono text-[11px] tracking-[.1em] text-muted">
+			<span className="font-mono text-[11px] tracking-widest text-muted">
 				LINE COLOR
 			</span>
 			<input
@@ -55,7 +58,7 @@ export function LineColorEditor({ color, onChange }: LineColorEditorProps) {
 					setDraft(ev.target.value);
 					commit(ev.target.value);
 				}}
-				className="h-[34px] w-[42px] cursor-pointer rounded-[6px] border-2 border-ink bg-paper p-[2px]"
+				className="h-8.5 w-10.5 cursor-pointer rounded-md border-2 border-ink bg-paper p-0.5"
 			/>
 			<input
 				value={draft}
@@ -69,9 +72,9 @@ export function LineColorEditor({ color, onChange }: LineColorEditorProps) {
 				onBlur={() => {
 					if (!commit(draft)) setDraft(color);
 				}}
-				className="w-[92px] rounded-[6px] border-2 border-ink bg-paper px-2 py-[6px] font-mono text-[13px] font-bold text-ink"
+				className="w-23 rounded-md border-2 border-ink bg-paper px-2 py-1.5 font-mono text-[13px] font-bold text-ink"
 			/>
-			<div className="flex items-center gap-[5px]">
+			<div className="flex items-center gap-1.25">
 				{swatches.map((swatch) => (
 					<button
 						key={swatch}
@@ -82,7 +85,7 @@ export function LineColorEditor({ color, onChange }: LineColorEditorProps) {
 						}}
 						title={swatch}
 						aria-label={`Use ${swatch}`}
-						className="h-[22px] w-[22px] cursor-pointer rounded-full p-0"
+						className="h-5.5 w-5.5 cursor-pointer rounded-full p-0"
 						style={{
 							border: `2px solid ${color === swatch ? "var(--ink)" : "transparent"}`,
 							outline: color === swatch ? "2px solid var(--acid)" : "none",

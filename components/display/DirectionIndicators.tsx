@@ -52,7 +52,7 @@ export function DirectionIndicators({
 	return (
 		<div
 			aria-hidden={true}
-			className="absolute left-[60px] right-[60px] top-[91px] h-[14px] pointer-events-none z-[1]"
+			className="absolute left-15 right-15 top-22.75 h-3.5 pointer-events-none z-1"
 		>
 			{betweenStations}
 			{continueForward ? arrow((nodePosition(count - 1) + 1) / 2, "next-page", 180) : null}

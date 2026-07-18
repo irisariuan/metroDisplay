@@ -17,7 +17,7 @@ export function TransferStrip({ route, pos, lang }: TransferStripProps) {
 	const contentRef = React.useRef<HTMLDivElement>(null);
 	const [overflows, setOverflows] = React.useState(false);
 
-	if (!st.xf || !st.xf.length) return null;
+
 
 	const transferKey = `${lang}:${st.xf.map((lid) => `${lid}-${lang === "ja" ? LINES[lid].ja : LINES[lid].en}`).join("|")}`;
 	React.useLayoutEffect(() => {
@@ -32,12 +32,13 @@ export function TransferStrip({ route, pos, lang }: TransferStripProps) {
 		observer.observe(viewport);
 		observer.observe(content);
 		return () => observer.disconnect();
-	}, [transferKey, overflows]);
+	}, [transferKey]);
 
-	const content = (key: string, ref: React.Ref<HTMLDivElement> | null) => (
-		<div
-			key={key}
-			ref={ref}
+	if (!st.xf || !st.xf.length) return null;
+
+	const content = (key: string) => (
+				<div
+					key={key}
 			className="inline-flex items-center gap-3 w-max pr-8"
 		>
 			{st.xf.map((lid) => (
@@ -69,11 +70,11 @@ export function TransferStrip({ route, pos, lang }: TransferStripProps) {
 			>
 				{overflows ? (
 					<div className="inline-flex items-center w-max animate-xfmove will-change-transform">
-						{content("first", contentRef)}
-						{content("repeat", null)}
+						<div ref={contentRef}>{content("first")}</div>
+													{content("repeat")}
 					</div>
 				) : (
-					content("static", contentRef)
+					<div ref={contentRef}>{content("static")}</div>
 				)}
 			</div>
 		</div>

@@ -72,7 +72,7 @@ export function AlertOverlay({
 				>
 					<FullAlertMessage message={displayMessage} />
 				</div>
-				<div className="font-mono text-label font-bold tracking-[.1em] text-paper">
+				<div className="font-mono text-label font-bold tracking-widest text-paper">
 					{instruction}
 				</div>
 			</div>

@@ -43,7 +43,7 @@ export function ProgressRail({
 			el.style.width = "calc((100% - 120px) * " + frac + ")";
 		});
 		return () => cancelAnimationFrame(frame);
-	}, []); // intentionally empty — runs only on mount / remount
+	}, [frac]);
 
 	// A single-page route clears instantly, then redraws to the first station.
 	React.useEffect(() => {
@@ -87,7 +87,7 @@ export function ProgressRail({
 	return (
 		<div
 			ref={ref}
-			className={`absolute top-[92px] h-[12px] rounded-pill ${reverseFill ? "right-[60px]" : "left-[60px]"}`}
+			className={`absolute top-23 h-3 rounded-pill ${reverseFill ? "right-15" : "left-15"}`}
 			style={{ width: startWidth, background: color }}
 		/>
 	);

@@ -83,7 +83,7 @@ export function RouteStrip({
 	const PAGE_SIZE = Math.max(2, Math.floor(Number(pageSize) || 8));
 	const pageCount = Math.ceil(route.stations.length / PAGE_SIZE);
 	const targetPage = Math.floor(pos / PAGE_SIZE);
-	const previousPos = React.useRef(pos);
+
 	const isCircularForwardWrap =
 		pageCount > 1 && route.circular && !isReverse && pos === 0 &&
 		fromPos === route.stations.length - 1;
@@ -106,11 +106,7 @@ export function RouteStrip({
 		isPageBoundaryTravel && (approachProgress as number) < 0.5
 			? boundaryOldPage
 			: targetPage;
-	const singlePageWrap = pageCount === 1 && pos === 0 && previousPos.current === route.stations.length - 1;
-
-	React.useEffect(() => {
-		previousPos.current = pos;
-	}, [pos]);
+	const singlePageWrap = pageCount === 1 && pos === 0 && fromPos === route.stations.length - 1;
 
 	// pageState bundles the displayed page + exit flag + current line so a line
 	// switch always resets everything atomically in one setState call.
@@ -127,7 +123,7 @@ export function RouteStrip({
 	// Line or page capacity changed → reset the displayed page immediately.
 	React.useEffect(() => {
 		if (pageState.line !== route.line || pageState.pageSize !== PAGE_SIZE) {
-			setPageState({
+			setTimeout(() => setPageState({
 				line: route.line,
 				pageSize: PAGE_SIZE,
 				displayPage: desiredPage,
@@ -135,9 +131,9 @@ export function RouteStrip({
 				retreating: false,
 				resetToken: 0,
 				direction: "forward",
-			});
+			}), 0);
 		}
-	}, [route.line, PAGE_SIZE]);
+	}, [desiredPage, pageState.line, pageState.pageSize, route.line, PAGE_SIZE]);
 
 	// Cross-page navigation completes or clears the departing trail before handoff.
 	React.useEffect(() => {
@@ -146,7 +142,7 @@ export function RouteStrip({
 		// A direction change cancels a pending forward completion at the current station.
 		// The next leg begins from the trail's current fill rather than jumping to an edge.
 		if (isReverse && pageState.exiting) {
-			setPageState((s) => ({ ...s, exiting: false, retreating: false, direction: "backward" }));
+			setTimeout(() => setPageState((s) => ({ ...s, exiting: false, retreating: false, direction: "backward" })), 0);
 			return;
 		}
 
@@ -158,13 +154,13 @@ export function RouteStrip({
 				pageState.exiting ||
 				pageState.retreating
 			) {
-				setPageState((s) => ({
+				setTimeout(() => setPageState((s) => ({
 					...s,
 					displayPage: desiredPage,
 					exiting: false,
 					retreating: false,
 					direction: "forward",
-				}));
+				})), 0);
 			}
 			return;
 		}
@@ -173,12 +169,12 @@ export function RouteStrip({
 		const needsForwardHandoff = wrapsToFirstPage || singlePageWrap;
 		if (desiredPage < pageState.displayPage && !needsForwardHandoff) {
 			if (!pageState.retreating) {
-				setPageState((s) => ({ ...s, retreating: true }));
+				setTimeout(() => setPageState((s) => ({ ...s, retreating: true })), 0);
 			}
 			return;
 		}
 		if ((desiredPage > pageState.displayPage || needsForwardHandoff) && !pageState.exiting) {
-			setPageState((s) => ({ ...s, exiting: true }));
+			setTimeout(() => setPageState((s) => ({ ...s, exiting: true })), 0);
 		}
 	}, [
 		desiredPage,
@@ -192,6 +188,7 @@ export function RouteStrip({
 		pageState.retreating,
 		pageState.line,
 		route.line,
+		route.circular,
 	]);
 
 	// Called by ProgressRail once the fill-to-100% transition finishes.
@@ -287,11 +284,11 @@ export function RouteStrip({
 			: travelMotionDirection;
 
 	return (
-		<div className="relative pt-[46px] px-[60px] pb-[20px]">
+		<div className="relative pt-11.5 px-15 pb-5">
 			{/* Shown above the labels, alongside the page indicator when present. */}
 			{distanceLabel ? (
 				<div
-					className="absolute top-[12px] left-[60px] inline-flex items-center py-1 px-2 border-[2px] rounded-[4px] bg-paper font-mono text-[11px] font-bold tracking-[0.08em] leading-none z-[3]"
+					className="absolute top-3 left-15 inline-flex items-center py-1 px-2 border-2 rounded-sm bg-paper font-mono text-[11px] font-bold tracking-[0.08em] leading-none z-3"
 					style={{ borderColor: L.color, color: L.color }}
 				>
 					{distanceLabel}
@@ -300,8 +297,8 @@ export function RouteStrip({
 			{speedLabel ? (
 				<div
 					className={[
-						"absolute top-[12px] inline-flex items-center py-1 px-2 border-[2px] border-ink rounded-[4px] bg-acid text-ink font-mono text-[11px] font-bold tracking-[0.08em] leading-none z-[3]",
-						distanceLabel ? "left-[206px]" : "left-[60px]",
+						"absolute top-3 inline-flex items-center py-1 px-2 border-2 border-ink rounded-sm bg-acid text-ink font-mono text-[11px] font-bold tracking-[0.08em] leading-none z-3",
+						distanceLabel ? "left-51.5" : "left-15",
 					].join(" ")}
 				>
 					{speedLabel}
@@ -310,8 +307,8 @@ export function RouteStrip({
 			{stayLabel ? (
 				<div
 					className={[
-						"absolute top-[12px] inline-flex items-center py-1 px-2 border-[2px] border-ink rounded-[4px] bg-orange text-ink font-mono text-[11px] font-bold tracking-[0.08em] leading-none z-[3]",
-						distanceLabel && speedLabel ? "left-[360px]" : (distanceLabel || speedLabel ? "left-[206px]" : "left-[60px]"),
+						"absolute top-3 inline-flex items-center py-1 px-2 border-2 border-ink rounded-sm bg-orange text-ink font-mono text-[11px] font-bold tracking-[0.08em] leading-none z-3",
+						distanceLabel && speedLabel ? "left-90" : (distanceLabel || speedLabel ? "left-51.5" : "left-15"),
 					].join(" ")}
 				>
 					{stayLabel}
@@ -320,7 +317,7 @@ export function RouteStrip({
 			{/* page indicator */}
 			{pageCount > 1 ? (
 				<div
-					className="absolute top-[14px] right-[60px] flex items-center gap-[7px] font-mono text-[10px] font-bold tracking-[0.1em] text-muted"
+					className="absolute top-3.5 right-15 flex items-center gap-1.75 font-mono text-[10px] font-bold tracking-widest text-muted"
 					aria-label={
 						lang === "ja"
 							? `${pageCount}ページ中 ${displayPage + 1}ページ`
@@ -334,7 +331,7 @@ export function RouteStrip({
 						{Array.from({ length: pageCount }, (_, i) => (
 							<span
 								key={i}
-								className="w-[7px] h-[7px] rounded-pill"
+								className="w-1.75 h-1.75 rounded-pill"
 								style={{
 									background: i === displayPage ? L.color : "#d8d6cc",
 									transition: "background .35s ease, transform .35s var(--ease-pop)",
@@ -348,7 +345,7 @@ export function RouteStrip({
 			{/* grey base rail */}
 			<div
 				key={`rail-${displayPage}`}
-				className="absolute left-[60px] right-[60px] top-[92px] h-[12px] rounded-pill bg-[#d8d6cc]"
+				className="absolute left-15 right-15 top-23 h-3 rounded-pill bg-[#d8d6cc]"
 				style={{ animation: pageCount > 1 ? "swipeIn .42s var(--ease-out) both" : "none" }}
 			/>
 			{/* colored progress rail — separate component so useLayoutEffect fires on each page mount */}
@@ -417,7 +414,7 @@ export function RouteStrip({
 						};
 					else if (arrived)
 						node = {
-							className: "w-[30px] h-[30px] border-[6px] border-ink bg-acid shadow-[0_0_0_5px_rgba(214,255,63,0.55)]",
+							className: "w-[30px] h-7.5 border-[6px] border-ink bg-acid shadow-[0_0_0_5px_rgba(214,255,63,0.55)]",
 						};
 					else if (current)
 						node = {
@@ -448,8 +445,8 @@ export function RouteStrip({
 									// Keep label height + gap at 37px: the station-dot centre then
 									// remains on the fixed rail centre (top: 92px) in every script phase.
 									className={[
-										"flex flex-col items-center justify-end w-full transition-transform duration-[350ms] ease-pop",
-										showStationReadings ? "h-[33px] mb-1" : "h-[23px] mb-[14px]",
+										"flex flex-col items-center justify-end w-full transition-transform duration-350 ease-pop",
+										showStationReadings ? "h-8.25 mb-1" : "h-5.75 mb-3.5",
 										current ? "scale-[1.04]" : "scale-100",
 									].join(" ")}
 								>
@@ -482,10 +479,10 @@ export function RouteStrip({
 								</div>
 							</div>
 							{/* node dot */}
-							<div className="h-[30px] flex items-center justify-center">
+							<div className="h-7.5 flex items-center justify-center">
 								<div
 									className={[
-										"rounded-pill z-[2] transition-all duration-[350ms] ease-pop",
+										"rounded-pill z-2 transition-all duration-350 ease-pop",
 										node.className,
 										arrived
 											? "animate-now-at-ring"
@@ -504,11 +501,11 @@ export function RouteStrip({
 								{num(route.line, stationIndex)}
 							</div>
 							{/* transfer mini-dots */}
-							<div className="flex gap-[3px] mt-[5px] min-h-[12px]">
+							<div className="flex gap-0.75 mt-1.25 min-h-3">
 								{(st.xf || []).map((lid) => (
 									<span
 										key={lid}
-										className="w-[10px] h-[10px] rounded-[3px]"
+										className="w-2.5 h-2.5 rounded-[3px]"
 										style={{ background: LINES[lid].color }}
 									/>
 								))}

@@ -25,7 +25,7 @@ export function TrailMarker({ frac, direction, hidden, moveDur, instant = false 
 			el.style.left = left(frac);
 		});
 		return () => cancelAnimationFrame(frame);
-	}, []);
+	}, [frac, instant]);
 
 	React.useEffect(() => {
 		if (lastFrac.current === frac || hidden) return;
@@ -40,7 +40,7 @@ export function TrailMarker({ frac, direction, hidden, moveDur, instant = false 
 		<div
 			ref={ref}
 			className={[
-				"absolute top-[66px] -translate-x-1/2 z-[4] transition-opacity duration-[350ms] ease-[ease]",
+				"absolute top-16.5 -translate-x-1/2 z-4 transition-opacity duration-350 ease-[ease]",
 				hidden ? "opacity-0" : "opacity-100",
 			].join(" ")}
 			style={{ left: left(startFrac) }}

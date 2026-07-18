@@ -25,8 +25,8 @@ export function StationReadings({
 			className={[
 				"w-full overflow-hidden whitespace-nowrap leading-none font-body",
 				compact
-					? "h-[11px] mt-0.5 text-[10px] font-semibold tracking-normal"
-					: "h-[23px] mt-2 text-[15px] font-bold tracking-[0.08em]",
+					? "h-2.75 mt-0.5 text-[10px] font-semibold tracking-normal"
+					: "h-5.75 mt-2 text-[15px] font-bold tracking-[0.08em]",
 			].join(" ")}
 			style={{
 				textAlign: align as React.CSSProperties["textAlign"],
