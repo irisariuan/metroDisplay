@@ -18,6 +18,11 @@ interface TopBoardProps {
 	showKatakana?: boolean;
 	stationNameMode?: string;
 	doorSide?: Side;
+	serviceJa?: string;
+	serviceEn?: string;
+	serviceIsLocal?: boolean;
+	/** the train will pass the shown station without stopping */
+	passing?: boolean;
 }
 
 // ——— top board: toward label + NEXT/NOW + big bilingual station name + clock + car
@@ -31,10 +36,11 @@ export function TopBoard({
 	doorSide,
 	showKatakana = false,
 	stationNameMode = "kanji",
+	serviceJa = "各駅停車",
+	serviceEn = "Local",
+	serviceIsLocal = true,
+	passing = false,
 }: TopBoardProps) {
-	const [lastDoorSide, setLastDoorSide] = React.useState<Side>(
-		doorSide ?? route.stations[pos].side,
-	);
 	const L = LINES[route.line];
 	const st = route.stations[pos];
 	const isAt = phase === "at";
@@ -45,19 +51,13 @@ export function TopBoard({
 			: isEnglishName
 				? st.en
 				: st.ja;
-	const eyebrowJa = isAt ? "ただいま" : "つぎは";
-	const eyebrowEn = isAt ? "Now at" : "Next";
+	const eyebrowJa = isAt ? "ただいま" : passing ? "通過" : "つぎは";
+	const eyebrowEn = isAt ? "Now at" : passing ? "Passing" : "Next";
 	// Katakana only rides along under the kanji name. When it isn't shown
 	// (English/hiragana mode, or katakana toggled off), the readings row is
 	// omitted entirely rather than reserved empty — otherwise the empty row is
 	// swept into justify-center and the name reads optically high.
 	const hasKatakana = stationNameMode === "kanji" && showKatakana;
-	React.useEffect(() => {
-		if (!doorSide) return undefined;
-		const id = setTimeout(() => setLastDoorSide(doorSide), 0);
-		return () => clearTimeout(id);
-	}, [doorSide]);
-	const displayDoorSide = doorSide ?? lastDoorSide;
 	return (
 		<div className="pt-5.5 px-8.5 bg-ink text-paper border-b-4 border-b-acid flex flex-col">
 			<div
@@ -73,11 +73,20 @@ export function TopBoard({
 			>
 				{/* toward + service type */}
 				<div className="relative min-w-37.5">
+					{/* service type badge: locals wear the line color, express
+					    variants flip to acid so they read at a glance */}
 					<div
 						className="inline-block font-mono font-bold text-label tracking-[0.12em] py-1 px-2.25 rounded-sm"
-						style={{ background: L.color, color: L.textOnColor }}
+						style={
+							serviceIsLocal
+								? { background: L.color, color: L.textOnColor }
+								: {
+										background: "var(--acid)",
+										color: "var(--ink)",
+									}
+						}
 					>
-						LOCAL
+						{lang === "ja" ? serviceJa : serviceEn.toUpperCase()}
 					</div>
 					<div className="font-body font-bold text-[28px] leading-[1.18] mt-2 text-white whitespace-nowrap">
 						{route.destJa}
@@ -150,28 +159,23 @@ export function TopBoard({
 					</div>
 				</div>
 			</div>
-			<AnimatedVisibility
-				enterAnimation={
-					displayDoorSide === "L"
-						? "doorNoticeLeftIn .32s ease-out both"
-						: "doorNoticeRightIn .32s ease-out both"
-				}
-				exitAnimation={
-					displayDoorSide === "L"
-						? "doorNoticeLeftOut .32s ease-out both"
-						: "doorNoticeRightOut .32s ease-out both"
-				}
-				className="h-5.5"
-			>
-				{doorSide && (
-					<p
-						className={`text-acid text-mono uppercase tracking-widest text-xs ${doorSide === "R" ? "text-right" : ""}`}
-					>
-						Door on the {doorSide === "L" ? "left" : "right"} side
-						will open
-					</p>
-				)}
-			</AnimatedVisibility>
+			<div className="h-5.5">
+				<AnimatedVisibility>
+					{doorSide ? (
+						<p
+							className={[
+								"text-acid text-mono uppercase tracking-widest text-xs will-change-transform",
+								doorSide === "R"
+									? "text-right data-[visibility-state=visible]:animate-door-notice-right-in data-[visibility-state=leaving]:animate-door-notice-right-out"
+									: "data-[visibility-state=visible]:animate-door-notice-left-in data-[visibility-state=leaving]:animate-door-notice-left-out",
+							].join(" ")}
+						>
+							Door on the {doorSide === "L" ? "left" : "right"} side
+							will open
+						</p>
+					) : null}
+				</AnimatedVisibility>
+			</div>
 		</div>
 	);
 }

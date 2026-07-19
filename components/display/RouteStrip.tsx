@@ -6,8 +6,7 @@ import { ProgressRail } from "./ProgressRail";
 import { DirectionIndicators } from "./DirectionIndicators";
 import { TrailMarker } from "./TrailMarker";
 import { NumPlate } from "./NumPlate";
-import { BoundaryShiftText } from "./BoundaryShiftText";
-import { StationReadings } from "./StationReadings";
+import { StationNameLabel } from "./StationNameLabel";
 
 interface RouteStripProps {
 	// `circular` isn't in the shared Route type yet, but the runtime data may set it.
@@ -27,6 +26,8 @@ interface RouteStripProps {
 	stationNameMode?: string;
 	direction?: number;
 	showDoorSideCue?: boolean;
+	/** station indices the active express service passes without stopping */
+	skipStations?: number[];
 }
 // ——— horizontal route strip (Tokyu style) with animated train marker and paged long routes
 export function RouteStrip({
@@ -46,6 +47,7 @@ export function RouteStrip({
 	stationNameMode = "kanji",
 	direction = 1,
 	showDoorSideCue = false,
+	skipStations,
 }: RouteStripProps) {
 	const L = LINES[route.line];
 	const isEnglishName = stationNameMode === "en";
@@ -485,6 +487,7 @@ export function RouteStrip({
 						: stationIndex < displayPos;
 					const current = stationIndex === displayPos;
 					const arrived = current && displayPhase === "at";
+					const skipped = !!skipStations?.includes(stationIndex);
 					const cellPosition = (visualIndex + 0.5) / stations.length;
 					const stationPosition =
 						visualNodeLayout === "full" && stations.length > 1
@@ -502,7 +505,16 @@ export function RouteStrip({
 						className: string;
 						borderColor?: string;
 					};
-					if (isPast)
+					// Skipped stations stay small and hollow in every state: the
+					// express run never "arrives" at them, it only rolls past.
+					if (skipped)
+						node = {
+							className: current
+								? "w-[18px] h-[18px] border-[3px] bg-paper shadow-none"
+								: "w-[13px] h-[13px] border-[3px] bg-paper shadow-none",
+							borderColor: isPast ? "#bdbbb0" : "#9a988c",
+						};
+					else if (isPast)
 						node = {
 							className:
 								"w-[15px] h-[15px] border-[3px] bg-[#bdbbb0] shadow-none",
@@ -528,6 +540,7 @@ export function RouteStrip({
 					return (
 						<div
 							key={i}
+							data-station-cell
 							className="flex flex-col items-center min-w-0"
 							style={{
 								width: `${100 / stations.length}%`,
@@ -536,76 +549,63 @@ export function RouteStrip({
 									: "none",
 							}}
 						>
-							{/* station name */}
-							<div
-								key={`label-${displayPage}-${stationIndex}-${stationNameMode}-${current}`}
-								className="w-full"
-								style={{
-									animation:
-										"swipeIn .35s var(--ease-out) both",
+							{/* station name — self-measuring label that shifts,
+							    borrows neighbour space, or marquees. The key
+							    excludes `current` so arrival adapts in place
+							    (style transition) instead of remounting. */}
+							<StationNameLabel
+								key={`label-${displayPage}-${stationIndex}-${stationNameMode}`}
+								text={
+									stationNameMode === "hiragana"
+										? st.hira || st.ja
+										: isEnglishName
+											? st.en
+											: st.ja
+								}
+								station={st}
+								focused={current && !skipped}
+								showReadings={showStationReadings}
+								readingsColor={
+									current
+										? "var(--ink)"
+										: isPast
+											? "#a7a59a"
+											: "var(--text-muted)"
+								}
+								textStyle={{
+									fontFamily: "var(--font-body)",
+									fontWeight:
+										current && !skipped ? 700 : 500,
+									fontSize: !isEnglishName
+										? current && !skipped
+											? 20
+											: 15
+										: current && !skipped
+											? 17
+											: 13,
+									color: skipped
+										? "#a7a59a"
+										: current
+											? "var(--ink)"
+											: isPast
+												? "#a7a59a"
+												: "var(--text-muted)",
+									lineHeight: 1,
 								}}
-							>
-								<div
-									// Keep label height + gap at 37px: the station-dot centre then
-									// remains on the fixed rail centre (top: 92px) in every script phase.
-									className="flex h-9 w-full flex-col items-center justify-end mb-0.25"
-								>
-									<BoundaryShiftText
-										text={
-											stationNameMode === "hiragana"
-												? st.hira || st.ja
-												: isEnglishName
-													? st.en
-													: st.ja
-										}
-										measurementKey={
-											current ? "focused" : "regular"
-										}
-										textStyle={{
-											fontFamily: "var(--font-body)",
-											fontWeight: current ? 700 : 500,
-											fontSize: !isEnglishName
-												? current
-													? 20
-													: 15
-												: current
-													? 17
-													: 13,
-											color: current
-												? "var(--ink)"
-												: isPast
-													? "#a7a59a"
-													: "var(--text-muted)",
-											lineHeight: 1,
-										}}
-									/>
-									{showStationReadings && (
-										<StationReadings
-											station={st}
-											visible
-											compact={true}
-											color={
-												current
-													? "var(--ink)"
-													: isPast
-														? "#a7a59a"
-														: "var(--text-muted)"
-											}
-										/>
-									)}
-								</div>
-							</div>
+							/>
 							{/* node dot */}
 							<div className="h-7.5 flex items-center justify-center">
 								<div
 									className={[
 										"rounded-pill z-2 transition-all duration-350 ease-pop",
 										node.className,
-										arrived
-											? "animate-now-at-ring"
-											: current
-												? "animate-next-station-ring"
-												: "",
+										skipped
+											? ""
+											: arrived
+												? "animate-now-at-ring"
+												: current
+													? "animate-next-station-ring"
+													: "",
 									].join(" ")}
 									style={
 										node.borderColor
@@ -617,7 +617,10 @@ export function RouteStrip({
 							{/* station number */}
 							<div
 								className="mt-2 font-mono text-[11px] font-bold tracking-[0.02em]"
-								style={{ color: isPast ? "#b3b1a6" : L.color }}
+								style={{
+									color:
+										isPast || skipped ? "#b3b1a6" : L.color,
+								}}
 							>
 								{num(route.line, stationIndex)}
 							</div>

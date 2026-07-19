@@ -2,38 +2,30 @@
 
 import React from "react";
 
-interface AnimatedVisibilityProps
-	extends Omit<React.HTMLAttributes<HTMLDivElement>, "children"> {
-	visible?: boolean;
-	enterAnimation: string;
-	exitAnimation: string;
+interface AnimatedVisibilityProps {
 	exitDurationMs?: number;
-	children: React.ReactNode;
+	children: React.ReactElement | null | false;
 }
 
-// Keeps its child mounted until the exit animation has completed. The wrapper
-// itself remains in the layout, which also supports reserved-space UI rows.
+// Retains the last child for its exit animation without adding a DOM element
+// or owning any visual styles. Consumers animate the cloned child with the
+// data-visibility-state attribute.
 export function AnimatedVisibility({
-	visible,
-	enterAnimation,
-	exitAnimation,
 	exitDurationMs = 320,
 	children,
-	style,
-	...props
 }: AnimatedVisibilityProps) {
-	const childIsPresent =
-		children !== null && children !== undefined && children !== false;
-	const isVisible = visible ?? childIsPresent;
+	const child = React.isValidElement(children) ? children : null;
+	const isVisible = child !== null;
 	const [rendered, setRendered] = React.useState(isVisible);
 	const [leaving, setLeaving] = React.useState(false);
-	const [displayChildren, setDisplayChildren] = React.useState(children);
+	const [displayChild, setDisplayChild] =
+		React.useState<React.ReactElement | null>(child);
 
 	React.useEffect(() => {
-		if (!isVisible) return undefined;
-		const contentId = setTimeout(() => setDisplayChildren(children), 0);
+		if (!child) return undefined;
+		const contentId = setTimeout(() => setDisplayChild(child), 0);
 		return () => clearTimeout(contentId);
-	}, [children, isVisible]);
+	}, [child]);
 
 	React.useEffect(() => {
 		if (isVisible) {
@@ -44,6 +36,7 @@ export function AnimatedVisibility({
 			return () => clearTimeout(showId);
 		}
 		if (!rendered) return undefined;
+
 		const leaveId = setTimeout(() => setLeaving(true), 0);
 		const hideId = setTimeout(() => {
 			setRendered(false);
@@ -55,22 +48,12 @@ export function AnimatedVisibility({
 		};
 	}, [exitDurationMs, isVisible, rendered]);
 
-	return (
-		<div
-			{...props}
-			data-visibility-state={
-				rendered ? (leaving ? "leaving" : "visible") : "hidden"
-			}
-			style={{
-				...style,
-				animation: rendered
-					? leaving
-						? exitAnimation
-						: enterAnimation
-					: "none",
-			}}
-		>
-			{rendered ? displayChildren : null}
-		</div>
+	if (!rendered || !displayChild) return null;
+
+	return React.cloneElement(
+		displayChild as React.ReactElement<Record<string, unknown>>,
+		{
+			"data-visibility-state": leaving ? "leaving" : "visible",
+		},
 	);
 }

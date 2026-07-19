@@ -33,7 +33,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		initialSimulatorControlState,
 	);
 	const {
-		lineId, auto, travelDirection, speedKmh, simulationSpeed, stationStayMs,
+		lineId, serviceId, auto, travelDirection, speedKmh, simulationSpeed, stationStayMs,
 		langMode, lang, langMs, doorNoticeMs, doorNoticeWaitMs, pageSize,
 		showHiragana, showKatakana, stationNameMode, alertText, alertSecondText,
 		alertScope, alertActive, alertLeaving, delayNextMarqueeMessage,
@@ -101,6 +101,29 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 
 	const route = routes[lineId];
 	const N = route.stations.length;
+	// ——— express service: the active stopping pattern and its skipped stops.
+	// Terminal stations are always served so a run can never end mid-air.
+	const activeService =
+		serviceId === "local"
+			? null
+			: (route.services || []).find((sv: any) => sv.id === serviceId) ||
+				null;
+	const skipStations: number[] = React.useMemo(() => {
+		if (!activeService) return [];
+		return route.stations
+			.map((station: any, index: number) =>
+				index > 0 &&
+				index < route.stations.length - 1 &&
+				station.skip?.includes(activeService.id)
+					? index
+					: -1,
+			)
+			.filter((index: number) => index >= 0);
+	}, [route, activeService]);
+	const serviceJa = activeService ? activeService.ja : "各駅停車";
+	const serviceEn = activeService ? activeService.en : "Local";
+	const passingNext =
+		journey.phase === "approach" && skipStations.includes(journey.pos);
 	const hasCurrentTransfers = !!route.stations[journey.pos]?.xf?.length;
 	const transferExpanded =
 		hasCurrentTransfers &&
@@ -169,29 +192,49 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 			}
 			return [labelMarqueeItem(item, lang)];
 		});
+	const serviceInfo = {
+		ja: serviceJa,
+		en: serviceEn,
+		passing: passingNext,
+	};
 	const stationAnnouncementItems =
 		langMode === "auto"
 			? [
-					announcement(route, journey.pos, journey.phase, "ja"),
-					announcement(route, journey.pos, journey.phase, "en"),
+					announcement(route, journey.pos, journey.phase, "ja", serviceInfo),
+					announcement(route, journey.pos, journey.phase, "en", serviceInfo),
 				]
-			: [announcement(route, journey.pos, journey.phase, lang)];
+			: [announcement(route, journey.pos, journey.phase, lang, serviceInfo)];
 	const tickerItems =
 		nextMarqueeMessageVisible || !remainingMarqueeItems.length
 			? stationAnnouncementItems
 			: remainingMarqueeItems;
-	const stateRef = useRef({ N, circular: route.circular });
+	const stateRef = useRef({
+		N,
+		circular: route.circular,
+		skipSet: new Set<number>(),
+	});
 	React.useEffect(() => {
 		stateRef.current.N = N;
 		stateRef.current.circular = !!route.circular;
-	}, [N, route.circular]);
+		stateRef.current.skipSet = new Set(skipStations);
+	}, [N, route.circular, skipStations]);
 
 	function advance(dir: number) {
 		setJourney((j) => {
-			const { N: n, circular } = stateRef.current;
+			const { N: n, circular, skipSet } = stateRef.current;
 			if (dir > 0) {
-				if (j.phase === "approach")
+				if (j.phase === "approach") {
+					// an express run rolls through a skipped station straight
+					// onto the next leg instead of stopping
+					if (skipSet.has(j.pos) && (j.pos < n - 1 || circular))
+						return {
+							pos: (j.pos + 1) % n,
+							phase: "approach" as Phase,
+							progress: 0,
+							from: j.pos,
+						};
 					return { ...j, phase: "at" as Phase, progress: 1 };
+				}
 				if (j.pos === n - 1 && !circular) return j;
 				return {
 					pos: (j.pos + 1) % n,
@@ -203,16 +246,25 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 			if (j.phase === "approach") {
 				if (j.pos === 0 && !circular)
 					return { ...j, phase: "at" as Phase, progress: 1 };
+				const target = (j.pos - 1 + n) % n;
+				if (skipSet.has(target) && (target > 0 || circular))
+					return {
+						pos: target,
+						phase: "approach" as Phase,
+						progress: 0,
+						from: j.pos,
+					};
 				return {
-					pos: (j.pos - 1 + n) % n,
+					pos: target,
 					phase: "at" as Phase,
 					progress: 1,
 					from: j.pos,
 				};
 			}
 			if (j.pos === 0 && !circular) return j;
+			const target = (j.pos - 1 + n) % n;
 			return {
-				pos: (j.pos - 1 + n) % n,
+				pos: target,
 				phase: "approach" as Phase,
 				progress: 0,
 				from: j.pos,
@@ -253,9 +305,26 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					dispatch(setControl("auto", false));
 					return { ...j, progress: 0.499 };
 				}
-				return progress === 1
-					? { ...j, phase: "at" as Phase, progress }
-					: { ...j, progress };
+				if (progress === 1) {
+					// pass through skipped stations without dwelling
+					const { N: n, circular, skipSet } = stateRef.current;
+					const canContinue =
+						travelDirection > 0
+							? j.pos < n - 1 || circular
+							: j.pos > 0 || circular;
+					if (skipSet.has(j.pos) && canContinue)
+						return {
+							pos:
+								travelDirection > 0
+									? (j.pos + 1) % n
+									: (j.pos - 1 + n) % n,
+							phase: "approach" as Phase,
+							progress: 0,
+							from: j.pos,
+						};
+					return { ...j, phase: "at" as Phase, progress };
+				}
+				return { ...j, progress };
 			});
 		}, tickMs);
 		return () => clearInterval(id);
@@ -345,9 +414,55 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 
 	function pickLine(id: LineId) {
 		setLineId(id);
+		updateControl("serviceId", "local");
 		setTravelDirection(1);
 		setJourney({ pos: 0, phase: "approach", progress: 0, from: null });
 	}
+
+	// ——— express service editing (variants live on the route, skip flags on stations)
+	const SERVICE_PRESETS = [
+		["準急", "Semi-Express"],
+		["急行", "Express"],
+		["特急", "Super-Express"],
+		["快速", "Rapid"],
+	];
+	const addService = () => {
+		const id = `sv-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e4)}`;
+		editRoute((r) => {
+			r.services = r.services || [];
+			const preset =
+				SERVICE_PRESETS[r.services.length % SERVICE_PRESETS.length];
+			r.services.push({ id, ja: preset[0], en: preset[1] });
+		});
+		updateControl("serviceId", id);
+	};
+	const removeService = (id: string) => {
+		editRoute((r) => {
+			r.services = (r.services || []).filter((sv: any) => sv.id !== id);
+			r.stations.forEach((station: any) => {
+				if (station.skip)
+					station.skip = station.skip.filter((x: string) => x !== id);
+			});
+		});
+		if (serviceId === id) updateControl("serviceId", "local");
+	};
+	const setServiceField = (id: string, field: "ja" | "en", value: string) =>
+		editRoute((r) => {
+			const sv = (r.services || []).find((x: any) => x.id === id);
+			if (sv) sv[field] = value;
+		});
+	const toggleServiceStop = (index: number) => {
+		if (serviceId === "local") return;
+		editRoute((r) => {
+			// terminals always stay served
+			if (index <= 0 || index >= r.stations.length - 1) return;
+			const station = r.stations[index];
+			station.skip = station.skip || [];
+			station.skip = station.skip.includes(serviceId)
+				? station.skip.filter((x: string) => x !== serviceId)
+				: [...station.skip, serviceId];
+		});
+	};
 
 	// ——— line editing (operates on the selected line's clone)
 	function editRoute(mutator: (r: any) => void) {
@@ -502,6 +617,11 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 
 			<SimulatorDisplay
 				route={route}
+				serviceJa={serviceJa}
+				serviceEn={serviceEn}
+				serviceIsLocal={!activeService}
+				passing={passingNext}
+				skipStations={skipStations}
 				pos={journey.pos}
 				phase={journey.phase}
 				progress={journey.progress}
@@ -541,6 +661,10 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					route,
 					hasCurrentTransfers,
 					transferExpanded,
+					addService,
+					removeService,
+					setServiceField,
+					toggleServiceStop,
 					addLine,
 					pickLine,
 					setLineField,

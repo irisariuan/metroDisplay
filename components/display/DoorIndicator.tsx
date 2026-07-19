@@ -69,25 +69,14 @@ export function DoorIndicator({
 	const txtJa = left ? "左側のドアが開きます" : "右側のドアが開きます";
 	const txtEn = left ? "Doors open on the LEFT" : "Doors open on the RIGHT";
 	return (
-		<AnimatedVisibility
-			enterAnimation={
-				left
-					? "doorNoticeLeftIn .32s ease-out both"
-					: "doorNoticeRightIn .32s ease-out both"
-			}
-			exitAnimation={
-				left
-					? "doorNoticeLeftOut .32s ease-out both"
-					: "doorNoticeRightOut .32s ease-out both"
-			}
-		>
-			{active && pulseVisible && (
+		<AnimatedVisibility>
+			{active && pulseVisible ? (
 				<div
 					className={[
-						"absolute top-3.5 flex items-center gap-3 bg-magenta text-ink border-[3px] border-ink rounded-pill py-2 px-4 shadow-hard-s pointer-events-none",
+						"absolute top-3.5 z-40 flex items-center gap-3 rounded-pill border-[3px] border-ink bg-magenta px-4 py-2 text-ink shadow-hard-s pointer-events-none will-change-transform",
 						left
-							? "left-3.5 flex-row"
-							: "right-3.5 flex-row-reverse",
+							? "left-3.5 flex-row origin-left data-[visibility-state=visible]:animate-door-notice-left-in data-[visibility-state=leaving]:animate-door-notice-left-out"
+							: "right-3.5 flex-row-reverse origin-right data-[visibility-state=visible]:animate-door-notice-right-in data-[visibility-state=leaving]:animate-door-notice-right-out",
 					].join(" ")}
 				>
 					<span className="font-display text-[26px] animate-chev-fast">
@@ -104,7 +93,7 @@ export function DoorIndicator({
 						</div>
 					</div>
 				</div>
-			)}
+			) : null}
 		</AnimatedVisibility>
 	);
 }

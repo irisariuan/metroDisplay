@@ -250,6 +250,21 @@ a:hover {
 		);
 	}
 }
+
+@keyframes stationLabelMarquee {
+	0%,
+	12% {
+		transform: translateX(var(--marquee-start, 0px));
+	}
+	45%,
+	57% {
+		transform: translateX(var(--marquee-end, 0px));
+	}
+	90%,
+	100% {
+		transform: translateX(var(--marquee-start, 0px));
+	}
+}
 @keyframes doorPop {
 	from {
 		opacity: 0;

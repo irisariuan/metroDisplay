@@ -15,6 +15,8 @@ export interface MarqueeContentItem {
 
 export interface SimulatorControlState {
 	lineId: LineId;
+	/** active stopping pattern: "local" or a ServiceVariant id on the route */
+	serviceId: string;
 	auto: boolean;
 	travelDirection: number;
 	speedKmh: number;
@@ -71,6 +73,7 @@ export type SimulatorControlAction =
 
 export const initialSimulatorControlState: SimulatorControlState = {
 	lineId: "CS",
+	serviceId: "local",
 	auto: true,
 	travelDirection: 1,
 	speedKmh: SPEED_PRESETS.normal,

@@ -4,6 +4,7 @@ import React from "react";
 import { Switch } from "@/components/ds";
 import { SPEED_PRESETS } from "@/lib/constants";
 import { LineControls } from "@/components/simulator/controls/LineControls";
+import { ServiceControls } from "@/components/simulator/controls/ServiceControls";
 import { TrainControls } from "@/components/simulator/controls/TrainControls";
 import {
 	setControl,
@@ -21,6 +22,10 @@ interface SimulatorControlsProps {
 		route: Route & { circular?: boolean };
 		hasCurrentTransfers: boolean;
 		transferExpanded: boolean;
+		addService: () => void;
+		removeService: (id: string) => void;
+		setServiceField: (id: string, field: "ja" | "en", value: string) => void;
+		toggleServiceStop: (index: number) => void;
 		addLine: () => void;
 		pickLine: (lineId: LineId) => void;
 		setLineField: (field: string, value: string) => void;
@@ -44,7 +49,7 @@ export function SimulatorControls({
 	context,
 }: SimulatorControlsProps) {
 	const {
-		lineId, showEditor, auto, travelDirection, speedKmh, simulationSpeed,
+		lineId, serviceId, showEditor, auto, travelDirection, speedKmh, simulationSpeed,
 		langMode, langMs, pageSize, doorNoticeMs, doorNoticeWaitMs, stationStayMs,
 		showDistanceIndicator, showSpeedIndicator, showStationStayIndicator,
 		showHiragana, showKatakana, followDirectionView, delayNextMarqueeMessage,
@@ -53,6 +58,7 @@ export function SimulatorControls({
 	} = state;
 	const {
 		route, hasCurrentTransfers, transferExpanded,
+		addService, removeService, setServiceField, toggleServiceStop,
 		addLine, pickLine, setLineField, setStationField, toggleSide, toggleXfer,
 		addStation, removeStation, moveStation, setDest, toggleCircular, advance,
 		clearAlert,
@@ -104,6 +110,15 @@ export function SimulatorControls({
 					moveStation={moveStation}
 					setDest={setDest}
 					toggleCircular={toggleCircular}
+				/>
+				<ServiceControls
+					route={route}
+					serviceId={serviceId}
+					onPickService={(id) => set("serviceId", id)}
+					onAddService={addService}
+					onRemoveService={removeService}
+					setServiceField={setServiceField}
+					toggleServiceStop={toggleServiceStop}
 				/>
 				{/* transport + options */}
 				<div className="grid grid-cols-2 items-stretch gap-3">

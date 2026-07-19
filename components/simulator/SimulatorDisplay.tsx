@@ -9,6 +9,11 @@ import type { Lang, Phase, Route } from "@/types/metro";
 
 interface SimulatorDisplayProps {
 	route: Route & { circular?: boolean };
+	serviceJa: string;
+	serviceEn: string;
+	serviceIsLocal: boolean;
+	passing: boolean;
+	skipStations: number[];
 	pos: number;
 	phase: Phase;
 	progress: number;
@@ -43,6 +48,11 @@ interface SimulatorDisplayProps {
 
 export function SimulatorDisplay({
 	route,
+	serviceJa,
+	serviceEn,
+	serviceIsLocal,
+	passing,
+	skipStations,
 	pos,
 	phase,
 	progress,
@@ -83,6 +93,10 @@ export function SimulatorDisplay({
 			{monitorAlert ? null : (
 				<TopBoard
 					route={route}
+					serviceJa={serviceJa}
+					serviceEn={serviceEn}
+					serviceIsLocal={serviceIsLocal}
+					passing={passing}
 					pos={pos}
 					phase={phase}
 					lang={lang}
@@ -90,11 +104,15 @@ export function SimulatorDisplay({
 					car={6}
 					showKatakana={showKatakana}
 					stationNameMode={stationNameMode}
-					doorSide={doorIndicatorVisible ? undefined : route.stations[pos].side}
+					doorSide={
+						doorIndicatorVisible || passing
+							? undefined
+							: route.stations[pos].side
+					}
 				/>
 			)}
 			{monitorAlert ? null : (
-				<div className="relative bg-paper">
+				<div className="relative isolate bg-paper">
 					<DoorIndicator
 						side={route.stations[pos].side}
 						phase={phase}
@@ -105,6 +123,7 @@ export function SimulatorDisplay({
 					/>
 					<RouteStrip
 						route={route}
+						skipStations={skipStations}
 						pos={pos}
 						phase={phase}
 						travelProgress={progress}
