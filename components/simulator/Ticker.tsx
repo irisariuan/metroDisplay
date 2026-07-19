@@ -65,41 +65,48 @@ export function Ticker({
 		};
 	}, [contentKey, stillOnNewContent]);
 
-	// key = displayed content so the track restarts only after a scheduled copy change.
-	const trackRef = React.useRef<HTMLDivElement>(null);
+	// Measure a single announcement group and render enough copies to cover the
+	// ticker viewport before the loop returns to its identical next group.
+	const groupRef = React.useRef<HTMLSpanElement>(null);
 	const contentViewportRef = React.useRef<HTMLDivElement>(null);
-	const [contentOverflows, setContentOverflows] = React.useState(true);
-	const duplicateGroups = !splitAlert || contentOverflows;
+	const [groupWidth, setGroupWidth] = React.useState(0);
+	const [viewportWidth, setViewportWidth] = React.useState(0);
 	const [duration, setDuration] = React.useState(22);
 	React.useLayoutEffect(() => {
-		const track = trackRef.current;
-		if (!track) return undefined;
+		const group = groupRef.current;
+		const viewport = contentViewportRef.current;
+		if (!group || !viewport) return undefined;
 		const measure = () => {
-			// tickmove advances exactly one of the two duplicate groups (half the track width).
-			// Deriving duration from that distance keeps the physical ticker speed at 72 px/s.
-			const groupWidth = track.scrollWidth / (duplicateGroups ? 2 : 1);
-			const nextDuration = Math.max(8, groupWidth / 72);
+			const nextGroupWidth = group.getBoundingClientRect().width;
+			const nextViewportWidth = viewport.clientWidth;
+			setGroupWidth(nextGroupWidth);
+			setViewportWidth(nextViewportWidth);
+			const nextDuration = Math.max(8, nextGroupWidth / 72);
 			setDuration((current) =>
 				Math.abs(current - nextDuration) < 0.1 ? current : nextDuration,
-			);
-			const viewport = contentViewportRef.current;
-			setContentOverflows(
-				!splitAlert ||
-					!viewport ||
-					groupWidth > viewport.clientWidth + 2,
 			);
 		};
 		measure();
 		if (typeof ResizeObserver === "undefined") return undefined;
 		const observer = new ResizeObserver(measure);
-		observer.observe(track);
-		if (contentViewportRef.current)
-			observer.observe(contentViewportRef.current);
+		observer.observe(group);
+		observer.observe(viewport);
 		return () => observer.disconnect();
-	}, [contentKey, splitAlert, duplicateGroups]);
+	}, [contentKey]);
 
-	const group = (k: string) => (
-		<span key={k} className="inline-flex items-center">
+	// Every ticker loops a whole group. Repeating it through the visible width
+	// avoids exposing empty space when a short message starts to move.
+	const shouldScroll = groupWidth > 0;
+	const repeatCount = shouldScroll
+		? Math.max(2, Math.ceil(viewportWidth / groupWidth) + 1)
+		: 1;
+
+	const group = (key: string, measure = false) => (
+		<span
+			key={key}
+			ref={measure ? groupRef : undefined}
+			className="inline-flex items-center"
+		>
 			{seq.map((t, i) => (
 				<span
 					key={i}
@@ -121,7 +128,7 @@ export function Ticker({
 		!splitAlert && isAlert && alertLeaving
 			? "swipeOut .3s var(--ease-out) both"
 			: scrollingKey === contentKey
-				? !splitAlert || contentOverflows
+				? shouldScroll
 					? `tickmove ${duration}s linear infinite`
 					: "none"
 				: "swipeIn .35s var(--ease-pop) both";
@@ -129,17 +136,24 @@ export function Ticker({
 	const track = (
 		<div
 			key={contentKey}
-			ref={trackRef}
 			className="inline-flex items-center"
-			style={{ animation: trackAnimation, willChange: "transform" }}
+			style={
+				{
+					animation: trackAnimation,
+					willChange: "transform",
+					"--tick-distance": `-${groupWidth}px`,
+				} as React.CSSProperties
+			}
 		>
-			{group("a")}
-			{duplicateGroups ? group("b") : null}
+			{Array.from({ length: repeatCount }, (_, index) =>
+				group(`group-${index}`, index === 0),
+			)}
 		</div>
 	);
 
 	return (
 		<div
+			ref={splitAlert ? undefined : contentViewportRef}
 			className="relative flex flex-1 min-w-0 items-stretch overflow-hidden whitespace-nowrap text-paper"
 			style={{
 				background,

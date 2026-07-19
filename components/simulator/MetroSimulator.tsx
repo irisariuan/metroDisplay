@@ -1,18 +1,12 @@
 "use client";
 /* Simulator engine + controls + mount */
 import React from "react";
-import { LINES, ROUTES, num } from "@/lib/metro-data";
+import { LINES, ROUTES } from "@/lib/metro-data";
 import { Switch } from "@/components/ds";
-import { TopBoard } from "@/components/display/TopBoard";
-import { DoorIndicator } from "@/components/display/DoorIndicator";
-import { RouteStrip } from "@/components/display/RouteStrip";
-import { TransferStrip } from "@/components/display/TransferStrip";
 import { SPEED_PRESETS, DEFAULT_MARQUEE_CONTENT } from "@/lib/constants";
 import { announcement } from "@/lib/announcement";
 import { useClock } from "@/hooks/useClock";
-import { Ticker } from "@/components/simulator/Ticker";
-import { FullAlertMessage } from "@/components/simulator/FullAlertMessage";
-import { AlertOverlay } from "@/components/simulator/AlertOverlay";
+import { SimulatorDisplay } from "@/components/simulator/SimulatorDisplay";
 import { LineControls } from "@/components/simulator/controls/LineControls";
 import { TrainControls } from "@/components/simulator/controls/TrainControls";
 import type { LineId, Lang, Phase } from "@/types/metro";
@@ -26,7 +20,11 @@ interface Journey {
 	from: number | null;
 }
 
-export function MetroSimulator() {
+interface MetroSimulatorProps {
+	children: React.ReactNode;
+}
+
+export function MetroSimulator({ children }: MetroSimulatorProps) {
 	const [lineId, setLineId] = useState<LineId>("CS");
 	const [journey, setJourney] = useState<Journey>({
 		pos: 0,
@@ -84,11 +82,18 @@ export function MetroSimulator() {
 	const [stationStayRemainingMs, setStationStayRemainingMs] = useState(0);
 	const [arrivalTransferExpanded, setArrivalTransferExpanded] =
 		useState(false);
+	const [transferDisplayMode, setTransferDisplayMode] = useState<
+		"auto" | "full" | "split"
+	>("auto");
 	const clock = useClock();
 
 	const route = routes[lineId];
 	const N = route.stations.length;
 	const hasCurrentTransfers = !!route.stations[journey.pos]?.xf?.length;
+	const transferExpanded =
+		hasCurrentTransfers &&
+		(transferDisplayMode === "full" ||
+			(transferDisplayMode === "auto" && arrivalTransferExpanded));
 	const activeAlert =
 		alertActive && alertText.trim()
 			? {
@@ -284,6 +289,10 @@ export function MetroSimulator() {
 		const id = setTimeout(() => setArrivalTransferExpanded(false), 4000);
 		return () => clearTimeout(id);
 	}, [journey.phase, journey.pos, hasCurrentTransfers]);
+
+	useEffect(() => {
+		setTransferDisplayMode("auto");
+	}, [journey.pos, lineId]);
 
 	// Station names treat phonetic Japanese as one language sequence:
 	// kanji + katakana reading → hiragana → English.
@@ -484,17 +493,9 @@ export function MetroSimulator() {
 		journey.phase === "at" ? "var(--acid)" : "var(--magenta-2)";
 
 	return (
-		<div className="relative z-1 mx-auto max-w-310 px-5.5 pt-6.5 pb-10">
-			{/* masthead */}
+		<>
 			<div className="mb-4.5 flex flex-wrap items-end justify-between gap-4">
-				<div>
-					<div className="font-mono text-sm tracking-[.22em] text-acid">
-						SHUIKA METRO · IN-CAR DISPLAY
-					</div>
-					<div className="font-display text-[46px] leading-[0.95] text-paper">
-						水下地鐵 車内案内
-					</div>
-				</div>
+				{children}
 				<div className="text-right font-mono text-sm tracking-widest text-paper-2 opacity-70">
 					<div>
 						{journey.phase === "at"
@@ -505,147 +506,40 @@ export function MetroSimulator() {
 				</div>
 			</div>
 
-			{/* ——— device / screen */}
-			<div className="relative overflow-hidden rounded-3xl border-4 border-ink bg-[#e8e7dd] shadow-hard">
-				{monitorAlert ? null : (
-					<TopBoard
-						route={route}
-						pos={journey.pos}
-						phase={journey.phase}
-						lang={lang}
-						clock={clock}
-						car={6}
-						showKatakana={showKatakana}
-						stationNameMode={stationNameMode}
-					/>
-				)}
-				{monitorAlert ? null : (
-					<div className="relative bg-paper">
-						<DoorIndicator
-							side={route.stations[journey.pos].side}
-							phase={journey.phase}
-							lang={lang}
-							noticeMs={doorNoticeMs}
-							waitMs={doorNoticeWaitMs}
-						/>
-						<RouteStrip
-							route={route}
-							pos={journey.pos}
-							phase={journey.phase}
-							travelProgress={journey.progress}
-							fromPos={journey.from ?? undefined}
-							direction={travelDirection}
-							followDirectionView={followDirectionView}
-							pageSize={pageSize}
-							remainingDistance={
-								showDistanceIndicator
-									? (remainingDistance ?? undefined)
-									: undefined
-							}
-							stationStayRemaining={
-								showStationStayIndicator
-									? stationStayRemainingMs
-									: undefined
-							}
-							speedIndicator={
-								showSpeedIndicator ? speedKmh : undefined
-							}
-							dwellMs={travelDuration}
-							lang={lang}
-							showKatakana={showKatakana}
-							stationNameMode={stationNameMode}
-						/>
-					</div>
-				)}
-				{/* bottom info bar: transfers + ticker (fixed height so language never shifts layout) */}
-				{monitorAlert ? null : (
-					<div className="relative flex h-19 items-stretch gap-0 overflow-hidden border-t-3 border-t-ink">
-						<div
-							data-transfer-expanded={arrivalTransferExpanded}
-							className="flex min-w-0 flex-none items-center overflow-hidden bg-paper-2 px-4.5 py-2"
-							style={{
-								width: arrivalTransferExpanded
-									? "100%"
-									: hasCurrentTransfers
-										? 280
-										: "auto",
-								borderRight: arrivalTransferExpanded
-									? "0 solid var(--ink)"
-									: "3px solid var(--ink)",
-								transition:
-									"width 650ms var(--ease-pop), border-width 650ms var(--ease-pop)",
-							}}
-						>
-							{hasCurrentTransfers ? (
-								<TransferStrip
-									route={route}
-									pos={journey.pos}
-									lang={lang}
-									expanded={arrivalTransferExpanded}
-								/>
-							) : (
-								<span
-									key={`no-transfer-${journey.pos}-${lang}`}
-									className="font-mono text-sm tracking-widest text-muted"
-									style={{
-										animation:
-											"swipeIn .35s var(--ease-out) both",
-									}}
-								>
-									{lang === "ja" ? "乗換なし" : "NO TRANSFER"}
-								</span>
-							)}
-						</div>
-						<Ticker
-							items={tickerItems}
-							color={
-								nextMarqueeMessageVisible
-									? annColor
-									: "var(--paper)"
-							}
-							alertMessages={
-								activeAlert && alertScope === "marquee"
-									? ([
-											activeAlert.primary,
-											activeAlert.secondary,
-										].filter(Boolean) as string[])
-									: undefined
-							}
-							alertLeaving={alertLeaving}
-						/>
-						{/* LOWER is a dedicated, full-width marquee broadcast rather than a
-						    message inserted into the ordinary text ticker. */}
-						{activeAlert && alertScope === "lower" ? (
-							<div className="absolute inset-0 z-20 flex">
-								<Ticker
-									items={[]}
-									color="var(--ink)"
-									background="var(--magenta)"
-									borderTop="none"
-									separateAlertLanguages={true}
-									lang={lang}
-									alertMessages={
-										[
-											activeAlert.primary,
-											activeAlert.secondary,
-										].filter(Boolean) as string[]
-									}
-									alertLeaving={alertLeaving}
-								/>
-							</div>
-						) : null}
-					</div>
-				)}
-				{activeAlert && alertScope === "monitor" ? (
-					<AlertOverlay
-						message={activeAlert.primary}
-						secondMessage={activeAlert.secondary}
-						full={true}
-						leaving={alertLeaving}
-						lang={lang}
-					/>
-				) : null}
-			</div>
+			<SimulatorDisplay
+				route={route}
+				pos={journey.pos}
+				phase={journey.phase}
+				progress={journey.progress}
+				from={journey.from}
+				direction={travelDirection}
+				lang={lang}
+				clock={clock}
+				showKatakana={showKatakana}
+				stationNameMode={stationNameMode}
+				doorNoticeMs={doorNoticeMs}
+				doorNoticeWaitMs={doorNoticeWaitMs}
+				followDirectionView={followDirectionView}
+				pageSize={pageSize}
+				remainingDistance={remainingDistance}
+				stationStayRemainingMs={stationStayRemainingMs}
+				showDistanceIndicator={showDistanceIndicator}
+				showStationStayIndicator={showStationStayIndicator}
+				showSpeedIndicator={showSpeedIndicator}
+				speedKmh={speedKmh}
+				travelDuration={travelDuration}
+				monitorAlert={monitorAlert}
+				activeAlert={activeAlert}
+				alertScope={alertScope}
+				alertLeaving={alertLeaving}
+				tickerItems={tickerItems}
+				tickerColor={nextMarqueeMessageVisible ? annColor : "var(--paper)"}
+				hasTransfers={hasCurrentTransfers}
+				transferExpanded={transferExpanded}
+				onToggleTransferExpanded={() =>
+					setTransferDisplayMode(transferExpanded ? "split" : "full")
+				}
+			/>
 
 			{/* ——— controls */}
 			<div className="mt-5.5 flex flex-col gap-4 rounded-3xl border-3 border-ink bg-paper p-4.5 shadow-hard-s">
@@ -1422,6 +1316,6 @@ export function MetroSimulator() {
 					</section>
 				</div>
 			</div>
-		</div>
+		</>
 	);
 }
