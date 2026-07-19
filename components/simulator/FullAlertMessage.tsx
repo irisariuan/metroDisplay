@@ -44,7 +44,7 @@ export function FullAlertMessage({ message }: FullAlertMessageProps) {
 		>
 			<div
 				ref={textRef}
-				className="break-words uppercase font-display tracking-[.01em] leading-[0.85]"
+				className="wrap-break-word uppercase font-display tracking-[.01em] leading-[0.85]"
 				style={{ fontSize }}
 			>
 				{message}

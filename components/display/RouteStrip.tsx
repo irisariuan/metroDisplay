@@ -6,7 +6,7 @@ import { ProgressRail } from "./ProgressRail";
 import { DirectionIndicators } from "./DirectionIndicators";
 import { TrailMarker } from "./TrailMarker";
 import { NumPlate } from "./NumPlate";
-import { Marquee } from "./Marquee";
+import { BoundaryShiftText } from "./BoundaryShiftText";
 import { StationReadings } from "./StationReadings";
 
 interface RouteStripProps {
@@ -351,7 +351,10 @@ export function RouteStrip({
 	const showStationReadings = stationNameMode === "kanji" && showKatakana;
 
 	return (
-		<div className="relative pt-11.5 px-15 pb-5">
+		<div
+			className="relative overflow-hidden pt-11.5 px-15 pb-5"
+			data-route-label-boundary
+		>
 			{/* Shown above the labels, alongside the page indicator when present. */}
 			{distanceLabel ? (
 				<div
@@ -451,7 +454,11 @@ export function RouteStrip({
 				hidden={displayPhase === "at" && !exiting && !retreating}
 				moveDur={markerMoveDur}
 			/>
-			{/* directional chevrons sit between nodes and mirror with reverse travel. */}
+			{/* directional chevrons sit between nodes and mirror with reverse travel.
+			    Every page-split stub (a rail segment leading to an adjacent page)
+			    carries a chevron in both travel directions: continueForward is the
+			    right-edge stub, continueBackward the left-edge stub. Under flipView
+			    the visual sides swap, so the page tests swap with them. */}
 			<DirectionIndicators
 				count={stations.length}
 				color={L.color}
@@ -460,10 +467,11 @@ export function RouteStrip({
 				layout={visualNodeLayout}
 				reverse={isReverse && !flipView}
 				continueForward={
-					(!isReverse && displayPage < pageCount - 1) ||
-					(flipView && displayPage > 0)
+					flipView ? displayPage > 0 : displayPage < pageCount - 1
 				}
-				continueBackward={isReverse && !flipView && displayPage > 0}
+				continueBackward={
+					flipView ? displayPage < pageCount - 1 : displayPage > 0
+				}
 			/>
 			{/* station nodes */}
 			<div
@@ -541,26 +549,22 @@ export function RouteStrip({
 							<div
 								key={`label-${displayPage}-${stationIndex}-${stationNameMode}`}
 								className="w-full"
-								style={{
-									animation:
-										"swipeIn .42s var(--ease-out) both",
-								}}
 							>
 								<div
 									// Keep label height + gap at 37px: the station-dot centre then
 									// remains on the fixed rail centre (top: 92px) in every script phase.
-									className={[
-										"flex flex-col items-center justify-end w-full transition-transform duration-350 ease-pop h-8.25 mb-1",
-										current ? "scale-[1.04]" : "scale-100",
-									].join(" ")}
+									className="flex h-9 w-full flex-col items-center justify-end mb-0.25"
 								>
-									<Marquee
+									<BoundaryShiftText
 										text={
 											stationNameMode === "hiragana"
 												? st.hira || st.ja
 												: isEnglishName
 													? st.en
-													: st.ja
+												: st.ja
+										}
+										measurementKey={
+											current ? "focused" : "regular"
 										}
 										textStyle={{
 											fontFamily: "var(--font-body)",

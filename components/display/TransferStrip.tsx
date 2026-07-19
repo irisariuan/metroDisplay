@@ -8,10 +8,16 @@ interface TransferStripProps {
 	route: Route;
 	pos: number;
 	lang: Lang;
+	expanded?: boolean;
 }
 
 // ——— transfer strip: connecting lines at the current station
-export function TransferStrip({ route, pos, lang }: TransferStripProps) {
+export function TransferStrip({
+	route,
+	pos,
+	lang,
+	expanded = false,
+}: TransferStripProps) {
 	const st = route.stations[pos];
 	const viewportRef = React.useRef<HTMLDivElement>(null);
 	const contentRef = React.useRef<HTMLDivElement>(null);
@@ -51,12 +57,26 @@ export function TransferStrip({ route, pos, lang }: TransferStripProps) {
 		<div
 			key={"xf" + transferKey}
 			className="flex items-center w-full min-w-0 gap-3"
-			style={{ animation: "swipeIn .4s var(--ease-out) both" }}
+			style={{
+				animation: "swipeIn .4s var(--ease-out) both",
+				justifyContent: expanded ? "center" : undefined,
+			}}
 		>
 			<span className="flex-none font-mono text-label tracking-[0.12em] text-muted">
 				{lang === "ja" ? "乗換" : "TRANSFER"}
 			</span>
-			<div ref={viewportRef} className="flex-1 min-w-0 overflow-hidden">
+			<div
+				ref={viewportRef}
+				className="min-w-0 overflow-hidden"
+				style={
+					expanded
+						? {
+								flex: "0 1 auto",
+								maxWidth: "calc(100% - 100px)",
+							}
+						: { flex: "1 1 0%" }
+				}
+			>
 				{overflows ? (
 					<div className="inline-flex items-center w-max animate-xfmove will-change-transform">
 						<div ref={contentRef}>{content("first")}</div>

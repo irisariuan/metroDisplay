@@ -2,7 +2,7 @@
 /* Simulator engine + controls + mount */
 import React from "react";
 import { LINES, ROUTES, num } from "@/lib/metro-data";
-import { Button, Switch } from "@/components/ds";
+import { Switch } from "@/components/ds";
 import { TopBoard } from "@/components/display/TopBoard";
 import { DoorIndicator } from "@/components/display/DoorIndicator";
 import { RouteStrip } from "@/components/display/RouteStrip";
@@ -13,10 +13,8 @@ import { useClock } from "@/hooks/useClock";
 import { Ticker } from "@/components/simulator/Ticker";
 import { FullAlertMessage } from "@/components/simulator/FullAlertMessage";
 import { AlertOverlay } from "@/components/simulator/AlertOverlay";
-import { LineButton } from "@/components/simulator/LineButton";
-import { EdInput } from "@/components/simulator/EdInput";
-import { LineColorEditor } from "@/components/simulator/LineColorEditor";
-import { LineEditor } from "@/components/simulator/LineEditor";
+import { LineControls } from "@/components/simulator/controls/LineControls";
+import { TrainControls } from "@/components/simulator/controls/TrainControls";
 import type { LineId, Lang, Phase } from "@/types/metro";
 
 const { useState, useEffect, useRef } = React;
@@ -84,10 +82,13 @@ export function MetroSimulator() {
 	const [, setLineRevision] = useState(0);
 	const [showEditor, setShowEditor] = useState(false);
 	const [stationStayRemainingMs, setStationStayRemainingMs] = useState(0);
+	const [arrivalTransferExpanded, setArrivalTransferExpanded] =
+		useState(false);
 	const clock = useClock();
 
 	const route = routes[lineId];
 	const N = route.stations.length;
+	const hasCurrentTransfers = !!route.stations[journey.pos]?.xf?.length;
 	const activeAlert =
 		alertActive && alertText.trim()
 			? {
@@ -271,6 +272,18 @@ export function MetroSimulator() {
 		const id = setInterval(tick, 100);
 		return () => clearInterval(id);
 	}, [journey.phase, journey.pos, stationStayMs]);
+
+	// Give transfer information the full lower display for the first few
+	// seconds after arrival, then return that space to the ordinary ticker.
+	useEffect(() => {
+		if (journey.phase !== "at" || !hasCurrentTransfers) {
+			setArrivalTransferExpanded(false);
+			return undefined;
+		}
+		setArrivalTransferExpanded(true);
+		const id = setTimeout(() => setArrivalTransferExpanded(false), 4000);
+		return () => clearTimeout(id);
+	}, [journey.phase, journey.pos, hasCurrentTransfers]);
 
 	// Station names treat phonetic Japanese as one language sequence:
 	// kanji + katakana reading → hiragana → English.
@@ -475,14 +488,14 @@ export function MetroSimulator() {
 			{/* masthead */}
 			<div className="mb-4.5 flex flex-wrap items-end justify-between gap-4">
 				<div>
-					<div className="font-mono text-[12px] tracking-[.22em] text-acid">
+					<div className="font-mono text-sm tracking-[.22em] text-acid">
 						SHUIKA METRO · IN-CAR DISPLAY
 					</div>
 					<div className="font-display text-[46px] leading-[0.95] text-paper">
 						水下地鐵 車内案内
 					</div>
 				</div>
-				<div className="text-right font-mono text-[12px] tracking-[.14em] text-paper-2 opacity-70">
+				<div className="text-right font-mono text-sm tracking-widest text-paper-2 opacity-70">
 					<div>
 						{journey.phase === "at"
 							? "STOPPED · ドア開"
@@ -546,19 +559,34 @@ export function MetroSimulator() {
 				)}
 				{/* bottom info bar: transfers + ticker (fixed height so language never shifts layout) */}
 				{monitorAlert ? null : (
-					<div className="relative flex h-19 items-stretch gap-0 overflow-hidden border-t-[3px] border-t-ink">
-						<div className="flex min-w-0 flex-none w-70 items-center overflow-hidden border-r-[3px] border-r-ink bg-paper-2 px-4.5 py-2">
-							{route.stations[journey.pos].xf &&
-							route.stations[journey.pos].xf.length ? (
+					<div className="relative flex h-19 items-stretch gap-0 overflow-hidden border-t-3 border-t-ink">
+						<div
+							data-transfer-expanded={arrivalTransferExpanded}
+							className="flex min-w-0 flex-none items-center overflow-hidden bg-paper-2 px-4.5 py-2"
+							style={{
+								width: arrivalTransferExpanded
+									? "100%"
+									: hasCurrentTransfers
+										? 280
+										: "auto",
+								borderRight: arrivalTransferExpanded
+									? "0 solid var(--ink)"
+									: "3px solid var(--ink)",
+								transition:
+									"width 650ms var(--ease-pop), border-width 650ms var(--ease-pop)",
+							}}
+						>
+							{hasCurrentTransfers ? (
 								<TransferStrip
 									route={route}
 									pos={journey.pos}
 									lang={lang}
+									expanded={arrivalTransferExpanded}
 								/>
 							) : (
 								<span
 									key={`no-transfer-${journey.pos}-${lang}`}
-									className="font-mono text-[12px] tracking-[.12em] text-muted"
+									className="font-mono text-sm tracking-widest text-muted"
 									style={{
 										animation:
 											"swipeIn .35s var(--ease-out) both",
@@ -621,113 +649,45 @@ export function MetroSimulator() {
 
 			{/* ——— controls */}
 			<div className="mt-5.5 flex flex-col gap-4 rounded-3xl border-3 border-ink bg-paper p-4.5 shadow-hard-s">
-				{/* line picker */}
-				<div>
-					<div className="mb-2 flex flex-wrap items-center justify-between gap-2.5">
-						<div className="font-mono text-[12px] tracking-[.14em] text-muted">
-							LINE · 路線
-						</div>
-						<div className="flex flex-wrap gap-2">
-							<button
-								className="lc-btn"
-								onClick={addLine}
-								style={{
-									background: "var(--acid)",
-									color: "var(--ink)",
-									fontSize: 12,
-								}}
-							>
-								+ ADD LINE
-							</button>
-							<button
-								className="lc-btn"
-								onClick={() => setShowEditor((v) => !v)}
-								style={{
-									background: showEditor
-										? "var(--acid)"
-										: "var(--paper)",
-									color: "var(--ink)",
-									fontSize: 12,
-								}}
-							>
-								{showEditor ? "✕ CLOSE EDITOR" : "✎ EDIT LINE"}
-							</button>
-						</div>
-					</div>
-					<div className="flex flex-wrap gap-2.5">
-						{Object.keys(LINES).map((id) => (
-							<LineButton
-								key={id}
-								lineId={id as LineId}
-								active={id === lineId}
-								onClick={() => pickLine(id as LineId)}
-							/>
-						))}
-					</div>
-				</div>
-				{showEditor ? (
-					<LineEditor
-						route={route}
-						lineId={lineId}
-						setLineField={setLineField}
-						setStationField={setStationField}
-						toggleSide={toggleSide}
-						toggleXfer={toggleXfer}
-						addStation={addStation}
-						removeStation={removeStation}
-						moveStation={moveStation}
-						setDest={setDest}
-						toggleCircular={toggleCircular}
-					/>
-				) : null}
+				<LineControls
+					lineId={lineId}
+					route={route}
+					showEditor={showEditor}
+					onAddLine={addLine}
+					onToggleEditor={() => setShowEditor((value) => !value)}
+					onPickLine={pickLine}
+					setLineField={setLineField}
+					setStationField={setStationField}
+					toggleSide={toggleSide}
+					toggleXfer={toggleXfer}
+					addStation={addStation}
+					removeStation={removeStation}
+					moveStation={moveStation}
+					setDest={setDest}
+					toggleCircular={toggleCircular}
+				/>
 				{/* transport + options */}
 				<div className="grid grid-cols-2 items-stretch gap-3">
-					{/* transport */}
-					<div
-						className="rounded-[10px] border-[3px] border-ink bg-acid p-3 text-ink"
-						style={{ boxShadow: "4px 4px 0 var(--magenta)" }}
-					>
-						<div className="mb-2 font-mono text-[12px] tracking-[.14em] text-muted">
-							TRAIN
-						</div>
-						<div className="grid grid-cols-3 items-center gap-1.5">
-							<Button
-								variant="ghost"
-								size="s"
-								onClick={() => {
-									setAuto(false);
-									setTravelDirection(-1);
-									advance(-1);
-								}}
-							>
-								PREV
-							</Button>
-							<Button
-								variant={auto ? "primary" : "accent"}
-								size="m"
-								onClick={() => setAuto((a) => !a)}
-							>
-								{auto ? "PAUSE" : "PLAY"}
-							</Button>
-							<Button
-								variant="ghost"
-								size="s"
-								onClick={() => {
-									setAuto(false);
-									setTravelDirection(1);
-									advance(1);
-								}}
-							>
-								NEXT
-							</Button>
-						</div>
-					</div>
+					<TrainControls
+						auto={auto}
+						onPrevious={() => {
+							setAuto(false);
+							setTravelDirection(-1);
+							advance(-1);
+						}}
+						onToggleAuto={() => setAuto((value) => !value)}
+						onNext={() => {
+							setAuto(false);
+							setTravelDirection(1);
+							advance(1);
+						}}
+					/>
 					{/* speed */}
 					<div
-						className="rounded-[10px] border-[3px] border-ink bg-blue p-3"
+						className="rounded-xl border-3 border-ink bg-blue p-3"
 						style={{ boxShadow: "4px 4px 0 var(--ink)" }}
 					>
-						<div className="mb-2 font-mono text-[12px] tracking-[.14em] text-muted">
+						<div className="mb-2 font-mono text-sm tracking-widest text-muted">
 							SPEED
 						</div>
 						<div className="grid grid-cols-3 gap-1.5">
@@ -774,7 +734,7 @@ export function MetroSimulator() {
 								}
 							/>
 							<output
-								className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-[12px] font-bold text-ink"
+								className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-sm font-bold text-ink"
 								style={{ boxShadow: "2px 2px 0 var(--ink)" }}
 							>
 								{`${speedKmh} KM/H`}
@@ -785,7 +745,7 @@ export function MetroSimulator() {
 								SIMULATION
 							</span>
 							<output
-								className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-[12px] font-bold text-ink"
+								className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-sm font-bold text-ink"
 								style={{ boxShadow: "2px 2px 0 var(--ink)" }}
 							>
 								{`${simulationSpeed}X`}
@@ -811,10 +771,10 @@ export function MetroSimulator() {
 					</div>
 					{/* language */}
 					<div
-						className="col-span-full rounded-[10px] border-[3px] border-ink bg-violet p-3"
+						className="col-span-full rounded-xl border-3 border-ink bg-violet p-3"
 						style={{ boxShadow: "4px 4px 0 var(--ink)" }}
 					>
-						<div className="mb-2 font-mono text-[12px] tracking-[.14em] text-muted">
+						<div className="mb-2 font-mono text-sm tracking-widest text-muted">
 							LANGUAGE
 						</div>
 						<div className="flex gap-2">
@@ -854,11 +814,11 @@ export function MetroSimulator() {
 							}}
 						>
 							<div className="mb-2 flex items-center justify-between gap-3">
-								<div className="font-mono text-[12px] tracking-[.14em] text-paper">
+								<div className="font-mono text-sm tracking-widest text-paper">
 									SWITCH EVERY
 								</div>
 								<output
-									className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-[12px] font-bold text-ink"
+									className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-sm font-bold text-ink"
 									style={{
 										boxShadow: "2px 2px 0 var(--ink)",
 									}}
@@ -891,7 +851,7 @@ export function MetroSimulator() {
 					</div>
 					{/* display settings */}
 					<section
-						className="col-span-full rounded-[10px] border-[3px] border-ink bg-paper-2 p-3"
+						className="col-span-full rounded-xl border-3 border-ink bg-paper-2 p-3"
 						style={{ boxShadow: "4px 4px 0 var(--blue)" }}
 					>
 						<div className="mb-2.5 font-display text-[28px] leading-[0.85] text-ink">
@@ -902,7 +862,7 @@ export function MetroSimulator() {
 								<div className="mb-1.75 flex justify-between gap-2 font-mono text-[11px] font-bold tracking-widest">
 									<span>STATIONS PER PAGE</span>
 									<output
-										className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-[12px] font-bold text-ink"
+										className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-sm font-bold text-ink"
 										style={{
 											boxShadow: "2px 2px 0 var(--ink)",
 										}}
@@ -937,7 +897,7 @@ export function MetroSimulator() {
 									<div className="mb-1.75 flex justify-between gap-2 font-mono text-[11px] font-bold tracking-widest">
 										<span>DOOR POP-UP TIME</span>
 										<output
-											className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-[12px] font-bold text-ink"
+											className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-sm font-bold text-ink"
 											style={{
 												boxShadow:
 													"2px 2px 0 var(--ink)",
@@ -974,7 +934,7 @@ export function MetroSimulator() {
 									<div className="mb-1.75 flex justify-between gap-2 font-mono text-[11px] font-bold tracking-widest">
 										<span>WAIT BEFORE POP-UP</span>
 										<output
-											className="rounded-md border-2 border-ink bg-blue px-1.75 py-1 text-center font-mono text-[12px] font-bold text-paper"
+											className="rounded-md border-2 border-ink bg-blue px-1.75 py-1 text-center font-mono text-sm font-bold text-paper"
 											style={{
 												boxShadow:
 													"2px 2px 0 var(--ink)",
@@ -1013,7 +973,7 @@ export function MetroSimulator() {
 								<div className="mb-1.75 flex justify-between gap-2 font-mono text-[11px] font-bold tracking-widest">
 									<span>STAY AT STATION</span>
 									<output
-										className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-[12px] font-bold text-ink"
+										className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-sm font-bold text-ink"
 										style={{
 											boxShadow: "2px 2px 0 var(--ink)",
 										}}
@@ -1081,7 +1041,7 @@ export function MetroSimulator() {
 					</section>
 					{/* lower marquee programming */}
 					<section
-						className="col-span-full rounded-[10px] border-[3px] border-ink bg-blue p-3.5 text-ink"
+						className="col-span-full rounded-xl border-3 border-ink bg-blue p-3.5 text-ink"
 						style={{
 							boxShadow: "6px 6px 0 var(--ink)",
 							backgroundImage:
@@ -1100,7 +1060,7 @@ export function MetroSimulator() {
 							}}
 						>
 							<div
-								className="flex flex-col gap-2.5 rounded-lg border-[3px] border-ink bg-paper p-3 text-ink"
+								className="flex flex-col gap-2.5 rounded-lg border-3 border-ink bg-paper p-3 text-ink"
 								style={{ boxShadow: "4px 4px 0 var(--ink)" }}
 							>
 								<Switch
@@ -1149,7 +1109,7 @@ export function MetroSimulator() {
 											} as React.CSSProperties
 										}
 									/>
-									<p className="mt-1.75 font-body text-[12px] leading-[1.3] text-muted">
+									<p className="mt-1.75 font-body text-sm leading-[1.3] text-muted">
 										Ads and Metro notices hold the ticker
 										until this share of the current leg is
 										complete.
@@ -1157,7 +1117,7 @@ export function MetroSimulator() {
 								</div>
 							</div>
 							<div
-								className="min-w-0 rounded-lg border-[3px] border-ink bg-orange p-3 text-ink"
+								className="min-w-0 rounded-lg border-3 border-ink bg-orange p-3 text-ink"
 								style={{ boxShadow: "4px 4px 0 var(--ink)" }}
 							>
 								<div className="mb-1.75 flex items-center justify-between gap-2.5">
@@ -1268,7 +1228,7 @@ export function MetroSimulator() {
 					</section>
 					{/* running controls */}
 					<section
-						className="col-span-full rounded-[10px] border-[3px] border-ink bg-acid p-3"
+						className="col-span-full rounded-xl border-3 border-ink bg-acid p-3"
 						style={{ boxShadow: "4px 4px 0 var(--ink)" }}
 					>
 						<div className="mb-2.5 font-display text-[28px] leading-[0.85]">
@@ -1329,7 +1289,7 @@ export function MetroSimulator() {
 					</section>
 					{/* alert system — a high-contrast broadcast console */}
 					<section
-						className="col-span-full overflow-hidden rounded-xl border-[3px] border-ink bg-paper"
+						className="col-span-full overflow-hidden rounded-xl border-3 border-ink bg-paper"
 						style={{
 							boxShadow: "6px 6px 0 var(--ink)",
 							minWidth: 310,
@@ -1374,7 +1334,7 @@ export function MetroSimulator() {
 									}
 									placeholder="ALERT MESSAGE"
 									aria-label="Primary alert message"
-									className="w-full rounded-md border-[3px] border-ink bg-paper-2 px-2.5 py-2.25 font-body font-bold text-ink"
+									className="w-full rounded-md border-3 border-ink bg-paper-2 px-2.5 py-2.25 font-body font-bold text-ink"
 								/>
 							</label>
 							<label className="flex flex-col gap-1.25 font-mono text-[10px] font-bold tracking-[.12em] text-muted">
@@ -1386,7 +1346,7 @@ export function MetroSimulator() {
 									}
 									placeholder="SECOND LANGUAGE MESSAGE"
 									aria-label="Second language alert message"
-									className="w-full rounded-md border-[3px] border-ink bg-paper-2 px-2.5 py-2.25 font-body font-bold text-ink"
+									className="w-full rounded-md border-3 border-ink bg-paper-2 px-2.5 py-2.25 font-body font-bold text-ink"
 								/>
 							</label>
 							<div className="font-mono text-[10px] font-bold tracking-[.12em] text-muted">
@@ -1403,7 +1363,7 @@ export function MetroSimulator() {
 									<button
 										key={scope}
 										onClick={() => setAlertScope(scope)}
-										className="cursor-pointer rounded-md border-[3px] border-ink p-1.5 font-mono text-[10px] font-bold tracking-[.08em]"
+										className="cursor-pointer rounded-md border-3 border-ink p-1.5 font-mono text-[10px] font-bold tracking-[.08em]"
 										style={{
 											minHeight: 46,
 											background:

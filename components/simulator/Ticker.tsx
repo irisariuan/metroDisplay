@@ -160,20 +160,20 @@ export function Ticker({
 			/>
 			{splitAlert ? (
 				<div className="flex w-full min-w-0">
-					<div className="flex flex-none items-center border-r-[3px] border-r-ink bg-ink px-3 font-mono text-[11px] font-bold tracking-[.12em] text-paper w-28">
-						<span
+					<div className="flex flex-none items-center border-r-3 border-r-ink bg-ink px-3 font-mono text-sm font-bold tracking-widest text-paper w-28">
+						<p
 							key={`${alertLabel}-${lang}`}
-							className="inline-block"
+							className="text-center w-full"
 							style={{
 								animation: "swipeIn .35s var(--ease-pop) both",
 							}}
 						>
 							{alertLabel}
-						</span>
+						</p>
 					</div>
 					<div
 						ref={contentViewportRef}
-						className="flex flex-1 min-w-0 items-center overflow-hidden"
+						className="flex flex-1 min-w-0 items-center overflow-hidden pl-2"
 					>
 						{track}
 					</div>
