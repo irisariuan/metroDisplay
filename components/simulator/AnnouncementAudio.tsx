@@ -22,6 +22,12 @@ interface AnnouncementAudioProps {
 	volume: number;
 	statusKey: string;
 	language: "ja" | "en";
+	onAutoPlaybackChange?: (playing: boolean) => void;
+}
+
+interface PendingSequence {
+	keys: string[];
+	onPlaybackChange?: (playing: boolean) => void;
 }
 
 /** Resolves generated/uploaded clips and plays each announcement as one queue. */
@@ -29,12 +35,20 @@ export const AnnouncementAudio = React.forwardRef<
 	AnnouncementAudioHandle,
 	AnnouncementAudioProps
 >(function AnnouncementAudio(
-	{ autoEnabled, sequence, overrides, volume, statusKey, language },
+	{
+		autoEnabled,
+		sequence,
+		overrides,
+		volume,
+		statusKey,
+		language,
+		onAutoPlaybackChange,
+	},
 	ref,
 ) {
 	const audioRef = React.useRef<HTMLAudioElement>(null);
 	const [manifest, setManifest] = React.useState<AnnouncementManifest | null>(null);
-	const pendingSequences = React.useRef<string[][]>([]);
+	const pendingSequences = React.useRef<PendingSequence[]>([]);
 	const queueGeneration = React.useRef(0);
 	const activeGeneration = React.useRef<number | null>(null);
 	const finishCurrentClip = React.useRef<(() => void) | null>(null);
@@ -72,10 +86,13 @@ export const AnnouncementAudio = React.forwardRef<
 				generation === queueGeneration.current &&
 				pendingSequences.current.length
 			) {
-				const keys = pendingSequences.current.shift() ?? [];
+				const pending = pendingSequences.current.shift();
+				if (!pending) continue;
+				const { keys, onPlaybackChange } = pending;
 				const urls = keys
 					.map((key) => overrides[key] ?? manifest.clips[key]?.url)
 					.filter((url): url is string => Boolean(url));
+				if (urls.length) onPlaybackChange?.(true);
 				for (const url of urls) {
 					if (generation !== queueGeneration.current) break;
 					audio.src = url;
@@ -97,6 +114,7 @@ export const AnnouncementAudio = React.forwardRef<
 						void audio.play().catch(finish);
 					});
 				}
+				onPlaybackChange?.(false);
 			}
 			if (activeGeneration.current === generation)
 				activeGeneration.current = null;
@@ -105,9 +123,9 @@ export const AnnouncementAudio = React.forwardRef<
 	);
 
 	const enqueueKeys = React.useCallback(
-		(keys: string[]) => {
+		(keys: string[], onPlaybackChange?: (playing: boolean) => void) => {
 			if (!manifest || !keys.length) return;
-			pendingSequences.current.push(keys);
+			pendingSequences.current.push({ keys, onPlaybackChange });
 			void drainQueue(queueGeneration.current);
 		},
 		[drainQueue, manifest],
@@ -118,7 +136,7 @@ export const AnnouncementAudio = React.forwardRef<
 		async (keys: string[]) => {
 			if (!manifest || !keys.length) return;
 			const generation = ++queueGeneration.current;
-			pendingSequences.current = [keys];
+			pendingSequences.current = [{ keys }];
 			audioRef.current?.pause();
 			finishCurrentClip.current?.();
 			await drainQueue(generation);
@@ -149,8 +167,16 @@ export const AnnouncementAudio = React.forwardRef<
 		)
 			return;
 		playedForStatus.current.languages.add(language);
-		enqueueKeys(sequence);
-	}, [autoEnabled, enqueueKeys, language, manifest, sequence, statusKey]);
+		enqueueKeys(sequence, onAutoPlaybackChange);
+	}, [
+		autoEnabled,
+		enqueueKeys,
+		language,
+		manifest,
+		onAutoPlaybackChange,
+		sequence,
+		statusKey,
+	]);
 
 	React.useEffect(() => {
 		if (audioRef.current)

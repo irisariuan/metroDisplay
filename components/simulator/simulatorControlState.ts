@@ -1,16 +1,18 @@
 import type React from "react";
 import { DEFAULT_MARQUEE_CONTENT, SPEED_PRESETS } from "@/lib/constants";
-import type { Lang, LineId } from "@/types/metro";
+import type {
+	AnnouncementContent,
+	AnnouncementContentType,
+	Lang,
+	LineId,
+} from "@/types/metro";
 
 export type AlertScope = "marquee" | "lower" | "monitor";
 export type TransferDisplayMode = "auto" | "full" | "split";
 export type StationNameMode = "kanji" | "hiragana" | "en";
 export type LanguageMode = "auto" | StationNameMode;
 
-export interface MarqueeContentItem {
-	type: "ad" | "notice";
-	en: string;
-	ja: string;
+export interface DisplayAnnouncement extends AnnouncementContent {
 	enabled: boolean;
 }
 
@@ -39,7 +41,7 @@ export interface SimulatorControlState {
 	alertLeaving: boolean;
 	delayNextMarqueeMessage: boolean;
 	nextMarqueeThreshold: number;
-	marqueeContent: MarqueeContentItem[];
+	announcements: DisplayAnnouncement[];
 	showDistanceIndicator: boolean;
 	showSpeedIndicator: boolean;
 	showStationStayIndicator: boolean;
@@ -60,18 +62,16 @@ type SetControlAction = {
 	};
 }[keyof SimulatorControlState];
 
-type UpdateMarqueeItemAction = {
-	[K in keyof MarqueeContentItem]: {
-		type: "updateMarqueeItem";
-		index: number;
-		field: K;
-		value: MarqueeContentItem[K];
-	};
-}[keyof MarqueeContentItem];
+type UpdateAnnouncementAction = {
+	type: "updateAnnouncement";
+	index: number;
+	field: keyof DisplayAnnouncement;
+	value: React.SetStateAction<DisplayAnnouncement[keyof DisplayAnnouncement]>;
+};
 
 export type SimulatorControlAction =
 	| SetControlAction
-	| UpdateMarqueeItemAction
+	| UpdateAnnouncementAction
 	| { type: "removeMarqueeItem"; index: number }
 	| { type: "addMarqueeItem" };
 
@@ -99,9 +99,9 @@ export const initialSimulatorControlState: SimulatorControlState = {
 	alertLeaving: false,
 	delayNextMarqueeMessage: true,
 	nextMarqueeThreshold: 70,
-	marqueeContent: DEFAULT_MARQUEE_CONTENT.map((item) => ({
+	announcements: DEFAULT_MARQUEE_CONTENT.map((item) => ({
 		...item,
-		type: item.type as MarqueeContentItem["type"],
+		type: item.type as AnnouncementContentType,
 		ja: item.ja ?? "",
 		enabled: true,
 	})),
@@ -136,27 +136,35 @@ export function simulatorControlReducer(
 				: value;
 		return { ...state, [action.field]: nextValue } as SimulatorControlState;
 	}
-	if (action.type === "updateMarqueeItem") {
+	if (action.type === "updateAnnouncement") {
 		return {
 			...state,
-			marqueeContent: state.marqueeContent.map((item, index) =>
-				index === action.index ? { ...item, [action.field]: action.value } : item,
+			announcements: state.announcements.map((item, index) =>
+				index === action.index
+					? { ...item, [action.field]: action.value }
+					: item,
 			),
 		};
 	}
 	if (action.type === "removeMarqueeItem") {
 		return {
 			...state,
-			marqueeContent: state.marqueeContent.filter(
+			announcements: state.announcements.filter(
 				(_, index) => index !== action.index,
 			),
 		};
 	}
 	return {
 		...state,
-		marqueeContent: [
-			...state.marqueeContent,
-			{ type: "notice", en: "New metro notice", ja: "", enabled: true },
+		announcements: [
+			...state.announcements,
+			{
+				type: "notice",
+				en: "New metro notice",
+				ja: "",
+				enabled: true,
+				displayable: true,
+			},
 		],
 	};
 }

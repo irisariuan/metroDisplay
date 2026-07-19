@@ -63,16 +63,23 @@ export function DirectionIndicators({
 	const betweenStations = Array.from({ length: count - 1 }, (_, index) =>
 		arrow((nodePosition(index) + nodePosition(index + 1)) / 2, index, index * 120),
 	);
+	// Multi-page circular routes already use the page-continuation arrows on
+	// their internal edge stubs. The circular fallback should only occupy an
+	// exposed edge, otherwise two chevrons are painted at the same position.
+	const showLeftLoopConnector =
+		loopConnectorSides.includes("left") && !continueBackward;
+	const showRightLoopConnector =
+		loopConnectorSides.includes("right") && !continueForward;
 	return (
 		<div
 			aria-hidden={true}
 			className="absolute left-15 right-15 top-22.75 h-3.5 pointer-events-none z-1"
 		>
 			{betweenStations}
-			{loopConnectorSides.includes("left")
+			{showLeftLoopConnector
 				? arrow(nodePosition(0) / 2, "loop-connector", 60)
 				: null}
-			{loopConnectorSides.includes("right")
+			{showRightLoopConnector
 				? arrow((nodePosition(count - 1) + 1) / 2, "loop-connector-end", 60)
 				: null}
 			{continueForward ? arrow((nodePosition(count - 1) + 1) / 2, "next-page", 180) : null}

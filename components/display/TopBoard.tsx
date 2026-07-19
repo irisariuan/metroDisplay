@@ -189,7 +189,9 @@ export function TopBoard({
 								lang={signLang === "ja" ? "ja" : "en"}
 								className={[
 									"absolute inset-x-0 top-0 text-acid text-mono tracking-widest text-xs will-change-transform",
-									signLang === "en" ? "uppercase" : "font-bold",
+									signLang === "en"
+										? "uppercase"
+										: "font-bold",
 									side === "R"
 										? "text-right data-[visibility-state=visible]:animate-door-notice-right-in data-[visibility-state=leaving]:animate-door-notice-right-out"
 										: "text-left data-[visibility-state=visible]:animate-door-notice-left-in data-[visibility-state=leaving]:animate-door-notice-left-out",

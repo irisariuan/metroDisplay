@@ -83,15 +83,13 @@ export type Lines = Record<LineId, LineMeta>;
 export type AnnotatedLines = Record<LineId, AnnotatedLineMeta>;
 export type Routes = Record<LineId, Route>;
 
-export type MarqueeType = "ad" | "notice";
+export type AnnouncementContentType = "ad" | "notice" | 'sound';
 
-export interface MarqueeItem {
-	type: MarqueeType;
+export interface AnnouncementContent {
+	type: AnnouncementContentType;
+	displayable: boolean;
 	en: string;
 	ja?: string;
-}
-
-export interface AnnotatedMarqueeItem extends MarqueeItem {
 	enReading?: string;
 	jaReading?: string;
 }

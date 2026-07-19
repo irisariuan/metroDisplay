@@ -2,22 +2,16 @@
 /* Simulator engine + controls + mount */
 import React from "react";
 import { LINES, ROUTES } from "@/lib/metro-data";
-import {
-	announcement,
-	trainStartAnnouncement,
-	upcomingMajorStations,
-} from "@/lib/announcement";
-import {
-	announcementAudioSequence,
-	trainStartAnnouncementAudioSequence,
-} from "@/lib/announcementAudio";
 import { useClock } from "@/hooks/useClock";
 import { SimulatorDisplay } from "@/components/simulator/SimulatorDisplay";
 import { SimulatorControls } from "@/components/simulator/SimulatorControls";
+import { AnnouncementAudio } from "@/components/simulator/AnnouncementAudio";
 import {
-	AnnouncementAudio,
-	type AnnouncementAudioHandle,
-} from "@/components/simulator/AnnouncementAudio";
+	advanceJourney,
+	type Journey,
+	type JourneyBounds,
+} from "@/components/simulator/simulatorJourney";
+import { useSimulatorAnnouncements } from "@/components/simulator/useSimulatorAnnouncements";
 import {
 	initialSimulatorControlState,
 	simulatorControlReducer,
@@ -25,16 +19,9 @@ import {
 	type SimulatorControlState,
 	type StationNameMode,
 } from "@/components/simulator/simulatorControlState";
-import type { LineId, Lang, Phase } from "@/types/metro";
+import type { LineId, Lang, Phase, AnnouncementContent } from "@/types/metro";
 
 const { useState, useEffect, useRef } = React;
-
-interface Journey {
-	pos: number;
-	phase: Phase;
-	progress: number;
-	from: number | null;
-}
 
 interface MetroSimulatorProps {
 	children: React.ReactNode;
@@ -69,7 +56,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		alertLeaving,
 		delayNextMarqueeMessage,
 		nextMarqueeThreshold,
-		marqueeContent,
+		announcements,
 		showDistanceIndicator,
 		showSpeedIndicator,
 		showStationStayIndicator,
@@ -81,7 +68,6 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		announcementVolume,
 		departureMajorStationCount,
 	} = controls;
-	const announcementAudioRef = useRef<AnnouncementAudioHandle>(null);
 	const [announcementAudioOverrides, setAnnouncementAudioOverrides] =
 		useState<Record<string, string>>({});
 	const uploadAnnouncementAudio = (key: string, file: File) => {
@@ -101,56 +87,12 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		updateControl("auto", value);
 	const setTravelDirection = (value: React.SetStateAction<number>) =>
 		updateControl("travelDirection", value);
-	const setSpeedKmh = (value: React.SetStateAction<number>) =>
-		updateControl("speedKmh", value);
-	const setSimulationSpeed = (value: React.SetStateAction<number>) =>
-		updateControl("simulationSpeed", value);
-	const setStationStayMs = (value: React.SetStateAction<number>) =>
-		updateControl("stationStayMs", value);
-	const setLangMs = (value: React.SetStateAction<number>) =>
-		updateControl("langMs", value);
-	const setDoorNoticeMs = (value: React.SetStateAction<number>) =>
-		updateControl("doorNoticeMs", value);
-	const setDoorNoticeWaitMs = (value: React.SetStateAction<number>) =>
-		updateControl("doorNoticeWaitMs", value);
-	const setPageSize = (value: React.SetStateAction<number>) =>
-		updateControl("pageSize", value);
-	const setShowKatakana = (value: React.SetStateAction<boolean>) =>
-		updateControl("showKatakana", value);
-	const setStationNameMode = (
-		value: React.SetStateAction<"kanji" | "hiragana" | "en">,
-	) => updateControl("stationNameMode", value);
-	const setAlertText = (value: React.SetStateAction<string>) =>
-		updateControl("alertText", value);
-	const setAlertSecondText = (value: React.SetStateAction<string>) =>
-		updateControl("alertSecondText", value);
-	const setAlertScope = (
-		value: React.SetStateAction<"marquee" | "lower" | "monitor">,
-	) => updateControl("alertScope", value);
 	const setAlertActive = (value: React.SetStateAction<boolean>) =>
 		updateControl("alertActive", value);
 	const setAlertLeaving = (value: React.SetStateAction<boolean>) =>
 		updateControl("alertLeaving", value);
-	const setDelayNextMarqueeMessage = (value: React.SetStateAction<boolean>) =>
-		updateControl("delayNextMarqueeMessage", value);
-	const setNextMarqueeThreshold = (value: React.SetStateAction<number>) =>
-		updateControl("nextMarqueeThreshold", value);
-	const setShowDistanceIndicator = (value: React.SetStateAction<boolean>) =>
-		updateControl("showDistanceIndicator", value);
-	const setShowSpeedIndicator = (value: React.SetStateAction<boolean>) =>
-		updateControl("showSpeedIndicator", value);
-	const setShowStationStayIndicator = (
-		value: React.SetStateAction<boolean>,
-	) => updateControl("showStationStayIndicator", value);
-	const setPauseAtPageBreak = (value: React.SetStateAction<boolean>) =>
-		updateControl("pauseAtPageBreak", value);
-	const setFollowDirectionView = (value: React.SetStateAction<boolean>) =>
-		updateControl("followDirectionView", value);
 	const setShowEditor = (value: React.SetStateAction<boolean>) =>
 		updateControl("showEditor", value);
-	const setTransferDisplayMode = (
-		value: React.SetStateAction<"auto" | "full" | "split">,
-	) => updateControl("transferDisplayMode", value);
 	const [journey, setJourney] = useState<Journey>({
 		pos: 0,
 		phase: "approach",
@@ -174,9 +116,6 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	const [arrivalTransferExpanded, setArrivalTransferExpanded] =
 		useState(false);
 	const [doorIndicatorVisible, setDoorIndicatorVisible] = useState(false);
-	const [departureAnnouncementPlaying, setDepartureAnnouncementPlaying] =
-		useState(false);
-	const departurePlaybackIdRef = useRef(0);
 	const clock = useClock();
 
 	const route = routes[lineId];
@@ -269,7 +208,11 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		journey.phase !== "approach" ||
 		!delayNextMarqueeMessage ||
 		journey.progress >= nextMarqueeThreshold / 100;
-	const labelMarqueeItem = (item: any, itemLang: Lang) => {
+	const labelAnnouncementContent = (
+		item: AnnouncementContent,
+		itemLang: Lang,
+	) => {
+		if (!item.displayable) throw new Error("Cannot label a non-displayable announcement");
 		const label =
 			item.type === "ad"
 				? itemLang === "ja"
@@ -280,290 +223,58 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					: "METRO NOTICE";
 		return `${label} · ${itemLang === "ja" ? item.ja || item.en : item.en}`;
 	};
-	const remainingMarqueeItems = marqueeContent
-		.filter((item) => item.enabled && item.en.trim())
+	const remainingMarqueeItems = announcements
+		.filter((item) => item.enabled && item.en.trim() && item.displayable)
 		.flatMap((item) => {
 			if (langMode === "auto") {
 				return [
-					item.ja.trim() ? labelMarqueeItem(item, "ja") : null,
-					labelMarqueeItem(item, "en"),
+					item.ja.trim()
+						? labelAnnouncementContent(item, "ja")
+						: null,
+					labelAnnouncementContent(item, "en"),
 				].filter(Boolean);
 			}
-			return [labelMarqueeItem(item, lang)];
+			return [labelAnnouncementContent(item, lang)];
 		});
-	const serviceInfo = {
-		ja: serviceJa,
-		en: serviceEn,
-		passing: passingNext,
-		terminalIndex: serviceDestinationIndex,
-	};
-	const departureStartIndex =
-		travelDirection > 0 ? serviceStartIndex : serviceEndIndex;
-	// On a circular line there is no true terminal, so only announce the
-	// departure from the start station when that station is itself major.
-	const suppressCircularStartDeparture =
-		!!route.circular && !route.stations[departureStartIndex]?.major;
-	const isStartingRun =
-		!suppressCircularStartDeparture &&
-		journey.from === null &&
-		journey.pos === departureStartIndex &&
-		journey.phase === "approach";
-	const isAtDepartureStartStation =
-		!suppressCircularStartDeparture &&
-		journey.pos === departureStartIndex &&
-		journey.phase === "at";
-	// The leg pulling out of the origin: the departure announcement should play
-	// as the train leaves the start stop, not only while it sits there.
-	const isDepartingStartStation =
-		!suppressCircularStartDeparture &&
-		journey.phase === "approach" &&
-		journey.from === departureStartIndex;
-	const isDepartingMajorStation =
-		journey.phase === "approach" &&
-		journey.from !== null &&
-		Boolean(route.stations[journey.from]?.major);
-	const departureOriginIndex =
-		isDepartingMajorStation || isDepartingStartStation
-			? journey.from
-			: journey.pos;
-	const departureMajorStations = React.useMemo(
-		() =>
-			upcomingMajorStations(route, {
-				fromIndex: departureOriginIndex,
-				direction: travelDirection,
-				count: departureMajorStationCount,
-				serviceStopIndices,
-				circular: route.circular,
-			}),
-		[
-			departureMajorStationCount,
-			departureOriginIndex,
-			route,
-			serviceStopIndices,
-			travelDirection,
-		],
-	);
-	const departureService = { serviceJa, serviceEn };
-	const isDepartureAnnouncementStage =
-		(isStartingRun || isDepartingStartStation || isDepartingMajorStation) &&
-		journey.progress < nextMarqueeThreshold / 100;
-	const showDepartureMessages =
-		isAtDepartureStartStation ||
-		isDepartureAnnouncementStage ||
-		departureAnnouncementPlaying;
-	const departureAnnouncementItems = showDepartureMessages
-		? [
-				trainStartAnnouncement(
-					route,
-					{
-						terminalIndex: serviceDestinationIndex,
-						...departureService,
-						majorStations: departureMajorStations,
-					},
-					"ja",
-				),
-				trainStartAnnouncement(
-					route,
-					{
-						terminalIndex: serviceDestinationIndex,
-						...departureService,
-						majorStations: departureMajorStations,
-					},
-					"en",
-				),
-			]
-		: [];
-	const stationAnnouncementItems =
-		langMode === "auto"
-			? [
-					announcement(
-						route,
-						journey.pos,
-						journey.phase,
-						"ja",
-						serviceInfo,
-					),
-					announcement(
-						route,
-						journey.pos,
-						journey.phase,
-						"en",
-						serviceInfo,
-					),
-				]
-			: [
-					announcement(
-						route,
-						journey.pos,
-						journey.phase,
-						lang,
-						serviceInfo,
-					),
-				];
-	const announcementSequence = React.useMemo(
-		() =>
-			announcementAudioSequence({
-				route,
-				pos: journey.pos,
-				phase: journey.phase,
-				lang,
-				passing: passingNext,
-				terminalIndex: serviceDestinationIndex,
-			}),
-		[
-			journey.phase,
-			journey.pos,
-			lang,
-			passingNext,
-			route,
-			serviceDestinationIndex,
-		],
-	);
-	const trainStartAnnouncementSequence = React.useMemo(
-		() =>
-			trainStartAnnouncementAudioSequence({
-				route,
-				lang,
-				terminalIndex: serviceDestinationIndex,
-				serviceJa,
-				serviceEn,
-				majorStations: departureMajorStations,
-			}),
-		[
-			departureMajorStations,
-			lang,
-			route,
-			serviceDestinationIndex,
-			serviceEn,
-			serviceJa,
-		],
-	);
-	const activeAnnouncementSequence = isDepartureAnnouncementStage
-		? trainStartAnnouncementSequence
-		: announcementSequence;
-	const playDepartureAnnouncement = async (announcementLang: Lang) => {
-		const playbackId = ++departurePlaybackIdRef.current;
-		setDepartureAnnouncementPlaying(true);
-		await announcementAudioRef.current?.playKeys(
-			trainStartAnnouncementAudioSequence({
-				route,
-				lang: announcementLang,
-				terminalIndex: serviceDestinationIndex,
-				...departureService,
-				majorStations: departureMajorStations,
-			}),
-		);
-		if (departurePlaybackIdRef.current === playbackId)
-			setDepartureAnnouncementPlaying(false);
-	};
-	const stopAnnouncementAudio = () => {
-		departurePlaybackIdRef.current += 1;
-		setDepartureAnnouncementPlaying(false);
-		announcementAudioRef.current?.stop();
-	};
-	const playCurrentAnnouncement = (announcementLang: Lang) => {
-		if (isDepartureAnnouncementStage) {
-			void announcementAudioRef.current?.playKeys(
-				trainStartAnnouncementAudioSequence({
-					route,
-					lang: announcementLang,
-					terminalIndex: serviceDestinationIndex,
-					...departureService,
-					majorStations: departureMajorStations,
-				}),
-			);
-			return;
-		}
-		const stationSequence = announcementAudioSequence({
-			route,
-			pos: journey.pos,
-			phase: journey.phase,
-			lang: announcementLang,
-			passing: passingNext,
-			terminalIndex: serviceDestinationIndex,
-		});
-		void announcementAudioRef.current?.playKeys(stationSequence);
-	};
-	const announcementAudioStatusKey = `${lineId}:${serviceId}:${serviceStartIndex}:${serviceEndIndex}:${journey.pos}:${journey.phase}:${travelDirection}:${passingNext}:${isDepartureAnnouncementStage ? "departure" : "station"}`;
-	const stationAnnouncementVisible =
-		nextMarqueeMessageVisible || !remainingMarqueeItems.length;
-	const tickerItems = showDepartureMessages
-		? departureAnnouncementItems
-		: stationAnnouncementVisible
-			? stationAnnouncementItems
-			: remainingMarqueeItems;
-	const stateRef = useRef({
-		N,
+	const announcementContents = useSimulatorAnnouncements({
+		route,
+		lineId,
+		serviceId,
+		serviceStartIndex,
+		serviceEndIndex,
+		serviceStopIndices,
+		serviceJa,
+		serviceEn,
+		journey,
+		travelDirection,
+		passingNext,
+		lang,
+		langMode,
+		nextMarqueeMessageVisible,
+		nextMarqueeThreshold,
+		remainingMarqueeItems,
+		departureMajorStationCount,
+		announcementAudioEnabled,
+		announcementVolume,
+		announcementAudioOverrides,
+	});
+	const stateRef = useRef<JourneyBounds>({
+		stationCount: N,
 		circular: route.circular,
-		skipSet: new Set<number>(),
+		skippedStations: new Set<number>(),
 		startIndex: 0,
 		endIndex: N - 1,
 	});
 	React.useEffect(() => {
-		stateRef.current.N = N;
+		stateRef.current.stationCount = N;
 		stateRef.current.circular = !!route.circular;
-		stateRef.current.skipSet = new Set(skipStations);
+		stateRef.current.skippedStations = new Set(skipStations);
 		stateRef.current.startIndex = serviceStartIndex;
 		stateRef.current.endIndex = serviceEndIndex;
 	}, [N, route.circular, serviceEndIndex, serviceStartIndex, skipStations]);
 
 	function advance(dir: number) {
-		setJourney((j) => {
-			const {
-				N: n,
-				circular,
-				skipSet,
-				startIndex,
-				endIndex,
-			} = stateRef.current;
-			if (dir > 0) {
-				if (j.phase === "approach") {
-					// an express run rolls through a skipped station straight
-					// onto the next leg instead of stopping
-					if (skipSet.has(j.pos) && (j.pos < endIndex || circular))
-						return {
-							pos: (j.pos + 1) % n,
-							phase: "approach" as Phase,
-							progress: 0,
-							from: j.pos,
-						};
-					return { ...j, phase: "at" as Phase, progress: 1 };
-				}
-				if (j.pos === endIndex && !circular) return j;
-				return {
-					pos: (j.pos + 1) % n,
-					phase: "approach" as Phase,
-					progress: 0,
-					from: j.pos,
-				};
-			}
-			if (j.phase === "approach") {
-				if (j.pos === startIndex && !circular)
-					return { ...j, phase: "at" as Phase, progress: 1 };
-				const target = (j.pos - 1 + n) % n;
-				if (skipSet.has(target) && (target > startIndex || circular))
-					return {
-						pos: target,
-						phase: "approach" as Phase,
-						progress: 0,
-						from: j.pos,
-					};
-				return {
-					pos: target,
-					phase: "at" as Phase,
-					progress: 1,
-					from: j.pos,
-				};
-			}
-			if (j.pos === startIndex && !circular) return j;
-			const target = (j.pos - 1 + n) % n;
-			return {
-				pos: target,
-				phase: "approach" as Phase,
-				progress: 0,
-				from: j.pos,
-			};
-		});
+		setJourney((current) => advanceJourney(current, dir, stateRef.current));
 	}
 
 	// Auto travel advances real progress rather than a CSS-only transition, so pause freezes in place.
@@ -602,9 +313,9 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 				if (progress === 1) {
 					// pass through skipped stations without dwelling
 					const {
-						N: n,
+						stationCount,
 						circular,
-						skipSet,
+						skippedStations,
 						startIndex,
 						endIndex,
 					} = stateRef.current;
@@ -612,12 +323,12 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 						travelDirection > 0
 							? j.pos < endIndex || circular
 							: j.pos > startIndex || circular;
-					if (skipSet.has(j.pos) && canContinue)
+					if (skippedStations.has(j.pos) && canContinue)
 						return {
 							pos:
 								travelDirection > 0
-									? (j.pos + 1) % n
-									: (j.pos - 1 + n) % n,
+									? (j.pos + 1) % stationCount
+									: (j.pos - 1 + stationCount) % stationCount,
 							phase: "approach" as Phase,
 							progress: 0,
 							from: j.pos,
@@ -959,7 +670,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 				activeAlert={activeAlert}
 				alertScope={alertScope}
 				alertLeaving={alertLeaving}
-				tickerItems={tickerItems}
+				tickerItems={announcementContents.tickerItems}
 				tickerColor={
 					nextMarqueeMessageVisible ? annColor : "var(--paper)"
 				}
@@ -969,16 +680,8 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 				onDoorIndicatorVisibleChange={setDoorIndicatorVisible}
 			/>
 			<AnnouncementAudio
-				ref={announcementAudioRef}
-				autoEnabled={
-					announcementAudioEnabled &&
-					(stationAnnouncementVisible || isDepartureAnnouncementStage)
-				}
-				sequence={activeAnnouncementSequence}
-				overrides={announcementAudioOverrides}
-				volume={announcementVolume}
-				statusKey={announcementAudioStatusKey}
-				language={lang}
+				ref={announcementContents.audioRef}
+				{...announcementContents.audioProps}
 			/>
 
 			<SimulatorControls
@@ -1009,11 +712,14 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					advance,
 					clearAlert,
 					uploadAnnouncementAudio,
-					playAnnouncementKeys: (keys: string[]) =>
-						void announcementAudioRef.current?.playKeys(keys),
-					playCurrentAnnouncement,
-					playDepartureAnnouncement,
-					stopAnnouncementAudio,
+					playAnnouncementKeys:
+						announcementContents.playAnnouncementKeys,
+					playCurrentAnnouncement:
+						announcementContents.playCurrentAnnouncement,
+					playDepartureAnnouncement:
+						announcementContents.playDepartureAnnouncement,
+					stopAnnouncementAudio:
+						announcementContents.stopAnnouncementAudio,
 				}}
 			/>
 		</>
