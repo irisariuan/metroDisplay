@@ -1,5 +1,4 @@
 "use client";
-import React from "react";
 import { LINES } from "@/lib/metro-data";
 import type { LineId } from "@/types/metro";
 

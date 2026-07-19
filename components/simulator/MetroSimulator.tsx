@@ -493,7 +493,7 @@ export function MetroSimulator() {
 			</div>
 
 			{/* ——— device / screen */}
-			<div className="relative overflow-hidden rounded-7xl border-4 border-ink bg-[#e8e7dd] shadow-hard">
+			<div className="relative overflow-hidden rounded-3xl border-4 border-ink bg-[#e8e7dd] shadow-hard">
 				{monitorAlert ? null : (
 					<TopBoard
 						route={route}
@@ -620,7 +620,7 @@ export function MetroSimulator() {
 			</div>
 
 			{/* ——— controls */}
-			<div className="mt-5.5 flex flex-col gap-4 rounded-[18px] border-[3px] border-ink bg-paper p-4.5 shadow-hard-s">
+			<div className="mt-5.5 flex flex-col gap-4 rounded-3xl border-3 border-ink bg-paper p-4.5 shadow-hard-s">
 				{/* line picker */}
 				<div>
 					<div className="mb-2 flex flex-wrap items-center justify-between gap-2.5">
