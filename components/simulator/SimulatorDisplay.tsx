@@ -5,10 +5,10 @@ import { DoorIndicator } from "@/components/display/DoorIndicator";
 import { RouteStrip } from "@/components/display/RouteStrip";
 import { AlertOverlay } from "@/components/simulator/AlertOverlay";
 import { LowerInfoBar } from "@/components/simulator/LowerInfoBar";
-import type { Lang, Phase } from "@/types/metro";
+import type { Lang, Phase, Route } from "@/types/metro";
 
 interface SimulatorDisplayProps {
-	route: any;
+	route: Route & { circular?: boolean };
 	pos: number;
 	phase: Phase;
 	progress: number;
@@ -90,6 +90,7 @@ export function SimulatorDisplay({
 					car={6}
 					showKatakana={showKatakana}
 					stationNameMode={stationNameMode}
+					doorSide={doorIndicatorVisible ? undefined : route.stations[pos].side}
 				/>
 			)}
 			{monitorAlert ? null : (

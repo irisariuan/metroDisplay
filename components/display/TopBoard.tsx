@@ -1,11 +1,12 @@
 "use client";
 import React from "react";
 import { LINES } from "@/lib/metro-data";
-import type { Route, Phase, Lang } from "@/types/metro";
+import type { Route, Phase, Lang, Side } from "@/types/metro";
 import { Marquee } from "./Marquee";
 import { StationReadings } from "./StationReadings";
 import { NumPlate } from "./NumPlate";
 import { HALFTONE } from "./const";
+import { AnimatedVisibility } from "@/components/animation/AnimatedVisibility";
 
 interface TopBoardProps {
 	route: Route;
@@ -16,6 +17,7 @@ interface TopBoardProps {
 	car: React.ReactNode;
 	showKatakana?: boolean;
 	stationNameMode?: string;
+	doorSide?: Side;
 }
 
 // ——— top board: toward label + NEXT/NOW + big bilingual station name + clock + car
@@ -26,9 +28,13 @@ export function TopBoard({
 	lang,
 	clock,
 	car,
+	doorSide,
 	showKatakana = false,
 	stationNameMode = "kanji",
 }: TopBoardProps) {
+	const [lastDoorSide, setLastDoorSide] = React.useState<Side>(
+		doorSide ?? route.stations[pos].side,
+	);
 	const L = LINES[route.line];
 	const st = route.stations[pos];
 	const isAt = phase === "at";
@@ -46,11 +52,14 @@ export function TopBoard({
 	// omitted entirely rather than reserved empty — otherwise the empty row is
 	// swept into justify-center and the name reads optically high.
 	const hasKatakana = stationNameMode === "kanji" && showKatakana;
+	React.useEffect(() => {
+		if (!doorSide) return undefined;
+		const id = setTimeout(() => setLastDoorSide(doorSide), 0);
+		return () => clearTimeout(id);
+	}, [doorSide]);
+	const displayDoorSide = doorSide ?? lastDoorSide;
 	return (
-		<div
-			className="relative grid items-center gap-7 py-5.5 px-8.5 bg-ink text-paper border-b-4 border-b-acid overflow-hidden"
-			style={{ gridTemplateColumns: "auto auto 1fr auto" }}
-		>
+		<div className="pt-5.5 px-8.5 bg-ink text-paper border-b-4 border-b-acid flex flex-col">
 			<div
 				className="absolute inset-0 opacity-50 pointer-events-none"
 				style={{
@@ -58,80 +67,111 @@ export function TopBoard({
 					backgroundSize: "11px 11px",
 				}}
 			/>
-			{/* toward + service type */}
-			<div className="relative min-w-37.5">
-				<div
-					className="inline-block font-mono font-bold text-label tracking-[0.12em] py-1 px-2.25 rounded-sm"
-					style={{ background: L.color, color: L.textOnColor }}
-				>
-					LOCAL
+			<div
+				className="relative grid items-center gap-7 overflow-hidden"
+				style={{ gridTemplateColumns: "auto auto 1fr auto" }}
+			>
+				{/* toward + service type */}
+				<div className="relative min-w-37.5">
+					<div
+						className="inline-block font-mono font-bold text-label tracking-[0.12em] py-1 px-2.25 rounded-sm"
+						style={{ background: L.color, color: L.textOnColor }}
+					>
+						LOCAL
+					</div>
+					<div className="font-body font-bold text-[28px] leading-[1.18] mt-2 text-white whitespace-nowrap">
+						{route.destJa}
+					</div>
+					<div className="font-mono text-label tracking-widest text-acid mt-1">
+						{("for " + route.destEn).toUpperCase()}
+					</div>
 				</div>
-				<div className="font-body font-bold text-[28px] leading-[1.18] mt-2 text-white whitespace-nowrap">
-					{route.destJa}
+				{/* number plate */}
+				<div className="relative">
+					<NumPlate
+						lineId={route.line}
+						idx={pos}
+						scale={1.15}
+						active={true}
+					/>
 				</div>
-				<div className="font-mono text-label tracking-widest text-acid mt-1">
-					{("for " + route.destEn).toUpperCase()}
-				</div>
-			</div>
-			{/* number plate */}
-			<div className="relative">
-				<NumPlate
-					lineId={route.line}
-					idx={pos}
-					scale={1.15}
-					active={true}
-				/>
-			</div>
-			{/* eyebrow + huge name (bilingual flip) — fixed height so the flip never shifts layout */}
-			<div className="relative overflow-hidden h-38.5 flex flex-col justify-center">
-				<div
-					key={"eb" + stationNameMode + isAt}
-					className={`font-mono text-[14px] tracking-[0.16em] ${isAt ? "text-acid" : "text-magenta-2"}`}
-					style={{ animation: "swipeIn .4s var(--ease-out) both" }}
-				>
-					{isEnglishName ? eyebrowEn.toUpperCase() : eyebrowJa}
-				</div>
-				<div
-					key={stationNameMode + pos}
-					className="w-full mt-1"
-					style={{ animation: "swipeIn .45s var(--ease-out) both" }}
-				>
-					<Marquee
-						text={stationName}
-						align="left"
-						textStyle={{
-							fontFamily: "var(--font-display)",
-							letterSpacing: "-.01em",
-							lineHeight: 0.9,
-							fontSize: isEnglishName
-								? "clamp(38px,5.2vw,76px)"
-								: "clamp(52px,7.4vw,100px)",
+				{/* eyebrow + huge name (bilingual flip) — fixed height so the flip never shifts layout */}
+				<div className="relative overflow-hidden h-38.5 flex flex-col justify-center">
+					<div
+						key={"eb" + stationNameMode + isAt}
+						className={`font-mono text-[14px] tracking-[0.16em] ${isAt ? "text-acid" : "text-magenta-2"}`}
+						style={{
+							animation: "swipeIn .4s var(--ease-out) both",
 						}}
-					/>
+					>
+						{isEnglishName ? eyebrowEn.toUpperCase() : eyebrowJa}
+					</div>
+					<div
+						key={stationNameMode + pos}
+						className="w-full mt-1"
+						style={{
+							animation: "swipeIn .45s var(--ease-out) both",
+						}}
+					>
+						<Marquee
+							text={stationName}
+							align="left"
+							textStyle={{
+								fontFamily: "var(--font-display)",
+								letterSpacing: "-.01em",
+								lineHeight: 0.9,
+								fontSize: isEnglishName
+									? "clamp(38px,5.2vw,76px)"
+									: "clamp(52px,7.4vw,100px)",
+							}}
+						/>
+					</div>
+					{hasKatakana && (
+						<StationReadings
+							station={st}
+							visible={true}
+							align="left"
+							color="var(--paper-2)"
+						/>
+					)}
 				</div>
-				{hasKatakana && (
-					<StationReadings
-						station={st}
-						visible={true}
-						align="left"
-						color="var(--paper-2)"
-					/>
+				{/* clock + car */}
+				<div className="relative text-right">
+					<div className="font-mono text-[34px] font-bold text-blue-2">
+						{clock}
+					</div>
+					<div className="inline-flex items-baseline gap-1 mt-1.5">
+						<span className="font-display text-[30px] text-acid">
+							{String(car)}
+						</span>
+						<span className="font-mono text-label tracking-widest">
+							{lang === "ja" ? "号車" : "CAR"}
+						</span>
+					</div>
+				</div>
+			</div>
+			<AnimatedVisibility
+				enterAnimation={
+					displayDoorSide === "L"
+						? "doorNoticeLeftIn .32s ease-out both"
+						: "doorNoticeRightIn .32s ease-out both"
+				}
+				exitAnimation={
+					displayDoorSide === "L"
+						? "doorNoticeLeftOut .32s ease-out both"
+						: "doorNoticeRightOut .32s ease-out both"
+				}
+				className="h-5.5"
+			>
+				{doorSide && (
+					<p
+						className={`text-acid text-mono uppercase tracking-widest text-xs ${doorSide === "R" ? "text-right" : ""}`}
+					>
+						Door on the {doorSide === "L" ? "left" : "right"} side
+						will open
+					</p>
 				)}
-			</div>
-			{/* clock + car */}
-			<div className="relative text-right">
-				<div className="font-mono text-[34px] font-bold text-blue-2">
-					{clock}
-				</div>
-				<div className="inline-flex items-baseline gap-1 mt-1.5">
-					<span className="font-display text-[30px] text-acid">
-						{String(car)}
-					</span>
-					<span className="font-mono text-label tracking-widest">
-						{lang === "ja" ? "号車" : "CAR"}
-					</span>
-				</div>
-			</div>
+			</AnimatedVisibility>
 		</div>
 	);
 }

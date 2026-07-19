@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import type { Side, Phase, Lang } from "@/types/metro";
+import { AnimatedVisibility } from "@/components/animation/AnimatedVisibility";
 
 interface DoorIndicatorProps {
 	side: Side;
@@ -20,8 +21,7 @@ export function DoorIndicator({
 	waitMs = 2400,
 	onVisibleChange,
 }: DoorIndicatorProps) {
-	const [visible, setVisible] = React.useState(phase === "at");
-	const [leaving, setLeaving] = React.useState(false);
+	const [active, setActive] = React.useState(phase === "at");
 	const [pulseVisible, setPulseVisible] = React.useState(true);
 	const [notice, setNotice] = React.useState({ side, lang });
 
@@ -29,22 +29,13 @@ export function DoorIndicator({
 		if (phase === "at") {
 			const id = setTimeout(() => {
 				setNotice({ side, lang });
-				setVisible(true);
-				setLeaving(false);
+				setActive(true);
 			}, 0);
 			return () => clearTimeout(id);
 		}
-		if (!visible) return undefined;
-		const leaveId = setTimeout(() => setLeaving(true), 0);
-		const hideId = setTimeout(() => {
-			setVisible(false);
-			setLeaving(false);
-		}, 320);
-		return () => {
-			clearTimeout(leaveId);
-			clearTimeout(hideId);
-		};
-	}, [phase, side, lang, visible]);
+		const id = setTimeout(() => setActive(false), 0);
+		return () => clearTimeout(id);
+	}, [phase, side, lang]);
 
 	// Pop-up and wait durations are separate so the door notice can stay visible
 	// briefly without immediately reappearing after it has cleared.
@@ -70,44 +61,50 @@ export function DoorIndicator({
 	}, [phase, noticeMs, waitMs]);
 
 	React.useEffect(() => {
-		onVisibleChange?.(phase === "at" && visible && pulseVisible && !leaving);
-	}, [leaving, onVisibleChange, phase, pulseVisible, visible]);
+		onVisibleChange?.(active && pulseVisible);
+	}, [active, onVisibleChange, pulseVisible]);
 
-	if (!visible) return null;
 	const left = notice.side === "L";
 	const arrows = left ? "‹ ‹ ‹" : "› › ›";
 	const txtJa = left ? "左側のドアが開きます" : "右側のドアが開きます";
 	const txtEn = left ? "Doors open on the LEFT" : "Doors open on the RIGHT";
-	const noticeAnimClass = leaving
-		? left
-			? "animate-door-notice-left-out"
-			: "animate-door-notice-right-out"
-		: pulseVisible
-			? left
-				? "animate-door-notice-left-in"
-				: "animate-door-notice-right-in"
-			: left
-				? "animate-door-notice-left-out"
-				: "animate-door-notice-right-out";
 	return (
-		<div
-			className={[
-				"absolute top-3.5 z-5 flex items-center gap-3 bg-magenta text-ink border-[3px] border-ink rounded-pill py-2 px-4 shadow-hard-s pointer-events-none",
-				left ? "left-3.5 flex-row" : "right-3.5 flex-row-reverse",
-				noticeAnimClass,
-			].join(" ")}
+		<AnimatedVisibility
+			enterAnimation={
+				left
+					? "doorNoticeLeftIn .32s ease-out both"
+					: "doorNoticeRightIn .32s ease-out both"
+			}
+			exitAnimation={
+				left
+					? "doorNoticeLeftOut .32s ease-out both"
+					: "doorNoticeRightOut .32s ease-out both"
+			}
 		>
-			<span className="font-display text-[26px] animate-chev-fast">
-				{arrows}
-			</span>
-			<div
-				className={`leading-[1.05] ${left ? "text-left" : "text-right"}`}
-			>
-				<div className="font-body font-bold text-[15px]">{txtJa}</div>
-				<div className="font-mono text-[11px] tracking-[0.08em]">
-					{txtEn.toUpperCase()}
+			{active && pulseVisible && (
+				<div
+					className={[
+						"absolute top-3.5 flex items-center gap-3 bg-magenta text-ink border-[3px] border-ink rounded-pill py-2 px-4 shadow-hard-s pointer-events-none",
+						left
+							? "left-3.5 flex-row"
+							: "right-3.5 flex-row-reverse",
+					].join(" ")}
+				>
+					<span className="font-display text-[26px] animate-chev-fast">
+						{arrows}
+					</span>
+					<div
+						className={`leading-[1.05] ${left ? "text-left" : "text-right"}`}
+					>
+						<div className="font-body font-bold text-[15px]">
+							{txtJa}
+						</div>
+						<div className="font-mono text-[11px] tracking-[0.08em]">
+							{txtEn.toUpperCase()}
+						</div>
+					</div>
 				</div>
-			</div>
-		</div>
+			)}
+		</AnimatedVisibility>
 	);
 }
