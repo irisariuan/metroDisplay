@@ -5,6 +5,8 @@ interface ProgressRailProps {
 	color: string;
 	frac: number;
 	fillToEnd?: boolean;
+	/** Visual rail fraction fillToEnd completes to; the exit edge. */
+	fillTargetFrac?: number;
 	clearToStart?: boolean;
 	resetToken?: number;
 	onFillEnd: () => void;
@@ -20,6 +22,7 @@ export function ProgressRail({
 	color,
 	frac,
 	fillToEnd,
+	fillTargetFrac = 1,
 	clearToStart,
 	resetToken,
 	onFillEnd,
@@ -30,6 +33,7 @@ export function ProgressRail({
 	const ref = React.useRef<HTMLDivElement>(null);
 	const lastFrac = React.useRef<number | null>(null);
 	const origin = Math.min(1, Math.max(0, originFrac));
+	const lastOrigin = React.useRef<number | null>(null);
 	const styleFor = React.useCallback(
 		(value: number) =>
 			({
@@ -47,11 +51,16 @@ export function ProgressRail({
 		[styleFor],
 	);
 
-	// Run after the initial start width has been painted, then move to the target.
+	// Run once after the initial start width has been painted, then move to
+	// the target. Later frac changes belong to the movement effect below.
+	const initialized = React.useRef(false);
 	React.useEffect(() => {
+		if (initialized.current) return undefined;
 		const el = ref.current;
 		if (!el) return undefined;
+		initialized.current = true;
 		lastFrac.current = frac;
+		lastOrigin.current = origin;
 		const frame = requestAnimationFrame(() => {
 			el.style.transition = "left 650ms ease-out, width 650ms ease-out";
 			applyTarget(el, frac);
@@ -68,6 +77,7 @@ export function ProgressRail({
 		applyTarget(el, origin);
 		el.offsetWidth;
 		lastFrac.current = frac;
+		lastOrigin.current = origin;
 		const frame = requestAnimationFrame(() => {
 			el.style.transition = "left 650ms ease-out, width 650ms ease-out";
 			applyTarget(el, frac);
@@ -77,14 +87,22 @@ export function ProgressRail({
 
 	// Subsequent train movements within the same page.
 	React.useEffect(() => {
-		if (lastFrac.current === frac) return;
+		const originChanged = lastOrigin.current !== origin;
+		if (lastFrac.current === frac && !originChanged) return;
 		if (fillToEnd || clearToStart) return;
 		const el = ref.current;
 		if (!el) return;
-		el.style.transition = `left ${moveDur}ms linear, width ${moveDur}ms linear`;
+		// Reversing a paused simulation changes the service-bound trail origin.
+		// React applies the new zero-width origin before this effect runs, so the
+		// imperative cache must also include the origin. Snap that recalculation
+		// into place instead of sweeping the fill across the whole route.
+		el.style.transition = originChanged
+			? "none"
+			: `left ${moveDur}ms linear, width ${moveDur}ms linear`;
 		applyTarget(el, frac);
 		lastFrac.current = frac;
-	}, [frac, moveDur, fillToEnd, clearToStart, applyTarget]);
+		lastOrigin.current = origin;
+	}, [frac, origin, moveDur, fillToEnd, clearToStart, applyTarget]);
 
 	// Complete or clear the trail before handing off to an adjacent page.
 	React.useEffect(() => {
@@ -92,10 +110,20 @@ export function ProgressRail({
 		const el = ref.current;
 		if (!el) return undefined;
 		el.style.transition = "left 480ms ease-out, width 480ms ease-out";
-		applyTarget(el, fillToEnd ? 1 : origin);
+		applyTarget(el, fillToEnd ? fillTargetFrac : origin);
+		lastOrigin.current = origin;
+		lastFrac.current = fillToEnd ? fillTargetFrac : origin;
 		const id = setTimeout(fillToEnd ? onFillEnd : onClearEnd, 500);
 		return () => clearTimeout(id);
-	}, [fillToEnd, clearToStart, onFillEnd, onClearEnd, origin, applyTarget]);
+	}, [
+		fillToEnd,
+		fillTargetFrac,
+		clearToStart,
+		onFillEnd,
+		onClearEnd,
+		origin,
+		applyTarget,
+	]);
 
 	return (
 		<div

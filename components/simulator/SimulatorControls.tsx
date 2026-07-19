@@ -291,7 +291,7 @@ export function SimulatorControls({
 						</div>
 						<input
 							type="range"
-							className="switch-range w-full"
+							className="w-full switch-range"
 							min={1}
 							max={100}
 							step={1}
@@ -363,21 +363,47 @@ export function SimulatorControls({
 											["hiragana", "ひらがな"],
 											["en", "ENGLISH"],
 										] as const
-									).map(([mode, label]) => (
-										<label
-											key={mode}
-											className="flex cursor-pointer items-center gap-1.5 rounded-md border-2 border-ink bg-paper px-2 py-1 font-mono text-sm font-bold text-ink"
-										>
-											<input
-												type="checkbox"
-												checked={autoLanguageModes.includes(mode)}
-												onChange={() => toggleAutoLanguageMode(mode)}
-												aria-label={`Include ${label} in auto language loop`}
-												className="h-3.5 w-3.5 accent-[var(--magenta)]"
-											/>
-											{label}
-										</label>
-									))}
+									).map(([mode, label]) => {
+										const active =
+											autoLanguageModes.includes(mode);
+										return (
+											<label
+												key={mode}
+												className="flex cursor-pointer items-center gap-1.75 rounded-md border-2 border-ink px-2.5 py-1.25 font-mono text-sm font-bold text-ink transition-transform duration-120 ease-pop active:translate-x-[3px] active:translate-y-[3px]"
+												style={{
+													background: active
+														? "var(--acid)"
+														: "var(--paper)",
+													boxShadow: active
+														? "3px 3px 0 var(--ink)"
+														: "none",
+												}}
+											>
+												<input
+													type="checkbox"
+													checked={active}
+													onChange={() =>
+														toggleAutoLanguageMode(mode)
+													}
+													aria-label={`Include ${label} in auto language loop`}
+													className="sr-only"
+												/>
+												<span
+													aria-hidden="true"
+													className="flex h-3.5 w-3.5 items-center justify-center rounded-[3px] border-2 border-ink text-[9px] leading-none"
+													style={{
+														background: active
+															? "var(--ink)"
+															: "var(--paper)",
+														color: "var(--acid)",
+													}}
+												>
+													{active ? "✓" : ""}
+												</span>
+												{label}
+											</label>
+										);
+									})}
 								</div>
 							</div>
 							<div className="mb-2 flex items-center justify-between gap-3">
@@ -395,7 +421,7 @@ export function SimulatorControls({
 							</div>
 							<input
 								type="range"
-								className="switch-range w-full"
+								className="w-full switch-range"
 								min={1000}
 								max={60000}
 								step={1000}
@@ -675,7 +701,7 @@ export function SimulatorControls({
 									</div>
 									<input
 										type="range"
-										className="switch-range w-full"
+										className="w-full switch-range"
 										min={0}
 										max={100}
 										step={5}

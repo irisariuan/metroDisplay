@@ -15,9 +15,14 @@ export function TrailMarker({ frac, direction, hidden, moveDur, instant = false 
 	const startFrac = instant ? frac : (direction === "backward" ? 1 : 0);
 	const left = (value: number) => `calc(60px + (100% - 120px) * ${value})`;
 
+	// Entry animation runs once on mount; later frac changes belong to the
+	// movement effect below so its moveDur transition actually applies.
+	const initialized = React.useRef(false);
 	React.useEffect(() => {
+		if (initialized.current) return undefined;
 		const el = ref.current;
 		if (!el) return undefined;
+		initialized.current = true;
 		lastFrac.current = frac;
 		if (instant) return undefined;
 		const frame = requestAnimationFrame(() => {

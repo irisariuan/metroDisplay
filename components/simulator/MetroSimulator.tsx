@@ -177,8 +177,6 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	const [departureAnnouncementPlaying, setDepartureAnnouncementPlaying] =
 		useState(false);
 	const departurePlaybackIdRef = useRef(0);
-	const [suppressInitialAnnouncement, setSuppressInitialAnnouncement] =
-		useState(true);
 	const clock = useClock();
 
 	const route = routes[lineId];
@@ -314,13 +312,20 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		!suppressCircularStartDeparture &&
 		journey.pos === departureStartIndex &&
 		journey.phase === "at";
+	// The leg pulling out of the origin: the departure announcement should play
+	// as the train leaves the start stop, not only while it sits there.
+	const isDepartingStartStation =
+		!suppressCircularStartDeparture &&
+		journey.phase === "approach" &&
+		journey.from === departureStartIndex;
 	const isDepartingMajorStation =
 		journey.phase === "approach" &&
 		journey.from !== null &&
 		Boolean(route.stations[journey.from]?.major);
-	const departureOriginIndex = isDepartingMajorStation
-		? journey.from
-		: journey.pos;
+	const departureOriginIndex =
+		isDepartingMajorStation || isDepartingStartStation
+			? journey.from
+			: journey.pos;
 	const departureMajorStations = React.useMemo(
 		() =>
 			upcomingMajorStations(route, {
@@ -340,35 +345,34 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	);
 	const departureService = { serviceJa, serviceEn };
 	const isDepartureAnnouncementStage =
-		(isStartingRun || isDepartingMajorStation) &&
+		(isStartingRun || isDepartingStartStation || isDepartingMajorStation) &&
 		journey.progress < nextMarqueeThreshold / 100;
 	const showDepartureMessages =
 		isAtDepartureStartStation ||
-		(isDepartureAnnouncementStage && !suppressInitialAnnouncement) ||
+		isDepartureAnnouncementStage ||
 		departureAnnouncementPlaying;
-	const departureAnnouncementItems =
-		showDepartureMessages
-			? [
-					trainStartAnnouncement(
-						route,
-						{
-							terminalIndex: serviceDestinationIndex,
-							...departureService,
-							majorStations: departureMajorStations,
-						},
-						"ja",
-					),
-					trainStartAnnouncement(
-						route,
-						{
-							terminalIndex: serviceDestinationIndex,
-							...departureService,
-							majorStations: departureMajorStations,
-						},
-						"en",
-					),
-				]
-			: [];
+	const departureAnnouncementItems = showDepartureMessages
+		? [
+				trainStartAnnouncement(
+					route,
+					{
+						terminalIndex: serviceDestinationIndex,
+						...departureService,
+						majorStations: departureMajorStations,
+					},
+					"ja",
+				),
+				trainStartAnnouncement(
+					route,
+					{
+						terminalIndex: serviceDestinationIndex,
+						...departureService,
+						majorStations: departureMajorStations,
+					},
+					"en",
+				),
+			]
+		: [];
 	const stationAnnouncementItems =
 		langMode === "auto"
 			? [
@@ -395,7 +399,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 						lang,
 						serviceInfo,
 					),
-			];
+				];
 	const announcementSequence = React.useMemo(
 		() =>
 			announcementAudioSequence({
@@ -483,11 +487,10 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	const announcementAudioStatusKey = `${lineId}:${serviceId}:${serviceStartIndex}:${serviceEndIndex}:${journey.pos}:${journey.phase}:${travelDirection}:${passingNext}:${isDepartureAnnouncementStage ? "departure" : "station"}`;
 	const stationAnnouncementVisible =
 		nextMarqueeMessageVisible || !remainingMarqueeItems.length;
-	const tickerItems =
-		showDepartureMessages
-			? departureAnnouncementItems
-			: stationAnnouncementVisible
-				? stationAnnouncementItems
+	const tickerItems = showDepartureMessages
+		? departureAnnouncementItems
+		: stationAnnouncementVisible
+			? stationAnnouncementItems
 			: remainingMarqueeItems;
 	const stateRef = useRef({
 		N,
@@ -645,11 +648,6 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	]);
 
 	useEffect(() => {
-		if (!suppressInitialAnnouncement || journey.phase !== "at") return;
-		setSuppressInitialAnnouncement(false);
-	}, [journey.phase, suppressInitialAnnouncement]);
-
-	useEffect(() => {
 		if (journey.phase !== "at") {
 			setStationStayRemainingMs(0);
 			return undefined;
@@ -716,7 +714,6 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		setLineId(id);
 		updateControl("serviceId", "local");
 		setTravelDirection(1);
-		setSuppressInitialAnnouncement(true);
 		setJourney({ pos: 0, phase: "approach", progress: 0, from: null });
 	}
 
@@ -852,7 +849,6 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		}));
 		setLineId(id as LineId);
 		setTravelDirection(1);
-		setSuppressInitialAnnouncement(true);
 		setJourney({ pos: 0, phase: "approach", progress: 0, from: null });
 		setShowEditor(true);
 	};
@@ -976,7 +972,6 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 				ref={announcementAudioRef}
 				autoEnabled={
 					announcementAudioEnabled &&
-					!suppressInitialAnnouncement &&
 					(stationAnnouncementVisible || isDepartureAnnouncementStage)
 				}
 				sequence={activeAnnouncementSequence}

@@ -43,7 +43,7 @@ export const ANNOUNCEMENT_FRAMEWORK_OPTIONS: AnnouncementFrameworkOption[] = [
 		key: "framework.ja.transferEnd",
 		label: "JA · お乗り換え",
 		text: "はお乗り換えです。",
-		speechText: "わお乗り換えです。",
+		speechText: "わ お乗り換えです。",
 		lang: "ja",
 	},
 	{
@@ -109,13 +109,13 @@ export const ANNOUNCEMENT_FRAMEWORK_OPTIONS: AnnouncementFrameworkOption[] = [
 	},
 	{
 		key: "framework.ja.start",
-		label: "JP · Start of announcement",
+		label: "JA · この電車は",
 		text: "この電車は",
 		lang: "ja",
 	},
 	{
 		key: "framework.ja.boundFor",
-		label: "JP · bound for",
+		label: "JA · 方面",
 		text: "方面行きです。",
 		lang: "ja",
 	},
@@ -191,6 +191,18 @@ export const ANNOUNCEMENT_FRAMEWORK_OPTIONS: AnnouncementFrameworkOption[] = [
 		text: "Rapid",
 		lang: "en",
 	},
+	{
+		key: "framework.ja.foot",
+		label: "JA · 足元にご注意ください",
+		text: "足元にご注意ください。",
+		lang: "ja",
+	},
+	{
+		key: "framework.en.foot",
+		label: "EN · Please watch your step",
+		text: "Please watch your step.",
+		lang: "en",
+	},
 ];
 
 export const stationAudioKey = (station: Station, lang: Lang) =>
@@ -247,31 +259,31 @@ export function trainStartAnnouncementAudioSequence({
 	majorStations = [],
 }: TrainStartAnnouncementAudioSequenceOptions): string[] {
 	const destination = route.stations[terminalIndex];
-	const serviceAudioKey = SERVICE_AUDIO_KEYS[lang][
-		lang === "ja" ? serviceJa : serviceEn
-	];
+	const serviceAudioKey =
+		SERVICE_AUDIO_KEYS[lang][lang === "ja" ? serviceJa : serviceEn];
 	const japaneseBoundForStations = [...majorStations, destination].filter(
 		(station, index, stations) =>
-			stations.findIndex((candidate) => candidate.ja === station.ja) === index,
+			stations.findIndex((candidate) => candidate.ja === station.ja) ===
+			index,
 	);
 	const sequence =
 		lang === "ja"
 			? [
-				"framework.ja.start",
-				lineAudioKey(route.line, "ja"),
-				...(serviceAudioKey ? [serviceAudioKey] : []),
-				...japaneseBoundForStations.map((station) =>
-					stationAudioKey(station, "ja"),
-				),
-				"framework.ja.boundFor",
-			]
+					"framework.ja.start",
+					lineAudioKey(route.line, "ja"),
+					...(serviceAudioKey ? [serviceAudioKey] : []),
+					...japaneseBoundForStations.map((station) =>
+						stationAudioKey(station, "ja"),
+					),
+					"framework.ja.boundFor",
+				]
 			: [
-				"framework.en.start",
-				lineAudioKey(route.line, "en"),
-				...(serviceAudioKey ? [serviceAudioKey] : []),
-				"framework.en.boundFor",
-				stationAudioKey(destination, "en"),
-			];
+					"framework.en.start",
+					lineAudioKey(route.line, "en"),
+					...(serviceAudioKey ? [serviceAudioKey] : []),
+					"framework.en.boundFor",
+					stationAudioKey(destination, "en"),
+				];
 	if (!majorStations.length || lang === "ja") return sequence;
 	sequence.push("framework.en.callingAt");
 	majorStations.forEach((station, index) => {
@@ -302,14 +314,16 @@ export function announcementAudioSequence({
 	if (lang === "ja") {
 		if (phase === "approach") sequence.push("framework.ja.approach");
 		sequence.push(stationKey, stationKey, "framework.ja.stationEnd");
-		if (phase === "approach")
-			sequence.push(
-				station.side === "L"
-					? "framework.ja.doorsLeft"
-					: "framework.ja.doorsRight",
-			);
-		if (phase === "at" && pos === terminalIndex)
-			sequence.push("framework.ja.terminal");
+		// if (phase === "approach")
+		sequence.push(
+			station.side === "L"
+				? "framework.ja.doorsLeft"
+				: "framework.ja.doorsRight",
+		);
+		if (phase === "at") {
+			sequence.push("framework.ja.foot");
+			if (pos === terminalIndex) sequence.push("framework.ja.terminal");
+		}
 		if (station.xf?.length)
 			sequence.push(
 				...station.xf.map((lineId) => lineAudioKey(lineId, "ja")),
@@ -322,14 +336,16 @@ export function announcementAudioSequence({
 		phase === "approach" ? "framework.en.approach" : "framework.en.thisIs",
 		stationKey,
 	);
-	if (phase === "approach")
-		sequence.push(
-			station.side === "L"
-				? "framework.en.doorsLeft"
-				: "framework.en.doorsRight",
-		);
-	if (phase === "at" && pos === terminalIndex)
-		sequence.push("framework.en.terminal");
+	// if (phase === "approach")
+	sequence.push(
+		station.side === "L"
+			? "framework.en.doorsLeft"
+			: "framework.en.doorsRight",
+	);
+	if (phase === "at") {
+		sequence.push("framework.en.foot");
+		if (pos === terminalIndex) sequence.push("framework.en.terminal");
+	}
 	if (station.xf?.length)
 		sequence.push(
 			"framework.en.transferStart",

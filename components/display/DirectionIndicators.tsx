@@ -10,6 +10,10 @@ interface DirectionIndicatorsProps {
 	continueForward?: boolean;
 	continueBackward?: boolean;
 	reverseFill?: boolean;
+	/** Explicit filled trail ranges override the linear fill heuristic. */
+	filledRanges?: Array<readonly [number, number]>;
+	/** Directional chevrons on the exposed circular-loop connectors. */
+	loopConnectorSides?: Array<"left" | "right">;
 }
 
 export function DirectionIndicators({
@@ -21,6 +25,8 @@ export function DirectionIndicators({
 	continueForward = false,
 	continueBackward = false,
 	reverseFill = false,
+	filledRanges,
+	loopConnectorSides = [],
 }: DirectionIndicatorsProps) {
 	if (count < 2) return null;
 	const nodePosition = (index: number) =>
@@ -38,7 +44,15 @@ export function DirectionIndicators({
 			style={{
 				left: `${position * 100}%`,
 				transform: `translateX(-50%)${reverse ? " scaleX(-1)" : ""}`,
-				color: (reverseFill ? position >= trailProgress : position <= trailProgress) ? "#fff" : color,
+				color: (filledRanges
+					? filledRanges.some(([start, end]) =>
+						position >= Math.min(start, end) && position <= Math.max(start, end),
+					)
+					: reverseFill
+						? position >= trailProgress
+						: position <= trailProgress)
+					? "#fff"
+					: color,
 			}}
 		>
 			<span className="inline-block animate-chev-fast" style={{ animationDelay: `${delay}ms` }}>
@@ -55,6 +69,12 @@ export function DirectionIndicators({
 			className="absolute left-15 right-15 top-22.75 h-3.5 pointer-events-none z-1"
 		>
 			{betweenStations}
+			{loopConnectorSides.includes("left")
+				? arrow(nodePosition(0) / 2, "loop-connector", 60)
+				: null}
+			{loopConnectorSides.includes("right")
+				? arrow((nodePosition(count - 1) + 1) / 2, "loop-connector-end", 60)
+				: null}
 			{continueForward ? arrow((nodePosition(count - 1) + 1) / 2, "next-page", 180) : null}
 			{continueBackward ? arrow(nodePosition(0) / 2, "previous-page", 180) : null}
 		</div>

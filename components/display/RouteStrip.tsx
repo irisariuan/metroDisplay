@@ -59,6 +59,11 @@ export function RouteStrip({
 	const isEnglishName = stationNameMode === "en";
 	const travelDirection = direction === -1 ? -1 : 1;
 	const isReverse = travelDirection < 0;
+	const trailOriginIndex = isReverse ? trailEndIndex : trailStartIndex;
+	const boundedTrailOriginIndex = Math.max(
+		0,
+		Math.min(route.stations.length - 1, trailOriginIndex),
+	);
 	const flipView = followDirectionView && isReverse;
 	const travelMotionDirection = isReverse ? "backward" : "forward";
 	const hasTravelProgress =
@@ -124,12 +129,23 @@ export function RouteStrip({
 		: isCircularReverseWrap
 			? 0
 			: targetPage + (isReverse ? 1 : -1);
+	// A single-page circular arrival that closed the loop. If the leg was not
+	// progress-driven (manual stepping), the wrap must be animated here: fill
+	// to the exit edge, then reset via resetToken.
+	const isSinglePageWrapArrival =
+		pageCount === 1 &&
+		!!route.circular &&
+		phase === "at" &&
+		(isReverse
+			? pos === route.stations.length - 1 && fromPos === 0
+			: pos === 0 && fromPos === route.stations.length - 1);
+	// True once the current wrap has been animated, by either the progress
+	// midpoint remount or the manual fill-to-edge handoff.
+	const wrapAnimatedRef = React.useRef(false);
 	const desiredPage =
 		isPageBoundaryTravel && (approachProgress as number) < 0.5
 			? boundaryOldPage
 			: targetPage;
-	const singlePageWrap =
-		pageCount === 1 && pos === 0 && fromPos === route.stations.length - 1;
 
 	// pageState bundles the displayed page + exit flag + current line so a line
 	// switch always resets everything atomically in one setState call.
@@ -142,7 +158,6 @@ export function RouteStrip({
 		resetToken: 0,
 		direction: "forward",
 	});
-
 	// Line or page capacity changed → reset the displayed page immediately.
 	React.useEffect(() => {
 		if (pageState.line !== route.line || pageState.pageSize !== PAGE_SIZE) {
@@ -171,6 +186,20 @@ export function RouteStrip({
 	// Cross-page navigation completes or clears the departing trail before handoff.
 	React.useEffect(() => {
 		if (pageState.line !== route.line) return;
+
+		// A manual step never crosses the wrap midpoint, so the loop closure
+		// is animated on arrival instead: exiting fills the trail to the exit
+		// edge, then handleFillEnd resets it to empty via resetToken.
+		if (isSinglePageWrapArrival) {
+			if (!wrapAnimatedRef.current && !pageState.exiting) {
+				wrapAnimatedRef.current = true;
+				setTimeout(
+					() => setPageState((s) => ({ ...s, exiting: true })),
+					0,
+				);
+			}
+			return;
+		}
 
 		// A direction change cancels a pending forward completion at the current station.
 		// The next leg begins from the trail's current fill rather than jumping to an edge.
@@ -216,7 +245,7 @@ export function RouteStrip({
 			route.circular &&
 			pos === 0 &&
 			pageState.displayPage === pageCount - 1;
-		const needsForwardHandoff = wrapsToFirstPage || singlePageWrap;
+		const needsForwardHandoff = wrapsToFirstPage;
 		if (desiredPage < pageState.displayPage && !needsForwardHandoff) {
 			if (!pageState.retreating) {
 				setTimeout(
@@ -236,9 +265,9 @@ export function RouteStrip({
 		desiredPage,
 		isPageBoundaryTravel,
 		isReverse,
+		isSinglePageWrapArrival,
 		pos,
 		pageCount,
-		singlePageWrap,
 		pageState.displayPage,
 		pageState.exiting,
 		pageState.retreating,
@@ -304,12 +333,54 @@ export function RouteStrip({
 	};
 	// During an approach, travel between the same visual positions used by station nodes.
 	const followsTravelProgress = hasTravelProgress && !exiting && !retreating;
+	// A single-page circular route wraps in place: the trail fills to the rail
+	// edge in the first half of the leg, then the marker re-enters from the
+	// opposite edge and closes the loop at the destination station.
+	const isSinglePageCircularWrap =
+		pageCount === 1 &&
+		!!route.circular &&
+		hasTravelProgress &&
+		(isReverse
+			? pos === route.stations.length - 1 && fromPos === 0
+			: pos === 0 && fromPos === route.stations.length - 1);
+	const wrapEntering =
+		isSinglePageCircularWrap && (approachProgress as number) >= 0.5;
+	// Bumped once per wrap, at the midpoint: remounts the rail and marker at
+	// the entry edge without a second remount (and flicker) on arrival.
+	const [wrapToken, setWrapToken] = React.useState(0);
+	const prevWrapEntering = React.useRef(false);
+	React.useEffect(() => {
+		if (wrapEntering && !prevWrapEntering.current) {
+			wrapAnimatedRef.current = true;
+			setWrapToken((t) => t + 1);
+		}
+		prevWrapEntering.current = wrapEntering;
+	}, [wrapEntering]);
+	// A new non-wrap leg re-arms the wrap animation for the next lap.
+	React.useEffect(() => {
+		if (phase === "approach" && !isSinglePageCircularWrap)
+			wrapAnimatedRef.current = false;
+	}, [phase, isSinglePageCircularWrap]);
 	const isBoundaryOldPage =
 		isPageBoundaryTravel && displayPage === boundaryOldPage;
 	const isBoundaryNewPage =
 		isPageBoundaryTravel && displayPage === targetPage;
 	let localFrac: number;
-	if (followsTravelProgress && isBoundaryOldPage) {
+	if (followsTravelProgress && isSinglePageCircularWrap) {
+		const p = approachProgress as number;
+		if (p < 0.5) {
+			const sourceFrac = stationFraction(
+				isReverse ? 0 : stations.length - 1,
+			);
+			const exitEdgeFrac = isReverse ? 0 : 1;
+			localFrac = sourceFrac + (exitEdgeFrac - sourceFrac) * (p * 2);
+		} else {
+			const targetFrac = stationFraction(pos - pageStart);
+			const enterEdgeFrac = isReverse ? 1 : 0;
+			localFrac =
+				enterEdgeFrac + (targetFrac - enterEdgeFrac) * ((p - 0.5) * 2);
+		}
+	} else if (followsTravelProgress && isBoundaryOldPage) {
 		const sourceFrac = stationFraction(isReverse ? 0 : stations.length - 1);
 		const edgeFrac = isReverse ? 0 : 1;
 		localFrac =
@@ -345,16 +416,12 @@ export function RouteStrip({
 	}
 	localFrac = Math.max(0, Math.min(1, localFrac));
 	const moveDur = followsTravelProgress ? 70 : Math.max(500, dwellMs - 150);
-	// During a page handoff the triangle follows the completing/clearing trail to the rail edge.
-	const markerFrac = exiting ? 1 : retreating ? 0 : localFrac;
-	const visualTrailFrac = flipView ? 1 - localFrac : localFrac;
+	// During a page handoff the triangle follows the completing/clearing trail
+	// to the rail edge. Reverse travel exits a circular page at the far side.
+	const exitEdgeFrac = isReverse ? 0 : 1;
+	const markerFrac = exiting ? exitEdgeFrac : retreating ? 0 : localFrac;
 	const visualMarkerFrac = flipView ? 1 - markerFrac : markerFrac;
 	const reverseFill = isReverse && !flipView;
-	const trailOriginIndex = isReverse ? trailEndIndex : trailStartIndex;
-	const boundedTrailOriginIndex = Math.max(
-		0,
-		Math.min(route.stations.length - 1, trailOriginIndex),
-	);
 	const trailOriginPage = Math.floor(boundedTrailOriginIndex / PAGE_SIZE);
 	const trailOriginLocalFrac =
 		trailOriginPage === displayPage
@@ -366,9 +433,24 @@ export function RouteStrip({
 				: trailOriginPage < displayPage
 					? 0
 					: 1;
-	const visualTrailOriginFrac = flipView
-		? 1 - trailOriginLocalFrac
+	const primaryTrailFrac = localFrac;
+	// A circular trail always fills from the rail's entry edge up to the
+	// triangle marker: it reaches 100% as the marker exits the far edge and
+	// resets to empty as the marker re-enters from the opposite edge.
+	const primaryTrailOriginFrac = route.circular
+		? isReverse
+			? 1
+			: 0
 		: trailOriginLocalFrac;
+	const toVisualFrac = (value: number) => (flipView ? 1 - value : value);
+	const visualTrailFrac = toVisualFrac(primaryTrailFrac);
+	const visualTrailOriginFrac = toVisualFrac(primaryTrailOriginFrac);
+	const loopConnectorSides: Array<"left" | "right"> = route.circular
+		? ["left", "right"]
+		: [];
+	const visualFilledTrailRanges = [
+		[visualTrailOriginFrac, visualTrailFrac] as const,
+	];
 	const markerMoveDur = exiting || retreating ? 480 : moveDur;
 	const motionDirection = exiting
 		? "forward"
@@ -450,11 +532,14 @@ export function RouteStrip({
 				}}
 			/>
 			{/* colored progress rail — separate component so useLayoutEffect fires on each page mount */}
+			{/* the wrap suffix remounts the rail alongside the marker so the
+			    fill snaps back to the entry edge in sync with the triangle */}
 			<ProgressRail
-				key={`progress-${displayPage}`}
+				key={`progress-${displayPage}-w${wrapToken}`}
 				color={L.color}
 				frac={visualTrailFrac}
 				fillToEnd={exiting}
+				fillTargetFrac={toVisualFrac(exitEdgeFrac)}
 				clearToStart={retreating}
 				resetToken={resetToken}
 				onFillEnd={handleFillEnd}
@@ -462,9 +547,11 @@ export function RouteStrip({
 				moveDur={moveDur}
 				originFrac={visualTrailOriginFrac}
 			/>
-			{/* train marker follows the same entry/retraction timing as the trail */}
+			{/* train marker follows the same entry/retraction timing as the trail.
+			    The key flips at the wrap midpoint so the marker remounts at the
+			    entry edge instead of sweeping back across the rail. */}
 			<TrailMarker
-				key={`marker-${displayPage}-${resetToken}`}
+				key={`marker-${displayPage}-${resetToken}-w${wrapToken}`}
 				frac={visualMarkerFrac}
 				direction={flipView ? "forward" : motionDirection}
 				hidden={displayPhase === "at" && !exiting && !retreating}
@@ -480,6 +567,8 @@ export function RouteStrip({
 				color={L.color}
 				trailProgress={visualTrailFrac}
 				reverseFill={reverseFill}
+				filledRanges={visualFilledTrailRanges}
+				loopConnectorSides={loopConnectorSides}
 				layout={visualNodeLayout}
 				reverse={isReverse && !flipView}
 				continueForward={

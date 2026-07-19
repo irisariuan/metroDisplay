@@ -81,7 +81,7 @@ export const initialSimulatorControlState: SimulatorControlState = {
 	auto: true,
 	travelDirection: 1,
 	speedKmh: SPEED_PRESETS.normal,
-	simulationSpeed: 100,
+	simulationSpeed: 2,
 	stationStayMs: 10000,
 	langMode: "auto",
 	lang: "ja",
