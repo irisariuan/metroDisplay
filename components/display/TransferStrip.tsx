@@ -21,7 +21,7 @@ export function TransferStrip({
 	const st = route.stations[pos];
 	const viewportRef = React.useRef<HTMLDivElement>(null);
 	const contentRef = React.useRef<HTMLDivElement>(null);
-	const [overflows, setOverflows] = React.useState(false);
+	const [shouldMarquee, setShouldMarquee] = React.useState(false);
 
 	const transferKey = `${lang}:${st.xf.map((lid) => `${lid}-${lang === "ja" ? LINES[lid].ja : LINES[lid].en}`).join("|")}`;
 	React.useLayoutEffect(() => {
@@ -29,7 +29,9 @@ export function TransferStrip({
 		const content = contentRef.current;
 		if (!viewport || !content) return undefined;
 		const measure = () =>
-			setOverflows(content.scrollWidth > viewport.clientWidth + 2);
+			setShouldMarquee(
+				content.scrollWidth > viewport.clientWidth + 2,
+			);
 		measure();
 		if (typeof ResizeObserver === "undefined") return undefined;
 		const observer = new ResizeObserver(measure);
@@ -40,8 +42,12 @@ export function TransferStrip({
 
 	if (!st.xf || !st.xf.length) return null;
 
-	const content = (key: string) => (
-		<div key={key} className="inline-flex items-center gap-3 w-max pr-8">
+	const content = (key: string, measure = false) => (
+		<div
+			key={key}
+			ref={measure ? contentRef : undefined}
+			className="inline-flex w-max items-center gap-3"
+		>
 			{st.xf.map((lid) => (
 				<div key={lid} className="flex flex-none items-center gap-1.5">
 					<LineChip lineId={lid} size={28} />
@@ -77,13 +83,15 @@ export function TransferStrip({
 						: { flex: "1 1 0%" }
 				}
 			>
-				{overflows ? (
+				{shouldMarquee ? (
 					<div className="inline-flex items-center w-max animate-xfmove will-change-transform">
-						<div ref={contentRef}>{content("first")}</div>
-						{content("repeat")}
+						<div className="flex-none pr-8">
+							{content("first", true)}
+						</div>
+						<div className="flex-none pr-8">{content("repeat")}</div>
 					</div>
 				) : (
-					<div ref={contentRef}>{content("static")}</div>
+					content("static", true)
 				)}
 			</div>
 		</div>

@@ -8,6 +8,7 @@ interface DoorIndicatorProps {
 	lang: Lang;
 	noticeMs?: number;
 	waitMs?: number;
+	onVisibleChange?: (visible: boolean) => void;
 }
 
 // ——— door-open indicator with animated chevrons
@@ -17,6 +18,7 @@ export function DoorIndicator({
 	lang,
 	noticeMs = 2400,
 	waitMs = 2400,
+	onVisibleChange,
 }: DoorIndicatorProps) {
 	const [visible, setVisible] = React.useState(phase === "at");
 	const [leaving, setLeaving] = React.useState(false);
@@ -66,6 +68,10 @@ export function DoorIndicator({
 			clearTimeout(showId);
 		};
 	}, [phase, noticeMs, waitMs]);
+
+	React.useEffect(() => {
+		onVisibleChange?.(phase === "at" && visible && pulseVisible && !leaving);
+	}, [leaving, onVisibleChange, phase, pulseVisible, visible]);
 
 	if (!visible) return null;
 	const left = notice.side === "L";

@@ -26,8 +26,8 @@ interface RouteStripProps {
 	showKatakana?: boolean;
 	stationNameMode?: string;
 	direction?: number;
+	showDoorSideCue?: boolean;
 }
-
 // ——— horizontal route strip (Tokyu style) with animated train marker and paged long routes
 export function RouteStrip({
 	route,
@@ -45,6 +45,7 @@ export function RouteStrip({
 	showKatakana = false,
 	stationNameMode = "kanji",
 	direction = 1,
+	showDoorSideCue = false,
 }: RouteStripProps) {
 	const L = LINES[route.line];
 	const isEnglishName = stationNameMode === "en";
@@ -299,7 +300,7 @@ export function RouteStrip({
 		isPageBoundaryTravel && displayPage === boundaryOldPage;
 	const isBoundaryNewPage =
 		isPageBoundaryTravel && displayPage === targetPage;
-	let localFrac;
+	let localFrac: number;
 	if (followsTravelProgress && isBoundaryOldPage) {
 		const sourceFrac = stationFraction(isReverse ? 0 : stations.length - 1);
 		const edgeFrac = isReverse ? 0 : 1;
@@ -356,71 +357,61 @@ export function RouteStrip({
 			data-route-label-boundary
 		>
 			{/* Shown above the labels, alongside the page indicator when present. */}
-			{distanceLabel ? (
-				<div
-					className="absolute top-3 left-15 inline-flex items-center py-1 px-2 border-2 rounded-sm bg-paper font-mono text-[11px] font-bold tracking-[0.08em] leading-none z-3"
-					style={{ borderColor: L.color, color: L.color }}
-				>
-					{distanceLabel}
-				</div>
-			) : null}
-			{speedLabel ? (
-				<div
-					className={[
-						"absolute top-3 inline-flex items-center py-1 px-2 border-2 border-ink rounded-sm bg-acid text-ink font-mono text-[11px] font-bold tracking-[0.08em] leading-none z-3",
-						distanceLabel ? "left-51.5" : "left-15",
-					].join(" ")}
-				>
-					{speedLabel}
-				</div>
-			) : null}
-			{stayLabel ? (
-				<div
-					className={[
-						"absolute top-3 inline-flex items-center py-1 px-2 border-2 border-ink rounded-sm bg-orange text-ink font-mono text-[11px] font-bold tracking-[0.08em] leading-none z-3",
-						distanceLabel && speedLabel
-							? "left-90"
-							: distanceLabel || speedLabel
-								? "left-51.5"
-								: "left-15",
-					].join(" ")}
-				>
-					{stayLabel}
-				</div>
-			) : null}
-			{/* page indicator */}
-			{pageCount > 1 ? (
-				<div
-					className="absolute top-3.5 right-15 flex items-center gap-1.75 font-mono text-[10px] font-bold tracking-widest text-muted"
-					aria-label={
-						lang === "ja"
-							? `${pageCount}ページ中 ${displayPage + 1}ページ`
-							: `Page ${displayPage + 1} of ${pageCount}`
-					}
-				>
-					{lang === "ja"
-						? `${displayPage + 1}/${pageCount} ページ`
-						: `PAGE ${displayPage + 1}/${pageCount}`}
-					<span className="flex gap-1">
-						{Array.from({ length: pageCount }, (_, i) => (
-							<span
-								key={i}
-								className="w-1.75 h-1.75 rounded-pill"
-								style={{
-									background:
-										i === displayPage ? L.color : "#d8d6cc",
-									transition:
-										"background .35s ease, transform .35s var(--ease-pop)",
-									transform:
-										i === displayPage
-											? "scale(1.25)"
-											: "scale(1)",
-								}}
-							/>
-						))}
-					</span>
-				</div>
-			) : null}
+			<div className="absolute flex gap-5 left-0 px-10 top-3 w-full">
+				{distanceLabel ? (
+					<div
+						className="inline-flex items-center py-1 px-2 border-2 rounded-sm bg-paper font-mono text-xs font-bold tracking-widest leading-none z-3"
+						style={{ borderColor: L.color, color: L.color }}
+					>
+						{distanceLabel}
+					</div>
+				) : null}
+				{speedLabel ? (
+					<div className="inline-flex items-center py-1 px-2 border-2 border-ink rounded-sm bg-acid text-ink font-mono text-xs font-bold tracking-widest leading-none z-3">
+						{speedLabel}
+					</div>
+				) : null}
+				{stayLabel ? (
+					<div className="inline-flex items-center py-1 px-2 border-2 border-ink rounded-sm bg-orange text-ink font-mono text-xs font-bold tracking-widest leading-none z-3">
+						{stayLabel}
+					</div>
+				) : null}
+				{/* page indicator */}
+				{pageCount > 1 ? (
+					<div
+						className="flex-1 justify-end flex items-center gap-1.75 font-mono text-xs font-bold tracking-widest text-muted"
+						aria-label={
+							lang === "ja"
+								? `${pageCount}ページ中 ${displayPage + 1}ページ`
+								: `Page ${displayPage + 1} of ${pageCount}`
+						}
+					>
+						{lang === "ja"
+							? `${displayPage + 1}/${pageCount} ページ`
+							: `PAGE ${displayPage + 1}/${pageCount}`}
+						<span className="flex gap-1">
+							{Array.from({ length: pageCount }, (_, i) => (
+								<span
+									key={i}
+									className="w-1.75 h-1.75 rounded-pill"
+									style={{
+										background:
+											i === displayPage
+												? L.color
+												: "#d8d6cc",
+										transition:
+											"background .35s ease, transform .35s var(--ease-pop)",
+										transform:
+											i === displayPage
+												? "scale(1.25)"
+												: "scale(1)",
+									}}
+								/>
+							))}
+						</span>
+					</div>
+				) : null}
+			</div>
 			{/* grey base rail */}
 			<div
 				key={`rail-${displayPage}`}
@@ -547,8 +538,12 @@ export function RouteStrip({
 						>
 							{/* station name */}
 							<div
-								key={`label-${displayPage}-${stationIndex}-${stationNameMode}`}
+								key={`label-${displayPage}-${stationIndex}-${stationNameMode}-${current}`}
 								className="w-full"
+								style={{
+									animation:
+										"swipeIn .35s var(--ease-out) both",
+								}}
 							>
 								<div
 									// Keep label height + gap at 37px: the station-dot centre then
@@ -561,7 +556,7 @@ export function RouteStrip({
 												? st.hira || st.ja
 												: isEnglishName
 													? st.en
-												: st.ja
+													: st.ja
 										}
 										measurementKey={
 											current ? "focused" : "regular"

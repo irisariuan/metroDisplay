@@ -242,10 +242,12 @@ a:hover {
 }
 @keyframes mq {
 	from {
-		transform: translateX(0);
+		transform: translateX(var(--boundary-shift, 0px));
 	}
 	to {
-		transform: translateX(var(--mq, 0));
+		transform: translateX(
+			calc(var(--boundary-shift, 0px) + var(--mq, 0px))
+		);
 	}
 }
 @keyframes doorPop {

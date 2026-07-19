@@ -10,7 +10,6 @@ interface LowerInfoBarProps {
 	lang: Lang;
 	hasTransfers: boolean;
 	transferExpanded: boolean;
-	onToggleTransferExpanded: () => void;
 	tickerItems: string[];
 	tickerColor: string;
 	alertMessages?: string[];
@@ -24,20 +23,26 @@ export function LowerInfoBar({
 	lang,
 	hasTransfers,
 	transferExpanded,
-	onToggleTransferExpanded,
 	tickerItems,
 	tickerColor,
 	alertMessages,
 	alertLeaving,
 	lowerAlertMessages,
 }: LowerInfoBarProps) {
+	const transferWidth = transferExpanded
+		? "100%"
+		: hasTransfers
+			? "280px"
+			: "180px";
+
 	return (
 		<div className="relative flex h-19 items-stretch gap-0 overflow-hidden border-t-3 border-t-ink">
 			<div
 				data-transfer-expanded={transferExpanded}
+				data-has-transfers={hasTransfers}
 				className="relative flex min-w-0 flex-none items-center overflow-hidden bg-paper-2 px-4.5 py-2"
 				style={{
-					width: transferExpanded ? "100%" : hasTransfers ? 280 : "auto",
+					width: transferWidth,
 					borderRight: transferExpanded
 						? "0 solid var(--ink)"
 						: "3px solid var(--ink)",
@@ -46,34 +51,22 @@ export function LowerInfoBar({
 				}}
 			>
 				{hasTransfers ? (
-					<>
-						<div className="min-w-0 flex-1 pr-12">
-							<TransferStrip
-								route={route}
-								pos={pos}
-								lang={lang}
-								expanded={transferExpanded}
-							/>
-						</div>
-						<button
-							onClick={onToggleTransferExpanded}
-							className="lc-btn absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px]"
-							style={{
-								background: transferExpanded
-									? "var(--ink)"
-									: "var(--acid)",
-								color: transferExpanded
-									? "var(--paper)"
-									: "var(--ink)",
-							}}
-						>
-							{transferExpanded ? "SPLIT" : "FULL"}
-						</button>
-					</>
+					<div
+						key={`transfers-${pos}-${lang}`}
+						className="min-w-0 flex-1"
+						style={{ animation: "swipeIn .4s var(--ease-out) both" }}
+					>
+						<TransferStrip
+							route={route}
+							pos={pos}
+							lang={lang}
+							expanded={transferExpanded}
+						/>
+					</div>
 				) : (
 					<span
 						key={`no-transfer-${pos}-${lang}`}
-						className="font-mono text-sm tracking-widest text-muted"
+						className="font-mono text-sm tracking-widest text-muted whitespace-nowrap"
 						style={{ animation: "swipeIn .35s var(--ease-out) both" }}
 					>
 						{lang === "ja" ? "乗換なし" : "NO TRANSFER"}

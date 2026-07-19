@@ -1,0 +1,152 @@
+import type React from "react";
+import { DEFAULT_MARQUEE_CONTENT, SPEED_PRESETS } from "@/lib/constants";
+import type { Lang, LineId } from "@/types/metro";
+
+export type AlertScope = "marquee" | "lower" | "monitor";
+export type TransferDisplayMode = "auto" | "full" | "split";
+export type StationNameMode = "kanji" | "hiragana" | "en";
+
+export interface MarqueeContentItem {
+	type: "ad" | "notice";
+	en: string;
+	ja: string;
+	enabled: boolean;
+}
+
+export interface SimulatorControlState {
+	lineId: LineId;
+	auto: boolean;
+	travelDirection: number;
+	speedKmh: number;
+	simulationSpeed: number;
+	stationStayMs: number;
+	langMode: "auto" | Lang;
+	lang: Lang;
+	langMs: number;
+	doorNoticeMs: number;
+	doorNoticeWaitMs: number;
+	pageSize: number;
+	showHiragana: boolean;
+	showKatakana: boolean;
+	stationNameMode: StationNameMode;
+	alertText: string;
+	alertSecondText: string;
+	alertScope: AlertScope;
+	alertActive: boolean;
+	alertLeaving: boolean;
+	delayNextMarqueeMessage: boolean;
+	nextMarqueeThreshold: number;
+	marqueeContent: MarqueeContentItem[];
+	showDistanceIndicator: boolean;
+	showSpeedIndicator: boolean;
+	showStationStayIndicator: boolean;
+	pauseAtPageBreak: boolean;
+	followDirectionView: boolean;
+	showEditor: boolean;
+	transferDisplayMode: TransferDisplayMode;
+}
+
+type SetControlAction = {
+	[K in keyof SimulatorControlState]: {
+		type: "set";
+		field: K;
+		value: React.SetStateAction<SimulatorControlState[K]>;
+	};
+}[keyof SimulatorControlState];
+
+type UpdateMarqueeItemAction = {
+	[K in keyof MarqueeContentItem]: {
+		type: "updateMarqueeItem";
+		index: number;
+		field: K;
+		value: MarqueeContentItem[K];
+	};
+}[keyof MarqueeContentItem];
+
+export type SimulatorControlAction =
+	| SetControlAction
+	| UpdateMarqueeItemAction
+	| { type: "removeMarqueeItem"; index: number }
+	| { type: "addMarqueeItem" };
+
+export const initialSimulatorControlState: SimulatorControlState = {
+	lineId: "CS",
+	auto: true,
+	travelDirection: 1,
+	speedKmh: SPEED_PRESETS.normal,
+	simulationSpeed: 100,
+	stationStayMs: 10000,
+	langMode: "auto",
+	lang: "ja",
+	langMs: 10000,
+	doorNoticeMs: 10000,
+	doorNoticeWaitMs: 10000,
+	pageSize: 8,
+	showHiragana: true,
+	showKatakana: true,
+	stationNameMode: "kanji",
+	alertText: "Service update in progress",
+	alertSecondText: "",
+	alertScope: "marquee",
+	alertActive: false,
+	alertLeaving: false,
+	delayNextMarqueeMessage: true,
+	nextMarqueeThreshold: 70,
+	marqueeContent: DEFAULT_MARQUEE_CONTENT.map((item) => ({
+		...item,
+		type: item.type as MarqueeContentItem["type"],
+		ja: item.ja ?? "",
+		enabled: true,
+	})),
+	showDistanceIndicator: true,
+	showSpeedIndicator: true,
+	showStationStayIndicator: false,
+	pauseAtPageBreak: false,
+	followDirectionView: false,
+	showEditor: false,
+	transferDisplayMode: "auto",
+};
+
+export function setControl<K extends keyof SimulatorControlState>(
+	field: K,
+	value: React.SetStateAction<SimulatorControlState[K]>,
+): SimulatorControlAction {
+	return { type: "set", field, value } as SimulatorControlAction;
+}
+
+export function simulatorControlReducer(
+	state: SimulatorControlState,
+	action: SimulatorControlAction,
+): SimulatorControlState {
+	if (action.type === "set") {
+		const value = action.value as React.SetStateAction<unknown>;
+		const nextValue =
+			typeof value === "function"
+				? (value as (previous: unknown) => unknown)(state[action.field])
+				: value;
+		return { ...state, [action.field]: nextValue } as SimulatorControlState;
+	}
+	if (action.type === "updateMarqueeItem") {
+		return {
+			...state,
+			marqueeContent: state.marqueeContent.map((item, index) =>
+				index === action.index ? { ...item, [action.field]: action.value } : item,
+			),
+		};
+	}
+	if (action.type === "removeMarqueeItem") {
+		return {
+			...state,
+			marqueeContent: state.marqueeContent.filter(
+				(_, index) => index !== action.index,
+			),
+		};
+	}
+	return {
+		...state,
+		marqueeContent: [
+			...state.marqueeContent,
+			{ type: "notice", en: "New metro notice", ja: "", enabled: true },
+		],
+	};
+}
