@@ -7,38 +7,104 @@ import { LineControls } from "@/components/simulator/controls/LineControls";
 import { ServiceControls } from "@/components/simulator/controls/ServiceControls";
 import { TrainControls } from "@/components/simulator/controls/TrainControls";
 import {
+	ANNOUNCEMENT_FRAMEWORK_OPTIONS,
+	contentAudioKey,
+	stationAudioKey,
+} from "@/lib/announcementAudio";
+import {
 	setControl,
 	type MarqueeContentItem,
 	type SimulatorControlAction,
 	type SimulatorControlState,
+	type StationNameMode,
 } from "@/components/simulator/simulatorControlState";
-import type { LineId } from "@/types/metro";
-import type { Route } from "@/types/metro";
+import type {
+	EditableRoute,
+	EditableStationField,
+	LineEditorField,
+	LineId,
+	RouteDestinationField,
+	Station,
+} from "@/types/metro";
+
+interface AudioClipControlProps {
+	label: string;
+	audioKey: string;
+	overridden: boolean;
+	onUpload: (key: string, file: File) => void;
+	onPlay: (keys: string[]) => void;
+}
+
+function AudioClipControl({
+	label,
+	audioKey,
+	overridden,
+	onUpload,
+	onPlay,
+}: AudioClipControlProps) {
+	return (
+		<div className="flex min-w-0 items-stretch gap-1">
+			<label className="flex min-w-0 flex-1 cursor-pointer items-center justify-center rounded-[5px] border-2 border-ink bg-paper px-2 py-1 font-mono text-[10px] font-bold">
+				<span className="truncate">{overridden ? "● " : "↑ "}{label}</span>
+				<input
+					type="file"
+					accept="audio/*"
+					className="sr-only"
+					onChange={(event) => {
+						const file = event.target.files?.[0];
+						if (file) onUpload(audioKey, file);
+						event.target.value = "";
+					}}
+				/>
+			</label>
+			<button
+				type="button"
+				className="cursor-pointer rounded-[5px] border-2 border-ink bg-acid px-2 font-mono text-xs font-bold"
+				onClick={() => onPlay([audioKey])}
+				aria-label={`Play ${label}`}
+			>
+				▶
+			</button>
+		</div>
+	);
+}
 
 interface SimulatorControlsProps {
 	state: SimulatorControlState;
 	dispatch: React.Dispatch<SimulatorControlAction>;
 	context: {
-		route: Route & { circular?: boolean };
+		route: EditableRoute;
 		hasCurrentTransfers: boolean;
 		transferExpanded: boolean;
+		currentStation: Station;
+		announcementAudioOverrides: Record<string, string>;
 		addService: () => void;
 		removeService: (id: string) => void;
 		setServiceField: (id: string, field: "ja" | "en", value: string) => void;
 		toggleServiceStop: (index: number) => void;
 		addLine: () => void;
 		pickLine: (lineId: LineId) => void;
-		setLineField: (field: string, value: string) => void;
-		setStationField: (index: number, field: string, value: unknown) => void;
+		setLineField: (field: LineEditorField, value: string) => void;
+		setStationField: (
+			index: number,
+			field: EditableStationField,
+			value: string | number,
+		) => void;
 		toggleSide: (index: number) => void;
+		toggleMajorStation: (index: number) => void;
 		toggleXfer: (index: number, lineId: LineId) => void;
 		addStation: () => void;
 		removeStation: (index: number) => void;
 		moveStation: (index: number, direction: number) => void;
-		setDest: (field: string, value: string) => void;
+		setDest: (field: RouteDestinationField, value: string) => void;
 		toggleCircular: () => void;
 		advance: (direction: number) => void;
 		clearAlert: () => void;
+		uploadAnnouncementAudio: (key: string, file: File) => void;
+		playAnnouncementKeys: (keys: string[]) => void;
+		playCurrentAnnouncement: (language: "ja" | "en") => void;
+		playDepartureAnnouncement: (language: "ja" | "en") => void;
+		stopAnnouncementAudio: () => void;
 	};
 }
 
@@ -52,16 +118,19 @@ export function SimulatorControls({
 		lineId, serviceId, showEditor, auto, travelDirection, speedKmh, simulationSpeed,
 		langMode, langMs, pageSize, doorNoticeMs, doorNoticeWaitMs, stationStayMs,
 		showDistanceIndicator, showSpeedIndicator, showStationStayIndicator,
-		showHiragana, showKatakana, followDirectionView, delayNextMarqueeMessage,
+		autoLanguageModes, showKatakana, followDirectionView, delayNextMarqueeMessage,
 		nextMarqueeThreshold, marqueeContent, pauseAtPageBreak, alertActive,
 		alertText, alertSecondText, alertScope, alertLeaving,
+		announcementAudioEnabled, announcementVolume, departureMajorStationCount,
 	} = state;
 	const {
-		route, hasCurrentTransfers, transferExpanded,
+		route, hasCurrentTransfers, transferExpanded, currentStation,
+		announcementAudioOverrides,
 		addService, removeService, setServiceField, toggleServiceStop,
-		addLine, pickLine, setLineField, setStationField, toggleSide, toggleXfer,
+		addLine, pickLine, setLineField, setStationField, toggleSide, toggleMajorStation, toggleXfer,
 		addStation, removeStation, moveStation, setDest, toggleCircular, advance,
-		clearAlert,
+		clearAlert, uploadAnnouncementAudio, playAnnouncementKeys, playCurrentAnnouncement,
+		playDepartureAnnouncement, stopAnnouncementAudio,
 	} = context;
 	const set = <K extends keyof SimulatorControlState>(
 		field: K,
@@ -82,7 +151,7 @@ export function SimulatorControls({
 	const setShowDistanceIndicator = (value: React.SetStateAction<boolean>) => set("showDistanceIndicator", value);
 	const setShowSpeedIndicator = (value: React.SetStateAction<boolean>) => set("showSpeedIndicator", value);
 	const setShowStationStayIndicator = (value: React.SetStateAction<boolean>) => set("showStationStayIndicator", value);
-	const setShowHiragana = (value: React.SetStateAction<boolean>) => set("showHiragana", value);
+	const setAutoLanguageModes = (value: React.SetStateAction<StationNameMode[]>) => set("autoLanguageModes", value);
 	const setShowKatakana = (value: React.SetStateAction<boolean>) => set("showKatakana", value);
 	const setFollowDirectionView = (value: React.SetStateAction<boolean>) => set("followDirectionView", value);
 	const setDelayNextMarqueeMessage = (value: React.SetStateAction<boolean>) => set("delayNextMarqueeMessage", value);
@@ -91,6 +160,20 @@ export function SimulatorControls({
 	const setAlertText = (value: React.SetStateAction<string>) => set("alertText", value);
 	const setAlertSecondText = (value: React.SetStateAction<string>) => set("alertSecondText", value);
 	const setAlertScope = (value: React.SetStateAction<SimulatorControlState["alertScope"]>) => set("alertScope", value);
+	const setAnnouncementAudioEnabled = (value: React.SetStateAction<boolean>) => set("announcementAudioEnabled", value);
+	const setAnnouncementVolume = (value: React.SetStateAction<number>) => set("announcementVolume", value);
+	const setDepartureMajorStationCount = (value: React.SetStateAction<number>) => set("departureMajorStationCount", value);
+	const [frameworkAudioKey, setFrameworkAudioKey] = React.useState(
+		ANNOUNCEMENT_FRAMEWORK_OPTIONS[0].key,
+	);
+	const toggleAutoLanguageMode = (mode: StationNameMode) =>
+		setAutoLanguageModes((current) => {
+			if (current.includes(mode))
+				return current.length === 1
+					? current
+					: current.filter((item) => item !== mode);
+			return [...current, mode];
+		});
 
 	return (
 			<div className="mt-5.5 flex flex-col gap-4 rounded-3xl border-3 border-ink bg-paper p-4.5 shadow-hard-s">
@@ -104,6 +187,7 @@ export function SimulatorControls({
 					setLineField={setLineField}
 					setStationField={setStationField}
 					toggleSide={toggleSide}
+					toggleMajorStation={toggleMajorStation}
 					toggleXfer={toggleXfer}
 					addStation={addStation}
 					removeStation={removeStation}
@@ -235,7 +319,8 @@ export function SimulatorControls({
 							{(
 								[
 									["auto", "AUTO"],
-									["ja", "日本語"],
+									["kanji", "日本語"],
+									["hiragana", "ひらがな"],
 									["en", "EN"],
 								] as const
 							).map(([m, lbl]) => (
@@ -267,6 +352,34 @@ export function SimulatorControls({
 									langMode === "auto" ? "auto" : "none",
 							}}
 						>
+							<div className="mb-3">
+								<div className="mb-1.5 font-mono text-sm font-bold tracking-widest text-paper">
+									AUTO LOOP LANGUAGES
+								</div>
+								<div className="flex flex-wrap gap-2">
+									{(
+										[
+											["kanji", "日本語"],
+											["hiragana", "ひらがな"],
+											["en", "ENGLISH"],
+										] as const
+									).map(([mode, label]) => (
+										<label
+											key={mode}
+											className="flex cursor-pointer items-center gap-1.5 rounded-md border-2 border-ink bg-paper px-2 py-1 font-mono text-sm font-bold text-ink"
+										>
+											<input
+												type="checkbox"
+												checked={autoLanguageModes.includes(mode)}
+												onChange={() => toggleAutoLanguageMode(mode)}
+												aria-label={`Include ${label} in auto language loop`}
+												className="h-3.5 w-3.5 accent-[var(--magenta)]"
+											/>
+											{label}
+										</label>
+									))}
+								</div>
+							</div>
 							<div className="mb-2 flex items-center justify-between gap-3">
 								<div className="font-mono text-sm tracking-widest text-paper">
 									SWITCH EVERY
@@ -313,7 +426,7 @@ export function SimulatorControls({
 						</div>
 						<div className="grid grid-cols-3 gap-4">
 							<div>
-								<div className="mb-1.75 flex justify-between gap-2 font-mono text-[11px] font-bold tracking-widest">
+								<div className="mb-1.75 flex justify-between gap-2 font-mono text-sm font-bold tracking-widest">
 									<span>STATIONS PER PAGE</span>
 									<output
 										className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-sm font-bold text-ink"
@@ -348,7 +461,7 @@ export function SimulatorControls({
 							</div>
 							<div className="flex flex-col gap-3">
 								<div>
-									<div className="mb-1.75 flex justify-between gap-2 font-mono text-[11px] font-bold tracking-widest">
+									<div className="mb-1.75 flex justify-between gap-2 font-mono text-sm font-bold tracking-widest">
 										<span>DOOR POP-UP TIME</span>
 										<output
 											className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-sm font-bold text-ink"
@@ -385,7 +498,7 @@ export function SimulatorControls({
 									</div>
 								</div>
 								<div className="border-t-2 border-t-ink pt-2.5">
-									<div className="mb-1.75 flex justify-between gap-2 font-mono text-[11px] font-bold tracking-widest">
+									<div className="mb-1.75 flex justify-between gap-2 font-mono text-sm font-bold tracking-widest">
 										<span>WAIT BEFORE POP-UP</span>
 										<output
 											className="rounded-md border-2 border-ink bg-blue px-1.75 py-1 text-center font-mono text-sm font-bold text-paper"
@@ -424,7 +537,7 @@ export function SimulatorControls({
 								</div>
 							</div>
 							<div>
-								<div className="mb-1.75 flex justify-between gap-2 font-mono text-[11px] font-bold tracking-widest">
+								<div className="mb-1.75 flex justify-between gap-2 font-mono text-sm font-bold tracking-widest">
 									<span>STAY AT STATION</span>
 									<output
 										className="min-w-13.5 rounded-md border-2 border-ink bg-magenta px-1.75 py-1 text-center font-mono text-sm font-bold text-ink"
@@ -498,11 +611,6 @@ export function SimulatorControls({
 								label="REMAINING STAY TIME"
 							/>
 							<Switch
-								checked={showHiragana}
-								onChange={setShowHiragana}
-								label="INCLUDE HIRAGANA IN AUTO LOOP"
-							/>
-							<Switch
 								checked={showKatakana}
 								onChange={setShowKatakana}
 								label="SHOW KATAKANA WITH KANJI"
@@ -553,7 +661,7 @@ export function SimulatorControls({
 											: "none",
 									}}
 								>
-									<div className="mb-1.75 flex justify-between gap-2 font-mono text-[11px] font-bold tracking-[.08em]">
+									<div className="mb-1.75 flex justify-between gap-2 font-mono text-sm font-bold tracking-[.08em]">
 										<span>SHOW NEXT AFTER</span>
 										<output
 											className="rounded-sm border-2 border-ink bg-acid px-1.5 py-0.75 font-mono font-bold text-ink"
@@ -596,7 +704,7 @@ export function SimulatorControls({
 								style={{ boxShadow: "4px 4px 0 var(--ink)" }}
 							>
 								<div className="mb-1.75 flex items-center justify-between gap-2.5">
-									<span className="font-mono text-[11px] font-bold tracking-widest text-ink">
+									<span className="font-mono text-sm font-bold tracking-widest text-ink">
 										CONTENT PLAYLIST · ENGLISH + OPTIONAL
 										JAPANESE
 									</span>
@@ -620,7 +728,7 @@ export function SimulatorControls({
 											className="grid items-center gap-1.5 rounded-[7px] border-2 border-ink bg-paper-2 p-1.5 text-ink"
 											style={{
 												gridTemplateColumns:
-													"auto 70px minmax(170px, 1fr) minmax(170px, 1fr) auto",
+													"auto 70px minmax(150px, 1fr) minmax(150px, 1fr) minmax(150px, auto) auto",
 												boxShadow:
 													"2px 2px 0 var(--ink)",
 											}}
@@ -645,7 +753,7 @@ export function SimulatorControls({
 													NOTICE
 												</option>
 											</select>
-											<input
+										<input
 												value={item.en}
 												placeholder="English message"
 												aria-label={`English marquee item ${index + 1}`}
@@ -661,9 +769,24 @@ export function SimulatorControls({
 												onChange={(ev) =>
 													dispatch({ type: "updateMarqueeItem", index, field: "ja", value: ev.target.value })
 												}
-												className="w-full min-w-0 rounded-[5px] border-2 border-ink bg-paper px-2 py-1.5 font-body font-semibold text-ink"
-											/>
-											<button
+											className="w-full min-w-0 rounded-[5px] border-2 border-ink bg-paper px-2 py-1.5 font-body font-semibold text-ink"
+										/>
+										<div className="grid grid-cols-2 gap-1">
+											{(["ja", "en"] as const).map((audioLang) => {
+												const key = contentAudioKey(index, audioLang);
+												return (
+													<AudioClipControl
+														key={key}
+														label={audioLang.toUpperCase()}
+														audioKey={key}
+														overridden={Boolean(announcementAudioOverrides[key])}
+														onUpload={uploadAnnouncementAudio}
+														onPlay={playAnnouncementKeys}
+													/>
+												);
+											})}
+										</div>
+										<button
 												className="lc-btn"
 											onClick={() => dispatch({ type: "removeMarqueeItem", index })}
 												title="Remove playlist item"
@@ -743,6 +866,133 @@ export function SimulatorControls({
 								label="PAUSE AT PAGE BREAK"
 							/>
 						</div>
+					</section>
+					<section
+						className="col-span-full rounded-xl border-3 border-ink bg-blue p-3 text-ink"
+						style={{ boxShadow: "4px 4px 0 var(--ink)" }}
+					>
+						<div className="mb-2 flex items-center justify-between gap-3">
+							<div>
+								<div className="font-display text-[25px] leading-none">AUDIO ANNOUNCEMENT</div>
+								<div className="mt-1 font-mono text-[10px] font-bold tracking-widest text-muted">
+									COMPOSED FROM FRAMEWORK + STATION + TRANSFER CLIPS
+								</div>
+							</div>
+							<Switch
+								checked={announcementAudioEnabled}
+								onChange={setAnnouncementAudioEnabled}
+								label="AUTO STATION AUDIO"
+							/>
+						</div>
+						<div className="grid gap-2.5 lg:grid-cols-2">
+							<div className="rounded-md border-2 border-ink bg-paper-2 p-2">
+								<div className="mb-1.5 font-mono text-[10px] font-bold tracking-widest">
+									CURRENT STATION · {currentStation.ja} / {currentStation.en}
+								</div>
+								<div className="grid grid-cols-2 gap-1.5">
+									{(["ja", "en"] as const).map((audioLang) => {
+										const key = stationAudioKey(currentStation, audioLang);
+										return (
+											<AudioClipControl
+												key={key}
+												label={`${audioLang.toUpperCase()} NAME`}
+												audioKey={key}
+												overridden={Boolean(announcementAudioOverrides[key])}
+												onUpload={uploadAnnouncementAudio}
+												onPlay={playAnnouncementKeys}
+											/>
+										);
+									})}
+								</div>
+							</div>
+							<div className="rounded-md border-2 border-ink bg-paper-2 p-2">
+								<div className="mb-1.5 font-mono text-[10px] font-bold tracking-widest">FRAMEWORK CLIP</div>
+								<div className="grid grid-cols-[minmax(0,1fr)_minmax(130px,auto)] gap-1.5">
+									<select
+										value={frameworkAudioKey}
+										onChange={(event) => setFrameworkAudioKey(event.target.value)}
+										className="min-w-0 rounded-[5px] border-2 border-ink bg-paper px-2 font-mono text-[10px] font-bold"
+									>
+										{ANNOUNCEMENT_FRAMEWORK_OPTIONS.map((option) => (
+											<option key={option.key} value={option.key}>{option.label}</option>
+										))}
+									</select>
+									<AudioClipControl
+										label="UPLOAD"
+										audioKey={frameworkAudioKey}
+										overridden={Boolean(announcementAudioOverrides[frameworkAudioKey])}
+										onUpload={uploadAnnouncementAudio}
+										onPlay={playAnnouncementKeys}
+									/>
+								</div>
+							</div>
+						</div>
+						<div className="mt-2 flex flex-wrap items-center gap-2">
+							<button
+								type="button"
+								className="lc-btn bg-acid text-sm text-paper"
+								onClick={stopAnnouncementAudio}
+							>
+								■ STOP AUDIO
+							</button>
+							<button
+								type="button"
+								className="lc-btn bg-magenta text-sm text-ink"
+								onClick={() => playDepartureAnnouncement("ja")}
+							>
+								▶ DEPARTURE · 日本語
+							</button>
+							<button
+								type="button"
+								className="lc-btn bg-magenta text-sm text-ink"
+								onClick={() => playDepartureAnnouncement("en")}
+							>
+								▶ DEPARTURE · ENGLISH
+							</button>
+							<span className="font-mono text-[10px] font-bold tracking-widest text-muted">
+								REPLAY CURRENT PHASE
+							</span>
+							<button
+								type="button"
+								className="lc-btn bg-acid text-sm text-ink"
+								onClick={() => playCurrentAnnouncement("ja")}
+							>
+								▶ 日本語
+							</button>
+							<button
+								type="button"
+								className="lc-btn bg-paper text-sm text-ink"
+								onClick={() => playCurrentAnnouncement("en")}
+							>
+								▶ ENGLISH
+							</button>
+						</div>
+						<label className="mt-2.5 flex items-center gap-3 font-mono text-[10px] font-bold tracking-widest">
+							MAJOR STOPS IN DEPARTURE
+							<input
+								type="range"
+								className="switch-range flex-1"
+								min={0}
+								max={5}
+								value={departureMajorStationCount}
+								onChange={(event) => setDepartureMajorStationCount(Number(event.target.value))}
+								style={{ "--range-fill": `${departureMajorStationCount * 20}%` } as React.CSSProperties}
+							/>
+							<span>{departureMajorStationCount}</span>
+						</label>
+						<label className="mt-2.5 flex items-center gap-3 font-mono text-[10px] font-bold tracking-widest">
+							VOLUME
+							<input
+								type="range"
+								className="switch-range flex-1"
+								min={0}
+								max={100}
+								value={Math.round(announcementVolume * 100)}
+								onChange={(event) => setAnnouncementVolume(Number(event.target.value) / 100)}
+								style={{ "--range-fill": `${announcementVolume * 100}%` } as React.CSSProperties}
+							/>
+							<span>{Math.round(announcementVolume * 100)}%</span>
+						</label>
 					</section>
 					{/* alert system — a high-contrast broadcast console */}
 					<section

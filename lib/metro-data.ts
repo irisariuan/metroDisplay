@@ -5,15 +5,22 @@
  * "⚠ uncertain" comments should be proofread against the map. Sides alternate
  * mechanically where the map gives no cue.
  */
-import type { LineId, Lines, Routes, Station } from "@/types/metro";
+import type {
+	AnnotatedLines,
+	LineId,
+	Route,
+	Routes,
+	Station,
+} from "@/types/metro";
 
 // line meta: id, code letter used in station numbers, names, brand color, ink-on-color legibility
-const LINES: Lines = {
+const LINES: AnnotatedLines = {
 	CS: {
 		id: "CS",
 		code: "C",
 		ja: "中心原線",
 		en: "Chūshingen Line",
+		jaReading: "ちゅうしんげんせん",
 		color: "#12318f",
 		textOnColor: "#fff",
 	},
@@ -21,6 +28,7 @@ const LINES: Lines = {
 		id: "MZ",
 		code: "M",
 		ja: "水野線",
+		jaReading: "みずのせん",
 		en: "Mizuno Line",
 		color: "#22a355",
 		textOnColor: "#fff",
@@ -29,6 +37,7 @@ const LINES: Lines = {
 		id: "KW",
 		code: "K",
 		ja: "北野川灣線",
+		jaReading: "きたのがわわんせん",
 		en: "Kitanogawa Bay Line",
 		color: "#e4632a",
 		textOnColor: "#fff",
@@ -37,6 +46,7 @@ const LINES: Lines = {
 		id: "UK",
 		code: "U",
 		ja: "私營うかしま線",
+		jaReading: "しえいうかしません",
 		en: "Ukashima Line",
 		color: "#e0359a",
 		textOnColor: "#fff",
@@ -45,6 +55,7 @@ const LINES: Lines = {
 		id: "SD",
 		code: "S",
 		ja: "水道上線",
+		jaReading: "すいどううえせん",
 		en: "Suidōue Line",
 		color: "#f2b400",
 		textOnColor: "#111",
@@ -53,6 +64,7 @@ const LINES: Lines = {
 		id: "AR",
 		code: "A",
 		ja: "都鐵荒川線",
+		jaReading: "とてつあらかわせん",
 		en: "Toden Arakawa Line",
 		color: "#d0121b",
 		textOnColor: "#fff",
@@ -61,6 +73,7 @@ const LINES: Lines = {
 		id: "KZ",
 		code: "Z",
 		ja: "私營北野川坂線",
+		jaReading: "しえいきたのがわざかせん",
 		en: "Kitanogawa-zaka Line",
 		color: "#2ba9d8",
 		textOnColor: "#fff",
@@ -69,6 +82,7 @@ const LINES: Lines = {
 		id: "KH",
 		code: "H",
 		ja: "北野川本線",
+		jaReading: "きたのがわほんせん",
 		en: "Kitanogawa Main Line",
 		color: "#a8bf2f",
 		textOnColor: "#111",
@@ -77,6 +91,7 @@ const LINES: Lines = {
 		id: "SG",
 		code: "G",
 		ja: "水道後線",
+		jaReading: "すいどうごせん",
 		en: "Suidōgo Line",
 		color: "#7d3fb0",
 		textOnColor: "#fff",
@@ -85,6 +100,7 @@ const LINES: Lines = {
 		id: "MG",
 		code: "W",
 		ja: "私營水口線",
+		jaReading: "しえいみずぐちせん",
 		en: "Mizuguchi Line",
 		color: "#55c2ad",
 		textOnColor: "#111",
@@ -93,6 +109,7 @@ const LINES: Lines = {
 		id: "SN",
 		code: "N",
 		ja: "新水野線",
+		jaReading: "しんみずのせん",
 		en: "Shin-Mizuno Line",
 		color: "#58b7c8",
 		textOnColor: "#111",
@@ -232,6 +249,20 @@ const s = (
 	kata: STATION_READINGS[ja]?.kata || "",
 });
 
+/**
+ * Mark interchanges and both termini as major by default. Explicit editor
+ * choices are retained so custom routes can opt a station in or out.
+ */
+export function markMajorStations(route: Route): Route {
+	const terminalIndex = route.stations.length - 1;
+	for (const [index, station] of route.stations.entries()) {
+		if (station.major === undefined)
+			station.major =
+				index === 0 || index === terminalIndex || station.xf.length > 0;
+	}
+	return route;
+}
+
 // Each line: ordered stations. terminusJa/En used for destination.
 const ROUTES: Routes = {
 	// 中心原線 — the east–west trunk: 荒川 → 聖橋東
@@ -260,6 +291,7 @@ const ROUTES: Routes = {
 	// (森原小學前・森原東) vs. a southern leg through the 水道後 corridor.
 	MZ: {
 		line: "MZ",
+		circular: true,
 		destJa: "聖橋北",
 		destEn: "Hijiribashi-Kita",
 		towardJa: "水道上・聖橋北",
@@ -440,6 +472,8 @@ const ROUTES: Routes = {
 		],
 	},
 };
+
+Object.values(ROUTES).forEach(markMajorStations);
 
 // station number label e.g. C05
 function num(lineId: LineId, idx: number): string {

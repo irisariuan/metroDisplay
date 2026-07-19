@@ -10,8 +10,8 @@ interface ProgressRailProps {
 	onFillEnd: () => void;
 	onClearEnd: () => void;
 	moveDur: number;
-	direction?: "forward" | "backward";
-	reverseFill?: boolean;
+	/** The trail origin on this page, as a rail fraction. */
+	originFrac?: number;
 }
 
 // ——— progress rail subcomponent
@@ -25,13 +25,27 @@ export function ProgressRail({
 	onFillEnd,
 	onClearEnd,
 	moveDur,
-	direction = "forward",
-	reverseFill = false,
+	originFrac = 0,
 }: ProgressRailProps) {
 	const ref = React.useRef<HTMLDivElement>(null);
 	const lastFrac = React.useRef<number | null>(null);
-
-	const startWidth = direction === "backward" ? "calc(100% - 120px)" : "0px";
+	const origin = Math.min(1, Math.max(0, originFrac));
+	const styleFor = React.useCallback(
+		(value: number) =>
+			({
+				left: `calc(60px + (100% - 120px) * ${Math.min(origin, Math.max(0, Math.min(1, value)))})`,
+				width: `calc((100% - 120px) * ${Math.abs(Math.max(0, Math.min(1, value)) - origin)})`,
+			}),
+		[origin],
+	);
+	const applyTarget = React.useCallback(
+		(el: HTMLDivElement, value: number) => {
+			const next = styleFor(value);
+			el.style.left = next.left;
+			el.style.width = next.width;
+		},
+		[styleFor],
+	);
 
 	// Run after the initial start width has been painted, then move to the target.
 	React.useEffect(() => {
@@ -39,11 +53,11 @@ export function ProgressRail({
 		if (!el) return undefined;
 		lastFrac.current = frac;
 		const frame = requestAnimationFrame(() => {
-			el.style.transition = "width 650ms ease-out";
-			el.style.width = "calc((100% - 120px) * " + frac + ")";
+			el.style.transition = "left 650ms ease-out, width 650ms ease-out";
+			applyTarget(el, frac);
 		});
 		return () => cancelAnimationFrame(frame);
-	}, [frac]);
+	}, [frac, applyTarget]);
 
 	// A single-page route clears instantly, then redraws to the first station.
 	React.useEffect(() => {
@@ -51,16 +65,15 @@ export function ProgressRail({
 		const el = ref.current;
 		if (!el) return undefined;
 		el.style.transition = "none";
-		el.style.width =
-			direction === "backward" ? "calc(100% - 120px)" : "0px";
+		applyTarget(el, origin);
 		el.offsetWidth;
 		lastFrac.current = frac;
 		const frame = requestAnimationFrame(() => {
-			el.style.transition = "width 650ms ease-out";
-			el.style.width = "calc((100% - 120px) * " + frac + ")";
+			el.style.transition = "left 650ms ease-out, width 650ms ease-out";
+			applyTarget(el, frac);
 		});
 		return () => cancelAnimationFrame(frame);
-	}, [resetToken, frac, direction]);
+	}, [resetToken, frac, origin, applyTarget]);
 
 	// Subsequent train movements within the same page.
 	React.useEffect(() => {
@@ -68,27 +81,30 @@ export function ProgressRail({
 		if (fillToEnd || clearToStart) return;
 		const el = ref.current;
 		if (!el) return;
-		el.style.transition = "width " + moveDur + "ms linear";
-		el.style.width = "calc((100% - 120px) * " + frac + ")";
+		el.style.transition = `left ${moveDur}ms linear, width ${moveDur}ms linear`;
+		applyTarget(el, frac);
 		lastFrac.current = frac;
-	}, [frac, moveDur, fillToEnd, clearToStart]);
+	}, [frac, moveDur, fillToEnd, clearToStart, applyTarget]);
 
 	// Complete or clear the trail before handing off to an adjacent page.
 	React.useEffect(() => {
 		if (!fillToEnd && !clearToStart) return undefined;
 		const el = ref.current;
 		if (!el) return undefined;
-		el.style.transition = "width 480ms ease-out";
-		el.style.width = fillToEnd ? "calc(100% - 120px)" : "0px";
+		el.style.transition = "left 480ms ease-out, width 480ms ease-out";
+		applyTarget(el, fillToEnd ? 1 : origin);
 		const id = setTimeout(fillToEnd ? onFillEnd : onClearEnd, 500);
 		return () => clearTimeout(id);
-	}, [fillToEnd, clearToStart, onFillEnd, onClearEnd]);
+	}, [fillToEnd, clearToStart, onFillEnd, onClearEnd, origin, applyTarget]);
 
 	return (
 		<div
 			ref={ref}
-			className={`absolute top-23 h-3 rounded-pill ${reverseFill ? "right-15" : "left-15"}`}
-			style={{ width: startWidth, background: color }}
+			className="absolute left-15 top-23 h-3 rounded-pill"
+			style={{
+				background: color,
+				...styleFor(origin),
+			}}
 		/>
 	);
 }

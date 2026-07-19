@@ -26,6 +26,11 @@ export interface LineMeta {
 	textOnColor: string;
 }
 
+export interface AnnotatedLineMeta extends LineMeta {
+	jaReading?: string;
+	enReading?: string;
+}
+
 export interface Station {
 	ja: string;
 	en: string;
@@ -33,6 +38,8 @@ export interface Station {
 	xf: LineId[];
 	hira: string;
 	kata: string;
+	/** highlighted stop for route displays and service announcements */
+	major?: boolean;
 	/** service-variant ids that pass this station without stopping */
 	skip?: string[];
 }
@@ -53,13 +60,38 @@ export interface Route {
 	towardEn: string;
 	stations: Station[];
 	services?: ServiceVariant[];
+	/** loops back to the first station instead of terminating */
+	circular?: boolean;
 }
 
+/** Editor-only station data used by the simulator's line designer. */
+export interface EditableStation extends Station {
+	distance?: number;
+}
+
+/** Route data enriched with the simulator editor's mutable fields. */
+export interface EditableRoute extends Omit<Route, "stations"> {
+	circular?: boolean;
+	stations: EditableStation[];
+}
+
+export type EditableStationField = "ja" | "en" | "hira" | "kata" | "distance";
+export type LineEditorField = "ja" | "en" | "color";
+export type RouteDestinationField = "destJa" | "destEn";
+
 export type Lines = Record<LineId, LineMeta>;
+export type AnnotatedLines = Record<LineId, AnnotatedLineMeta>;
 export type Routes = Record<LineId, Route>;
 
+export type MarqueeType = "ad" | "notice";
+
 export interface MarqueeItem {
-	type: "ad" | "notice";
+	type: MarqueeType;
 	en: string;
 	ja?: string;
+}
+
+export interface AnnotatedMarqueeItem extends MarqueeItem {
+	enReading?: string;
+	jaReading?: string;
 }

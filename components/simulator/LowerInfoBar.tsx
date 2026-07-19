@@ -2,10 +2,10 @@
 
 import { TransferStrip } from "@/components/display/TransferStrip";
 import { Ticker } from "@/components/simulator/Ticker";
-import type { Lang } from "@/types/metro";
+import type { Lang, Route } from "@/types/metro";
 
 interface LowerInfoBarProps {
-	route: any;
+	route: Route;
 	pos: number;
 	lang: Lang;
 	hasTransfers: boolean;

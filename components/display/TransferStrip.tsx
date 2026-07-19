@@ -25,20 +25,41 @@ export function TransferStrip({
 
 	const transferKey = `${lang}:${st.xf.map((lid) => `${lid}-${lang === "ja" ? LINES[lid].ja : LINES[lid].en}`).join("|")}`;
 	React.useLayoutEffect(() => {
-		const viewport = viewportRef.current;
-		const content = contentRef.current;
-		if (!viewport || !content) return undefined;
-		const measure = () =>
-			setShouldMarquee(
-				content.scrollWidth > viewport.clientWidth + 2,
-			);
+		let frame = 0;
+		let observer: ResizeObserver | undefined;
+		const measure = () => {
+			if (frame) return;
+			frame = requestAnimationFrame(() => {
+				frame = 0;
+				// Read the refs at measurement time. The measured copy is replaced
+				// when marquee mode changes, so capturing the initial node leaves the
+				// width observer comparing against a detached element.
+				const viewport = viewportRef.current;
+				const content = contentRef.current;
+				if (!viewport || !content) return;
+				const contentWidth = Math.max(
+					content.scrollWidth,
+					content.getBoundingClientRect().width,
+				);
+				const viewportWidth = viewport.getBoundingClientRect().width;
+				setShouldMarquee(contentWidth > viewportWidth + 2);
+			});
+		};
+
 		measure();
-		if (typeof ResizeObserver === "undefined") return undefined;
-		const observer = new ResizeObserver(measure);
-		observer.observe(viewport);
-		observer.observe(content);
-		return () => observer.disconnect();
-	}, [transferKey]);
+		void document.fonts?.ready.then(measure);
+		if (typeof ResizeObserver !== "undefined") {
+			observer = new ResizeObserver(measure);
+			if (viewportRef.current) observer.observe(viewportRef.current);
+			if (contentRef.current) observer.observe(contentRef.current);
+		}
+		window.addEventListener("resize", measure);
+		return () => {
+			cancelAnimationFrame(frame);
+			observer?.disconnect();
+			window.removeEventListener("resize", measure);
+		};
+	}, [expanded, transferKey]);
 
 	if (!st.xf || !st.xf.length) return null;
 
@@ -62,6 +83,7 @@ export function TransferStrip({
 	return (
 		<div
 			key={"xf" + transferKey}
+			data-transfer-marquee={shouldMarquee || undefined}
 			className="flex items-center w-full min-w-0 gap-3"
 			style={{
 				animation: "swipeIn .4s var(--ease-out) both",

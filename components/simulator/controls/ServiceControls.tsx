@@ -29,7 +29,6 @@ export function ServiceControls({
 	const services: ServiceVariant[] = route.services || [];
 	const active = services.find((sv) => sv.id === serviceId);
 	const lineColor = LINES[route.line].color;
-	const lastIndex = route.stations.length - 1;
 
 	return (
 		<section
@@ -140,29 +139,23 @@ export function ServiceControls({
 						</button>
 					</div>
 					<div className="font-mono text-[10px] font-bold tracking-[.12em] text-muted">
-						TAP A STATION TO TOGGLE STOP / PASS · TERMINALS ALWAYS
-						STOP
+						TAP A STATION TO TOGGLE STOP / PASS · FIRST & LAST ENABLED
+						STOPS DEFINE THE SERVICE ROUTE
 					</div>
 					<div className="flex flex-wrap gap-1.5">
 						{route.stations.map((station, index) => {
-							const terminal =
-								index === 0 || index === lastIndex;
 							const stops =
-								terminal ||
 								!station.skip?.includes(active.id);
 							return (
 								<button
 									key={`${index}-${station.ja}`}
 									className="lc-btn"
-									disabled={terminal}
 									onClick={() => toggleServiceStop(index)}
 									aria-pressed={!stops}
 									title={
-										terminal
-											? "Terminals always stop"
-											: stops
-												? "Stops — tap to pass"
-												: "Passes — tap to stop"
+										stops
+											? "Stops — tap to pass"
+											: "Passes — tap to stop"
 									}
 									style={{
 										padding: "5px 8px",
@@ -173,7 +166,6 @@ export function ServiceControls({
 										color: stops
 											? LINES[route.line].textOnColor
 											: "#8b897e",
-										opacity: terminal ? 0.75 : 1,
 										textDecoration: stops
 											? "none"
 											: "line-through",

@@ -1,11 +1,86 @@
 import { LINES } from "@/lib/metro-data";
-import type { Route, Phase, Lang } from "@/types/metro";
+import type { Route, Phase, Lang, Station } from "@/types/metro";
 
 export interface ServiceInfo {
 	ja: string;
 	en: string;
 	/** the train passes the current station without stopping */
 	passing?: boolean;
+	/** final served stop for the train's current direction */
+	terminalIndex?: number;
+}
+
+interface MajorStationOptions {
+	fromIndex: number;
+	direction: number;
+	count: number;
+	serviceStopIndices?: readonly number[];
+	circular?: boolean;
+}
+
+/** Return up to `count` served major stops ahead of the train. */
+export function upcomingMajorStations(
+	route: Route,
+	{
+		fromIndex,
+		direction,
+		count,
+		serviceStopIndices,
+		circular = false,
+	}: MajorStationOptions,
+): Station[] {
+	if (count <= 0 || route.stations.length < 2) return [];
+	const servedStops = serviceStopIndices
+		? new Set(serviceStopIndices)
+		: undefined;
+	const majorStations: Station[] = [];
+	const step = direction < 0 ? -1 : 1;
+	let index = fromIndex;
+
+	for (let traversed = 0; traversed < route.stations.length - 1; traversed += 1) {
+		index += step;
+		if (index < 0 || index >= route.stations.length) {
+			if (!circular) break;
+			index = (index + route.stations.length) % route.stations.length;
+		}
+		if (servedStops && !servedStops.has(index)) continue;
+		const station = route.stations[index];
+		if (station.major) majorStations.push(station);
+		if (majorStations.length === count) break;
+	}
+	return majorStations;
+}
+
+interface TrainStartAnnouncementOptions {
+	terminalIndex: number;
+	serviceJa: string;
+	serviceEn: string;
+	majorStations?: readonly Station[];
+}
+
+/** Spoken when a new run begins, before the ordinary next-station message. */
+export function trainStartAnnouncement(
+	route: Route,
+	{
+		terminalIndex,
+		serviceJa,
+		serviceEn,
+		majorStations = [],
+	}: TrainStartAnnouncementOptions,
+	lang: Lang,
+) {
+	const destination = route.stations[terminalIndex];
+	if (lang === "ja") {
+		const boundForStations = [...majorStations, destination].filter(
+			(station, index, stations) =>
+				stations.findIndex((candidate) => candidate.ja === station.ja) === index,
+		);
+		return `この電車は${LINES[route.line].ja}${serviceJa}${boundForStations.map((station) => station.ja).join("、")}方面行きです。`;
+	}
+	const majorStopText = majorStations.length
+		? ` Calling at ${majorStations.map((station) => station.en).join(", ")}.`
+		: "";
+	return `This is a ${LINES[route.line].en} ${serviceEn} train bound for ${destination.en}.${majorStopText}`;
 }
 
 export function announcement(
@@ -21,8 +96,7 @@ export function announcement(
 			? `この電車は${service.ja}です。${st.ja}には停まりません。ご注意ください。`
 			: `This train is the ${service.en} service and does not stop at ${st.en}. Please be careful.`;
 	}
-	const N = route.stations.length;
-	const last = pos === N - 1;
+	const last = pos === (service?.terminalIndex ?? route.stations.length - 1);
 	const sideJa = st.side === "L" ? "左" : "右";
 	const sideEn = st.side === "L" ? "left" : "right";
 	const xfJa =

@@ -5,15 +5,18 @@ import { DoorIndicator } from "@/components/display/DoorIndicator";
 import { RouteStrip } from "@/components/display/RouteStrip";
 import { AlertOverlay } from "@/components/simulator/AlertOverlay";
 import { LowerInfoBar } from "@/components/simulator/LowerInfoBar";
-import type { Lang, Phase, Route } from "@/types/metro";
+import type { Lang, Phase, Route, Station } from "@/types/metro";
 
 interface SimulatorDisplayProps {
 	route: Route & { circular?: boolean };
 	serviceJa: string;
 	serviceEn: string;
 	serviceIsLocal: boolean;
+	serviceOrigin?: Station;
 	passing: boolean;
 	skipStations: number[];
+	trailStartIndex?: number;
+	trailEndIndex?: number;
 	pos: number;
 	phase: Phase;
 	progress: number;
@@ -51,8 +54,11 @@ export function SimulatorDisplay({
 	serviceJa,
 	serviceEn,
 	serviceIsLocal,
+	serviceOrigin,
 	passing,
 	skipStations,
+	trailStartIndex,
+	trailEndIndex,
 	pos,
 	phase,
 	progress,
@@ -96,6 +102,7 @@ export function SimulatorDisplay({
 					serviceJa={serviceJa}
 					serviceEn={serviceEn}
 					serviceIsLocal={serviceIsLocal}
+					serviceOrigin={serviceOrigin}
 					passing={passing}
 					pos={pos}
 					phase={phase}
@@ -124,6 +131,8 @@ export function SimulatorDisplay({
 					<RouteStrip
 						route={route}
 						skipStations={skipStations}
+						trailStartIndex={trailStartIndex}
+						trailEndIndex={trailEndIndex}
 						pos={pos}
 						phase={phase}
 						travelProgress={progress}

@@ -28,6 +28,10 @@ interface RouteStripProps {
 	showDoorSideCue?: boolean;
 	/** station indices the active express service passes without stopping */
 	skipStations?: number[];
+	/** first station served by the selected service; the trail begins here */
+	trailStartIndex?: number;
+	/** final station served by the selected service; used when travelling back */
+	trailEndIndex?: number;
 }
 // ——— horizontal route strip (Tokyu style) with animated train marker and paged long routes
 export function RouteStrip({
@@ -48,6 +52,8 @@ export function RouteStrip({
 	direction = 1,
 	showDoorSideCue = false,
 	skipStations,
+	trailStartIndex = 0,
+	trailEndIndex = route.stations.length - 1,
 }: RouteStripProps) {
 	const L = LINES[route.line];
 	const isEnglishName = stationNameMode === "en";
@@ -344,7 +350,25 @@ export function RouteStrip({
 	const visualTrailFrac = flipView ? 1 - localFrac : localFrac;
 	const visualMarkerFrac = flipView ? 1 - markerFrac : markerFrac;
 	const reverseFill = isReverse && !flipView;
-	const railFillFrac = reverseFill ? 1 - visualTrailFrac : visualTrailFrac;
+	const trailOriginIndex = isReverse ? trailEndIndex : trailStartIndex;
+	const boundedTrailOriginIndex = Math.max(
+		0,
+		Math.min(route.stations.length - 1, trailOriginIndex),
+	);
+	const trailOriginPage = Math.floor(boundedTrailOriginIndex / PAGE_SIZE);
+	const trailOriginLocalFrac =
+		trailOriginPage === displayPage
+			? stationFraction(boundedTrailOriginIndex - pageStart)
+			: isReverse
+				? trailOriginPage > displayPage
+					? 1
+					: 0
+				: trailOriginPage < displayPage
+					? 0
+					: 1;
+	const visualTrailOriginFrac = flipView
+		? 1 - trailOriginLocalFrac
+		: trailOriginLocalFrac;
 	const markerMoveDur = exiting || retreating ? 480 : moveDur;
 	const motionDirection = exiting
 		? "forward"
@@ -429,15 +453,14 @@ export function RouteStrip({
 			<ProgressRail
 				key={`progress-${displayPage}`}
 				color={L.color}
-				frac={railFillFrac}
+				frac={visualTrailFrac}
 				fillToEnd={exiting}
 				clearToStart={retreating}
 				resetToken={resetToken}
 				onFillEnd={handleFillEnd}
 				onClearEnd={handleClearEnd}
 				moveDur={moveDur}
-				direction={flipView ? "forward" : motionDirection}
-				reverseFill={reverseFill}
+				originFrac={visualTrailOriginFrac}
 			/>
 			{/* train marker follows the same entry/retraction timing as the trail */}
 			<TrailMarker
@@ -566,16 +589,17 @@ export function RouteStrip({
 								focused={current && !skipped}
 								showReadings={showStationReadings}
 								readingsColor={
-									current
-										? "var(--ink)"
-										: isPast
-											? "#a7a59a"
-											: "var(--text-muted)"
+									skipped
+										? "#a7a59a"
+										: current
+											? "var(--ink)"
+											: isPast
+												? "#a7a59a"
+												: "var(--text-muted)"
 								}
 								textStyle={{
 									fontFamily: "var(--font-body)",
-									fontWeight:
-										current && !skipped ? 700 : 500,
+									fontWeight: current && !skipped ? 700 : 500,
 									fontSize: !isEnglishName
 										? current && !skipped
 											? 20

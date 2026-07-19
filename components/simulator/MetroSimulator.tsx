@@ -2,15 +2,28 @@
 /* Simulator engine + controls + mount */
 import React from "react";
 import { LINES, ROUTES } from "@/lib/metro-data";
-import { announcement } from "@/lib/announcement";
+import {
+	announcement,
+	trainStartAnnouncement,
+	upcomingMajorStations,
+} from "@/lib/announcement";
+import {
+	announcementAudioSequence,
+	trainStartAnnouncementAudioSequence,
+} from "@/lib/announcementAudio";
 import { useClock } from "@/hooks/useClock";
 import { SimulatorDisplay } from "@/components/simulator/SimulatorDisplay";
 import { SimulatorControls } from "@/components/simulator/SimulatorControls";
+import {
+	AnnouncementAudio,
+	type AnnouncementAudioHandle,
+} from "@/components/simulator/AnnouncementAudio";
 import {
 	initialSimulatorControlState,
 	simulatorControlReducer,
 	setControl,
 	type SimulatorControlState,
+	type StationNameMode,
 } from "@/components/simulator/simulatorControlState";
 import type { LineId, Lang, Phase } from "@/types/metro";
 
@@ -33,47 +46,111 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		initialSimulatorControlState,
 	);
 	const {
-		lineId, serviceId, auto, travelDirection, speedKmh, simulationSpeed, stationStayMs,
-		langMode, lang, langMs, doorNoticeMs, doorNoticeWaitMs, pageSize,
-		showHiragana, showKatakana, stationNameMode, alertText, alertSecondText,
-		alertScope, alertActive, alertLeaving, delayNextMarqueeMessage,
-		nextMarqueeThreshold, marqueeContent, showDistanceIndicator,
-		showSpeedIndicator, showStationStayIndicator, pauseAtPageBreak,
-		followDirectionView, showEditor, transferDisplayMode,
+		lineId,
+		serviceId,
+		auto,
+		travelDirection,
+		speedKmh,
+		simulationSpeed,
+		stationStayMs,
+		langMode,
+		lang,
+		langMs,
+		doorNoticeMs,
+		doorNoticeWaitMs,
+		pageSize,
+		autoLanguageModes,
+		showKatakana,
+		stationNameMode,
+		alertText,
+		alertSecondText,
+		alertScope,
+		alertActive,
+		alertLeaving,
+		delayNextMarqueeMessage,
+		nextMarqueeThreshold,
+		marqueeContent,
+		showDistanceIndicator,
+		showSpeedIndicator,
+		showStationStayIndicator,
+		pauseAtPageBreak,
+		followDirectionView,
+		showEditor,
+		transferDisplayMode,
+		announcementAudioEnabled,
+		announcementVolume,
+		departureMajorStationCount,
 	} = controls;
+	const announcementAudioRef = useRef<AnnouncementAudioHandle>(null);
+	const [announcementAudioOverrides, setAnnouncementAudioOverrides] =
+		useState<Record<string, string>>({});
+	const uploadAnnouncementAudio = (key: string, file: File) => {
+		setAnnouncementAudioOverrides((current) => {
+			const previous = current[key];
+			if (previous?.startsWith("blob:")) URL.revokeObjectURL(previous);
+			return { ...current, [key]: URL.createObjectURL(file) };
+		});
+	};
 	const updateControl = <K extends keyof SimulatorControlState>(
 		field: K,
 		value: React.SetStateAction<SimulatorControlState[K]>,
 	) => dispatch(setControl(field, value));
-	const setLineId = (value: React.SetStateAction<LineId>) => updateControl("lineId", value);
-	const setAuto = (value: React.SetStateAction<boolean>) => updateControl("auto", value);
-	const setTravelDirection = (value: React.SetStateAction<number>) => updateControl("travelDirection", value);
-	const setSpeedKmh = (value: React.SetStateAction<number>) => updateControl("speedKmh", value);
-	const setSimulationSpeed = (value: React.SetStateAction<number>) => updateControl("simulationSpeed", value);
-	const setStationStayMs = (value: React.SetStateAction<number>) => updateControl("stationStayMs", value);
-	const setLangMode = (value: React.SetStateAction<"auto" | Lang>) => updateControl("langMode", value);
-	const setLang = (value: React.SetStateAction<Lang>) => updateControl("lang", value);
-	const setLangMs = (value: React.SetStateAction<number>) => updateControl("langMs", value);
-	const setDoorNoticeMs = (value: React.SetStateAction<number>) => updateControl("doorNoticeMs", value);
-	const setDoorNoticeWaitMs = (value: React.SetStateAction<number>) => updateControl("doorNoticeWaitMs", value);
-	const setPageSize = (value: React.SetStateAction<number>) => updateControl("pageSize", value);
-	const setShowHiragana = (value: React.SetStateAction<boolean>) => updateControl("showHiragana", value);
-	const setShowKatakana = (value: React.SetStateAction<boolean>) => updateControl("showKatakana", value);
-	const setStationNameMode = (value: React.SetStateAction<"kanji" | "hiragana" | "en">) => updateControl("stationNameMode", value);
-	const setAlertText = (value: React.SetStateAction<string>) => updateControl("alertText", value);
-	const setAlertSecondText = (value: React.SetStateAction<string>) => updateControl("alertSecondText", value);
-	const setAlertScope = (value: React.SetStateAction<"marquee" | "lower" | "monitor">) => updateControl("alertScope", value);
-	const setAlertActive = (value: React.SetStateAction<boolean>) => updateControl("alertActive", value);
-	const setAlertLeaving = (value: React.SetStateAction<boolean>) => updateControl("alertLeaving", value);
-	const setDelayNextMarqueeMessage = (value: React.SetStateAction<boolean>) => updateControl("delayNextMarqueeMessage", value);
-	const setNextMarqueeThreshold = (value: React.SetStateAction<number>) => updateControl("nextMarqueeThreshold", value);
-	const setShowDistanceIndicator = (value: React.SetStateAction<boolean>) => updateControl("showDistanceIndicator", value);
-	const setShowSpeedIndicator = (value: React.SetStateAction<boolean>) => updateControl("showSpeedIndicator", value);
-	const setShowStationStayIndicator = (value: React.SetStateAction<boolean>) => updateControl("showStationStayIndicator", value);
-	const setPauseAtPageBreak = (value: React.SetStateAction<boolean>) => updateControl("pauseAtPageBreak", value);
-	const setFollowDirectionView = (value: React.SetStateAction<boolean>) => updateControl("followDirectionView", value);
-	const setShowEditor = (value: React.SetStateAction<boolean>) => updateControl("showEditor", value);
-	const setTransferDisplayMode = (value: React.SetStateAction<"auto" | "full" | "split">) => updateControl("transferDisplayMode", value);
+	const setLineId = (value: React.SetStateAction<LineId>) =>
+		updateControl("lineId", value);
+	const setAuto = (value: React.SetStateAction<boolean>) =>
+		updateControl("auto", value);
+	const setTravelDirection = (value: React.SetStateAction<number>) =>
+		updateControl("travelDirection", value);
+	const setSpeedKmh = (value: React.SetStateAction<number>) =>
+		updateControl("speedKmh", value);
+	const setSimulationSpeed = (value: React.SetStateAction<number>) =>
+		updateControl("simulationSpeed", value);
+	const setStationStayMs = (value: React.SetStateAction<number>) =>
+		updateControl("stationStayMs", value);
+	const setLangMs = (value: React.SetStateAction<number>) =>
+		updateControl("langMs", value);
+	const setDoorNoticeMs = (value: React.SetStateAction<number>) =>
+		updateControl("doorNoticeMs", value);
+	const setDoorNoticeWaitMs = (value: React.SetStateAction<number>) =>
+		updateControl("doorNoticeWaitMs", value);
+	const setPageSize = (value: React.SetStateAction<number>) =>
+		updateControl("pageSize", value);
+	const setShowKatakana = (value: React.SetStateAction<boolean>) =>
+		updateControl("showKatakana", value);
+	const setStationNameMode = (
+		value: React.SetStateAction<"kanji" | "hiragana" | "en">,
+	) => updateControl("stationNameMode", value);
+	const setAlertText = (value: React.SetStateAction<string>) =>
+		updateControl("alertText", value);
+	const setAlertSecondText = (value: React.SetStateAction<string>) =>
+		updateControl("alertSecondText", value);
+	const setAlertScope = (
+		value: React.SetStateAction<"marquee" | "lower" | "monitor">,
+	) => updateControl("alertScope", value);
+	const setAlertActive = (value: React.SetStateAction<boolean>) =>
+		updateControl("alertActive", value);
+	const setAlertLeaving = (value: React.SetStateAction<boolean>) =>
+		updateControl("alertLeaving", value);
+	const setDelayNextMarqueeMessage = (value: React.SetStateAction<boolean>) =>
+		updateControl("delayNextMarqueeMessage", value);
+	const setNextMarqueeThreshold = (value: React.SetStateAction<number>) =>
+		updateControl("nextMarqueeThreshold", value);
+	const setShowDistanceIndicator = (value: React.SetStateAction<boolean>) =>
+		updateControl("showDistanceIndicator", value);
+	const setShowSpeedIndicator = (value: React.SetStateAction<boolean>) =>
+		updateControl("showSpeedIndicator", value);
+	const setShowStationStayIndicator = (
+		value: React.SetStateAction<boolean>,
+	) => updateControl("showStationStayIndicator", value);
+	const setPauseAtPageBreak = (value: React.SetStateAction<boolean>) =>
+		updateControl("pauseAtPageBreak", value);
+	const setFollowDirectionView = (value: React.SetStateAction<boolean>) =>
+		updateControl("followDirectionView", value);
+	const setShowEditor = (value: React.SetStateAction<boolean>) =>
+		updateControl("showEditor", value);
+	const setTransferDisplayMode = (
+		value: React.SetStateAction<"auto" | "full" | "split">,
+	) => updateControl("transferDisplayMode", value);
 	const [journey, setJourney] = useState<Journey>({
 		pos: 0,
 		phase: "approach",
@@ -97,31 +174,56 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	const [arrivalTransferExpanded, setArrivalTransferExpanded] =
 		useState(false);
 	const [doorIndicatorVisible, setDoorIndicatorVisible] = useState(false);
+	const [departureAnnouncementPlaying, setDepartureAnnouncementPlaying] =
+		useState(false);
+	const departurePlaybackIdRef = useRef(0);
+	const [suppressInitialAnnouncement, setSuppressInitialAnnouncement] =
+		useState(true);
 	const clock = useClock();
 
 	const route = routes[lineId];
 	const N = route.stations.length;
-	// ——— express service: the active stopping pattern and its skipped stops.
-	// Terminal stations are always served so a run can never end mid-air.
+	// ——— express service: its first and last enabled stops bound the run.
 	const activeService =
 		serviceId === "local"
 			? null
 			: (route.services || []).find((sv: any) => sv.id === serviceId) ||
 				null;
-	const skipStations: number[] = React.useMemo(() => {
-		if (!activeService) return [];
+	const serviceStopIndices = React.useMemo(() => {
+		if (!activeService) return route.stations.map((_, index) => index);
 		return route.stations
 			.map((station: any, index: number) =>
-				index > 0 &&
-				index < route.stations.length - 1 &&
-				station.skip?.includes(activeService.id)
-					? index
-					: -1,
+				station.skip?.includes(activeService.id) ? -1 : index,
 			)
 			.filter((index: number) => index >= 0);
 	}, [route, activeService]);
+	const serviceStartIndex = serviceStopIndices[0] ?? 0;
+	const serviceEndIndex = serviceStopIndices.at(-1) ?? N - 1;
+	const skipStations = React.useMemo(
+		() =>
+			activeService
+				? route.stations
+						.map((_, index) =>
+							serviceStopIndices.includes(index) ? -1 : index,
+						)
+						.filter((index) => index >= 0)
+				: [],
+		[activeService, route.stations, serviceStopIndices],
+	);
 	const serviceJa = activeService ? activeService.ja : "各駅停車";
 	const serviceEn = activeService ? activeService.en : "Local";
+	const serviceDestinationIndex =
+		travelDirection > 0 ? serviceEndIndex : serviceStartIndex;
+	const serviceOriginIndex =
+		travelDirection > 0 ? serviceStartIndex : serviceEndIndex;
+	const displayRoute = {
+		...route,
+		destJa: route.stations[serviceDestinationIndex].ja,
+		destEn: route.stations[serviceDestinationIndex].en,
+	};
+	const serviceOrigin = activeService
+		? route.stations[serviceOriginIndex]
+		: undefined;
 	const passingNext =
 		journey.phase === "approach" && skipStations.includes(journey.pos);
 	const hasCurrentTransfers = !!route.stations[journey.pos]?.xf?.length;
@@ -149,8 +251,8 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		travelDirection > 0 ? journey.pos : (journey.pos + 1) % N;
 	const hasIncomingLeg =
 		travelDirection > 0
-			? journey.pos > 0 || route.circular
-			: journey.pos < N - 1 || route.circular;
+			? journey.pos > serviceStartIndex || route.circular
+			: journey.pos < serviceEndIndex || route.circular;
 	const legDistance = hasIncomingLeg
 		? Number(route.stations[legStationIndex].distance) || 0
 		: 0;
@@ -168,7 +270,6 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	const nextMarqueeMessageVisible =
 		journey.phase !== "approach" ||
 		!delayNextMarqueeMessage ||
-		!hasIncomingLeg ||
 		journey.progress >= nextMarqueeThreshold / 100;
 	const labelMarqueeItem = (item: any, itemLang: Lang) => {
 		const label =
@@ -196,37 +297,227 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		ja: serviceJa,
 		en: serviceEn,
 		passing: passingNext,
+		terminalIndex: serviceDestinationIndex,
 	};
+	const departureStartIndex =
+		travelDirection > 0 ? serviceStartIndex : serviceEndIndex;
+	// On a circular line there is no true terminal, so only announce the
+	// departure from the start station when that station is itself major.
+	const suppressCircularStartDeparture =
+		!!route.circular && !route.stations[departureStartIndex]?.major;
+	const isStartingRun =
+		!suppressCircularStartDeparture &&
+		journey.from === null &&
+		journey.pos === departureStartIndex &&
+		journey.phase === "approach";
+	const isAtDepartureStartStation =
+		!suppressCircularStartDeparture &&
+		journey.pos === departureStartIndex &&
+		journey.phase === "at";
+	const isDepartingMajorStation =
+		journey.phase === "approach" &&
+		journey.from !== null &&
+		Boolean(route.stations[journey.from]?.major);
+	const departureOriginIndex = isDepartingMajorStation
+		? journey.from
+		: journey.pos;
+	const departureMajorStations = React.useMemo(
+		() =>
+			upcomingMajorStations(route, {
+				fromIndex: departureOriginIndex,
+				direction: travelDirection,
+				count: departureMajorStationCount,
+				serviceStopIndices,
+				circular: route.circular,
+			}),
+		[
+			departureMajorStationCount,
+			departureOriginIndex,
+			route,
+			serviceStopIndices,
+			travelDirection,
+		],
+	);
+	const departureService = { serviceJa, serviceEn };
+	const isDepartureAnnouncementStage =
+		(isStartingRun || isDepartingMajorStation) &&
+		journey.progress < nextMarqueeThreshold / 100;
+	const showDepartureMessages =
+		isAtDepartureStartStation ||
+		(isDepartureAnnouncementStage && !suppressInitialAnnouncement) ||
+		departureAnnouncementPlaying;
+	const departureAnnouncementItems =
+		showDepartureMessages
+			? [
+					trainStartAnnouncement(
+						route,
+						{
+							terminalIndex: serviceDestinationIndex,
+							...departureService,
+							majorStations: departureMajorStations,
+						},
+						"ja",
+					),
+					trainStartAnnouncement(
+						route,
+						{
+							terminalIndex: serviceDestinationIndex,
+							...departureService,
+							majorStations: departureMajorStations,
+						},
+						"en",
+					),
+				]
+			: [];
 	const stationAnnouncementItems =
 		langMode === "auto"
 			? [
-					announcement(route, journey.pos, journey.phase, "ja", serviceInfo),
-					announcement(route, journey.pos, journey.phase, "en", serviceInfo),
+					announcement(
+						route,
+						journey.pos,
+						journey.phase,
+						"ja",
+						serviceInfo,
+					),
+					announcement(
+						route,
+						journey.pos,
+						journey.phase,
+						"en",
+						serviceInfo,
+					),
 				]
-			: [announcement(route, journey.pos, journey.phase, lang, serviceInfo)];
+			: [
+					announcement(
+						route,
+						journey.pos,
+						journey.phase,
+						lang,
+						serviceInfo,
+					),
+			];
+	const announcementSequence = React.useMemo(
+		() =>
+			announcementAudioSequence({
+				route,
+				pos: journey.pos,
+				phase: journey.phase,
+				lang,
+				passing: passingNext,
+				terminalIndex: serviceDestinationIndex,
+			}),
+		[
+			journey.phase,
+			journey.pos,
+			lang,
+			passingNext,
+			route,
+			serviceDestinationIndex,
+		],
+	);
+	const trainStartAnnouncementSequence = React.useMemo(
+		() =>
+			trainStartAnnouncementAudioSequence({
+				route,
+				lang,
+				terminalIndex: serviceDestinationIndex,
+				serviceJa,
+				serviceEn,
+				majorStations: departureMajorStations,
+			}),
+		[
+			departureMajorStations,
+			lang,
+			route,
+			serviceDestinationIndex,
+			serviceEn,
+			serviceJa,
+		],
+	);
+	const activeAnnouncementSequence = isDepartureAnnouncementStage
+		? trainStartAnnouncementSequence
+		: announcementSequence;
+	const playDepartureAnnouncement = async (announcementLang: Lang) => {
+		const playbackId = ++departurePlaybackIdRef.current;
+		setDepartureAnnouncementPlaying(true);
+		await announcementAudioRef.current?.playKeys(
+			trainStartAnnouncementAudioSequence({
+				route,
+				lang: announcementLang,
+				terminalIndex: serviceDestinationIndex,
+				...departureService,
+				majorStations: departureMajorStations,
+			}),
+		);
+		if (departurePlaybackIdRef.current === playbackId)
+			setDepartureAnnouncementPlaying(false);
+	};
+	const stopAnnouncementAudio = () => {
+		departurePlaybackIdRef.current += 1;
+		setDepartureAnnouncementPlaying(false);
+		announcementAudioRef.current?.stop();
+	};
+	const playCurrentAnnouncement = (announcementLang: Lang) => {
+		if (isDepartureAnnouncementStage) {
+			void announcementAudioRef.current?.playKeys(
+				trainStartAnnouncementAudioSequence({
+					route,
+					lang: announcementLang,
+					terminalIndex: serviceDestinationIndex,
+					...departureService,
+					majorStations: departureMajorStations,
+				}),
+			);
+			return;
+		}
+		const stationSequence = announcementAudioSequence({
+			route,
+			pos: journey.pos,
+			phase: journey.phase,
+			lang: announcementLang,
+			passing: passingNext,
+			terminalIndex: serviceDestinationIndex,
+		});
+		void announcementAudioRef.current?.playKeys(stationSequence);
+	};
+	const announcementAudioStatusKey = `${lineId}:${serviceId}:${serviceStartIndex}:${serviceEndIndex}:${journey.pos}:${journey.phase}:${travelDirection}:${passingNext}:${isDepartureAnnouncementStage ? "departure" : "station"}`;
+	const stationAnnouncementVisible =
+		nextMarqueeMessageVisible || !remainingMarqueeItems.length;
 	const tickerItems =
-		nextMarqueeMessageVisible || !remainingMarqueeItems.length
-			? stationAnnouncementItems
+		showDepartureMessages
+			? departureAnnouncementItems
+			: stationAnnouncementVisible
+				? stationAnnouncementItems
 			: remainingMarqueeItems;
 	const stateRef = useRef({
 		N,
 		circular: route.circular,
 		skipSet: new Set<number>(),
+		startIndex: 0,
+		endIndex: N - 1,
 	});
 	React.useEffect(() => {
 		stateRef.current.N = N;
 		stateRef.current.circular = !!route.circular;
 		stateRef.current.skipSet = new Set(skipStations);
-	}, [N, route.circular, skipStations]);
+		stateRef.current.startIndex = serviceStartIndex;
+		stateRef.current.endIndex = serviceEndIndex;
+	}, [N, route.circular, serviceEndIndex, serviceStartIndex, skipStations]);
 
 	function advance(dir: number) {
 		setJourney((j) => {
-			const { N: n, circular, skipSet } = stateRef.current;
+			const {
+				N: n,
+				circular,
+				skipSet,
+				startIndex,
+				endIndex,
+			} = stateRef.current;
 			if (dir > 0) {
 				if (j.phase === "approach") {
 					// an express run rolls through a skipped station straight
 					// onto the next leg instead of stopping
-					if (skipSet.has(j.pos) && (j.pos < n - 1 || circular))
+					if (skipSet.has(j.pos) && (j.pos < endIndex || circular))
 						return {
 							pos: (j.pos + 1) % n,
 							phase: "approach" as Phase,
@@ -235,7 +526,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 						};
 					return { ...j, phase: "at" as Phase, progress: 1 };
 				}
-				if (j.pos === n - 1 && !circular) return j;
+				if (j.pos === endIndex && !circular) return j;
 				return {
 					pos: (j.pos + 1) % n,
 					phase: "approach" as Phase,
@@ -244,10 +535,10 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 				};
 			}
 			if (j.phase === "approach") {
-				if (j.pos === 0 && !circular)
+				if (j.pos === startIndex && !circular)
 					return { ...j, phase: "at" as Phase, progress: 1 };
 				const target = (j.pos - 1 + n) % n;
-				if (skipSet.has(target) && (target > 0 || circular))
+				if (skipSet.has(target) && (target > startIndex || circular))
 					return {
 						pos: target,
 						phase: "approach" as Phase,
@@ -261,7 +552,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					from: j.pos,
 				};
 			}
-			if (j.pos === 0 && !circular) return j;
+			if (j.pos === startIndex && !circular) return j;
 			const target = (j.pos - 1 + n) % n;
 			return {
 				pos: target,
@@ -279,8 +570,8 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 			let nextDirection = travelDirection;
 			if (
 				!route.circular &&
-				((journey.pos === N - 1 && travelDirection > 0) ||
-					(journey.pos === 0 && travelDirection < 0))
+				((journey.pos === serviceEndIndex && travelDirection > 0) ||
+					(journey.pos === serviceStartIndex && travelDirection < 0))
 			) {
 				nextDirection = -travelDirection;
 				dispatch(setControl("travelDirection", nextDirection));
@@ -307,11 +598,17 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 				}
 				if (progress === 1) {
 					// pass through skipped stations without dwelling
-					const { N: n, circular, skipSet } = stateRef.current;
+					const {
+						N: n,
+						circular,
+						skipSet,
+						startIndex,
+						endIndex,
+					} = stateRef.current;
 					const canContinue =
 						travelDirection > 0
-							? j.pos < n - 1 || circular
-							: j.pos > 0 || circular;
+							? j.pos < endIndex || circular
+							: j.pos > startIndex || circular;
 					if (skipSet.has(j.pos) && canContinue)
 						return {
 							pos:
@@ -340,10 +637,17 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		pauseAtPageBreak,
 		N,
 		route.circular,
+		serviceEndIndex,
+		serviceStartIndex,
 		travelDirection,
 		stationStayMs,
 		dispatch,
 	]);
+
+	useEffect(() => {
+		if (!suppressInitialAnnouncement || journey.phase !== "at") return;
+		setSuppressInitialAnnouncement(false);
+	}, [journey.phase, suppressInitialAnnouncement]);
 
 	useEffect(() => {
 		if (journey.phase !== "at") {
@@ -376,19 +680,15 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		dispatch(setControl("transferDisplayMode", "auto"));
 	}, [dispatch, journey.pos, lineId]);
 
-	// Station names treat phonetic Japanese as one language sequence:
-	// kanji + katakana reading → hiragana → English.
+	// Loop through precisely the station-name modes enabled in the language UI.
 	useEffect(() => {
 		if (langMode !== "auto") {
-			dispatch(setControl("lang", langMode));
-			dispatch(
-				setControl("stationNameMode", langMode === "en" ? "en" : "kanji"),
-			);
+			dispatch(setControl("lang", langMode === "en" ? "en" : "ja"));
+			dispatch(setControl("stationNameMode", langMode));
 			return undefined;
 		}
-		const modes: Array<"kanji" | "hiragana" | "en"> = showHiragana
-			? ["kanji", "hiragana", "en"]
-			: ["kanji", "en"];
+		const modes: StationNameMode[] =
+			autoLanguageModes.length > 0 ? autoLanguageModes : ["kanji"];
 		let modeIndex = 0;
 		dispatch(setControl("lang", "ja"));
 		dispatch(setControl("stationNameMode", modes[modeIndex]));
@@ -399,23 +699,24 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 			dispatch(setControl("lang", nextMode === "en" ? "en" : "ja"));
 		}, langMs);
 		return () => clearInterval(id);
-	}, [dispatch, langMode, langMs, showHiragana]);
+	}, [autoLanguageModes, dispatch, langMode, langMs]);
 
-	// keep the train position valid when stations are added/removed
+	// Keep the train inside the active service segment as enabled stops change.
 	useEffect(() => {
-		if (journey.pos > N - 1)
+		if (journey.pos < serviceStartIndex || journey.pos > serviceEndIndex)
 			setJourney({
-				pos: Math.max(0, N - 1),
+				pos: serviceStartIndex,
 				phase: "approach",
 				progress: 0,
 				from: null,
 			});
-	}, [N, journey.pos]);
+	}, [journey.pos, serviceEndIndex, serviceStartIndex]);
 
 	function pickLine(id: LineId) {
 		setLineId(id);
 		updateControl("serviceId", "local");
 		setTravelDirection(1);
+		setSuppressInitialAnnouncement(true);
 		setJourney({ pos: 0, phase: "approach", progress: 0, from: null });
 	}
 
@@ -432,7 +733,11 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 			r.services = r.services || [];
 			const preset =
 				SERVICE_PRESETS[r.services.length % SERVICE_PRESETS.length];
-			r.services.push({ id, ja: preset[0], en: preset[1] });
+			r.services.push({
+				id,
+				ja: preset[0],
+				en: preset[1],
+			});
 		});
 		updateControl("serviceId", id);
 	};
@@ -454,10 +759,13 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	const toggleServiceStop = (index: number) => {
 		if (serviceId === "local") return;
 		editRoute((r) => {
-			// terminals always stay served
-			if (index <= 0 || index >= r.stations.length - 1) return;
 			const station = r.stations[index];
 			station.skip = station.skip || [];
+			const currentlyStops = !station.skip.includes(serviceId);
+			const enabledCount = r.stations.filter(
+				(candidate: any) => !candidate.skip?.includes(serviceId),
+			).length;
+			if (currentlyStops && enabledCount <= 1) return;
 			station.skip = station.skip.includes(serviceId)
 				? station.skip.filter((x: string) => x !== serviceId)
 				: [...station.skip, serviceId];
@@ -544,6 +852,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		}));
 		setLineId(id as LineId);
 		setTravelDirection(1);
+		setSuppressInitialAnnouncement(true);
 		setJourney({ pos: 0, phase: "approach", progress: 0, from: null });
 		setShowEditor(true);
 	};
@@ -555,6 +864,10 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	const toggleSide = (i: number) =>
 		editRoute((r) => {
 			r.stations[i].side = r.stations[i].side === "L" ? "R" : "L";
+		});
+	const toggleMajorStation = (i: number) =>
+		editRoute((r) => {
+			r.stations[i].major = !r.stations[i].major;
 		});
 	const toggleXfer = (i: number, lid: LineId) =>
 		editRoute((r) => {
@@ -578,7 +891,8 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		});
 	const removeStation = (i: number) =>
 		editRoute((r) => {
-			if (r.stations.length > 2) r.stations.splice(i, 1);
+			if (r.stations.length <= 2) return;
+			r.stations.splice(i, 1);
 		});
 	const moveStation = (i: number, dir: number) =>
 		editRoute((r) => {
@@ -616,12 +930,15 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 			</div>
 
 			<SimulatorDisplay
-				route={route}
+				route={displayRoute}
 				serviceJa={serviceJa}
 				serviceEn={serviceEn}
 				serviceIsLocal={!activeService}
+				serviceOrigin={serviceOrigin}
 				passing={passingNext}
 				skipStations={skipStations}
+				trailStartIndex={activeService ? serviceStartIndex : 0}
+				trailEndIndex={activeService ? serviceEndIndex : N - 1}
 				pos={journey.pos}
 				phase={journey.phase}
 				progress={journey.progress}
@@ -647,11 +964,26 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 				alertScope={alertScope}
 				alertLeaving={alertLeaving}
 				tickerItems={tickerItems}
-				tickerColor={nextMarqueeMessageVisible ? annColor : "var(--paper)"}
+				tickerColor={
+					nextMarqueeMessageVisible ? annColor : "var(--paper)"
+				}
 				hasTransfers={hasCurrentTransfers}
 				transferExpanded={transferExpanded}
 				doorIndicatorVisible={doorIndicatorVisible}
 				onDoorIndicatorVisibleChange={setDoorIndicatorVisible}
+			/>
+			<AnnouncementAudio
+				ref={announcementAudioRef}
+				autoEnabled={
+					announcementAudioEnabled &&
+					!suppressInitialAnnouncement &&
+					(stationAnnouncementVisible || isDepartureAnnouncementStage)
+				}
+				sequence={activeAnnouncementSequence}
+				overrides={announcementAudioOverrides}
+				volume={announcementVolume}
+				statusKey={announcementAudioStatusKey}
+				language={lang}
 			/>
 
 			<SimulatorControls
@@ -661,6 +993,8 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					route,
 					hasCurrentTransfers,
 					transferExpanded,
+					currentStation: route.stations[journey.pos],
+					announcementAudioOverrides,
 					addService,
 					removeService,
 					setServiceField,
@@ -670,6 +1004,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					setLineField,
 					setStationField,
 					toggleSide,
+					toggleMajorStation,
 					toggleXfer,
 					addStation,
 					removeStation,
@@ -678,6 +1013,12 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					toggleCircular,
 					advance,
 					clearAlert,
+					uploadAnnouncementAudio,
+					playAnnouncementKeys: (keys: string[]) =>
+						void announcementAudioRef.current?.playKeys(keys),
+					playCurrentAnnouncement,
+					playDepartureAnnouncement,
+					stopAnnouncementAudio,
 				}}
 			/>
 		</>

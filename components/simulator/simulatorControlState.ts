@@ -5,6 +5,7 @@ import type { Lang, LineId } from "@/types/metro";
 export type AlertScope = "marquee" | "lower" | "monitor";
 export type TransferDisplayMode = "auto" | "full" | "split";
 export type StationNameMode = "kanji" | "hiragana" | "en";
+export type LanguageMode = "auto" | StationNameMode;
 
 export interface MarqueeContentItem {
 	type: "ad" | "notice";
@@ -22,13 +23,13 @@ export interface SimulatorControlState {
 	speedKmh: number;
 	simulationSpeed: number;
 	stationStayMs: number;
-	langMode: "auto" | Lang;
+	langMode: LanguageMode;
 	lang: Lang;
 	langMs: number;
 	doorNoticeMs: number;
 	doorNoticeWaitMs: number;
 	pageSize: number;
-	showHiragana: boolean;
+	autoLanguageModes: StationNameMode[];
 	showKatakana: boolean;
 	stationNameMode: StationNameMode;
 	alertText: string;
@@ -46,6 +47,9 @@ export interface SimulatorControlState {
 	followDirectionView: boolean;
 	showEditor: boolean;
 	transferDisplayMode: TransferDisplayMode;
+	announcementAudioEnabled: boolean;
+	announcementVolume: number;
+	departureMajorStationCount: number;
 }
 
 type SetControlAction = {
@@ -85,7 +89,7 @@ export const initialSimulatorControlState: SimulatorControlState = {
 	doorNoticeMs: 10000,
 	doorNoticeWaitMs: 10000,
 	pageSize: 8,
-	showHiragana: true,
+	autoLanguageModes: ["kanji", "hiragana", "en"],
 	showKatakana: true,
 	stationNameMode: "kanji",
 	alertText: "Service update in progress",
@@ -108,6 +112,9 @@ export const initialSimulatorControlState: SimulatorControlState = {
 	followDirectionView: false,
 	showEditor: false,
 	transferDisplayMode: "auto",
+	announcementAudioEnabled: true,
+	announcementVolume: 0.8,
+	departureMajorStationCount: 1,
 };
 
 export function setControl<K extends keyof SimulatorControlState>(

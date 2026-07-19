@@ -1,24 +1,32 @@
 "use client";
-import React from "react";
 import { LINES } from "@/lib/metro-data";
 import { Switch } from "@/components/ds";
-import type { LineId } from "@/types/metro";
+import type {
+	EditableRoute,
+	EditableStationField,
+	LineEditorField,
+	LineId,
+	RouteDestinationField,
+} from "@/types/metro";
 import { EdInput } from "./EdInput";
 import { LineColorEditor } from "./LineColorEditor";
 
 interface LineEditorProps {
-	// `route`/`station` here carry editor-only fields (e.g. `distance`, `circular`)
-	// that aren't part of the shared `Route`/`Station` types — kept loose deliberately.
-	route: any;
+	route: EditableRoute;
 	lineId: LineId;
-	setLineField: (field: string, value: string) => void;
-	setStationField: (index: number, field: string, value: any) => void;
+	setLineField: (field: LineEditorField, value: string) => void;
+	setStationField: (
+		index: number,
+		field: EditableStationField,
+		value: string | number,
+	) => void;
 	toggleSide: (index: number) => void;
+	toggleMajorStation: (index: number) => void;
 	toggleXfer: (index: number, lid: LineId) => void;
 	addStation: () => void;
 	removeStation: (index: number) => void;
 	moveStation: (index: number, dir: number) => void;
-	setDest: (field: string, value: string) => void;
+	setDest: (field: RouteDestinationField, value: string) => void;
 	toggleCircular: () => void;
 }
 
@@ -46,6 +54,7 @@ export function LineEditor({
 	setLineField,
 	setStationField,
 	toggleSide,
+	toggleMajorStation,
 	toggleXfer,
 	addStation,
 	removeStation,
@@ -110,11 +119,9 @@ export function LineEditor({
 
 			{/* column headers */}
 			<div
-				className="grid items-center px-2 pb-0.5 font-mono text-[10px] tracking-widest text-muted"
+				className="grid items-center px-2 pb-0.5 font-mono text-xs tracking-widest text-muted"
 				style={{
-					gridTemplateColumns:
-						"24px 105px 145px 105px 105px 74px 70px 1fr 88px",
-					gap: 8,
+					gridTemplateColumns: "1fr 3fr 3fr 3fr 3fr 1fr 2fr 1.5fr 3fr 3.5fr",
 				}}
 			>
 				<span>#</span>
@@ -122,8 +129,9 @@ export function LineEditor({
 				<span>ENGLISH</span>
 				<span>ひらがな</span>
 				<span>カタカナ</span>
-				<span>DIST KM</span>
+				<span>DIST</span>
 				<span>DOOR</span>
+				<span>MAJOR</span>
 				<span>TRANSFERS</span>
 				<span></span>
 			</div>
@@ -136,12 +144,12 @@ export function LineEditor({
 						className="grid items-center rounded-lg border-2 border-ink bg-paper px-2 py-1.5"
 						style={{
 							gridTemplateColumns:
-								"24px 105px 145px 105px 105px 74px 70px 1fr 88px",
+								"1fr 3fr 3fr 3fr 3fr 1fr 2fr 1.5fr 3fr 1fr",
 							gap: 8,
 						}}
 					>
 						<span
-							className="font-mono text-[12px] font-bold"
+							className="font-mono text-sm font-bold"
 							style={{ color: L.color }}
 						>
 							{L.code + String(i + 1).padStart(2, "0")}
@@ -167,9 +175,9 @@ export function LineEditor({
 							w="100%"
 						/>
 						{i === 0 && !route.circular ? (
-							<span className="font-mono text-[12px] text-muted">
+							<p className="font-mono text-sm text-muted text-center">
 								—
-							</span>
+							</p>
 						) : (
 							<EdInput
 								value={st.distance ?? 1}
@@ -185,7 +193,7 @@ export function LineEditor({
 						)}
 						<button
 							onClick={() => toggleSide(i)}
-							className="lc-btn px-2.5 py-1 text-[12px] text-white"
+							className="lc-btn px-2.5 py-1 text-sm text-white"
 							style={{
 								background:
 									st.side === "L"
@@ -194,6 +202,19 @@ export function LineEditor({
 							}}
 						>
 							{st.side === "L" ? "◀ L" : "R ▶"}
+						</button>
+						<button
+							type="button"
+							onClick={() => toggleMajorStation(i)}
+							title={st.major ? "Marked as a major station" : "Mark as a major station"}
+							aria-pressed={Boolean(st.major)}
+							className="h-6.5 cursor-pointer rounded-md border-2 border-ink font-mono text-sm font-bold"
+							style={{
+								background: st.major ? "var(--acid)" : "transparent",
+								color: "var(--ink)",
+							}}
+						>
+							★
 						</button>
 						{/* transfers toggles */}
 						<div className="flex flex-wrap gap-1">
@@ -210,7 +231,7 @@ export function LineEditor({
 												toggleXfer(i, lid as LineId)
 											}
 											title={LINES[lid as LineId].en}
-											className="h-6.5 w-6.5 cursor-pointer rounded-md font-mono text-[12px] font-bold"
+											className="h-6.5 w-6.5 cursor-pointer rounded-md font-mono text-sm font-bold"
 											style={{
 												border: `2px solid ${LINES[lid as LineId].color}`,
 												background: on

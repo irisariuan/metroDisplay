@@ -1,8 +1,8 @@
-import type { MarqueeItem } from "@/types/metro";
+import type { AnnotatedMarqueeItem, MarqueeItem } from "@/types/metro";
 
 export const SPEED_PRESETS = { slow: 30, normal: 60, fast: 100 };
 
-export const DEFAULT_MARQUEE_CONTENT: MarqueeItem[] = [
+export const DEFAULT_MARQUEE_CONTENT: AnnotatedMarqueeItem[] = [
 	{
 		type: "ad",
 		en: "Discover the Shuika Metro Museum at Arakawa Park.",

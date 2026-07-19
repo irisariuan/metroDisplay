@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { LINES } from "@/lib/metro-data";
-import type { Route, Phase, Lang, Side } from "@/types/metro";
+import type { Route, Phase, Lang, Side, Station } from "@/types/metro";
 import { Marquee } from "./Marquee";
 import { StationReadings } from "./StationReadings";
 import { NumPlate } from "./NumPlate";
@@ -18,12 +18,28 @@ interface TopBoardProps {
 	showKatakana?: boolean;
 	stationNameMode?: string;
 	doorSide?: Side;
+	serviceOrigin?: Station;
 	serviceJa?: string;
 	serviceEn?: string;
 	serviceIsLocal?: boolean;
 	/** the train will pass the shown station without stopping */
 	passing?: boolean;
 }
+
+const DOOR_SIGN_TEXT: Record<Lang, Record<Side, string>> = {
+	ja: {
+		L: "左側のドアが開きます",
+		R: "右側のドアが開きます",
+	},
+	en: {
+		L: "Door on the left side will open",
+		R: "Door on the right side will open",
+	},
+};
+
+const DOOR_SIGN_VARIANTS = (["ja", "en"] as const).flatMap((signLang) =>
+	(["L", "R"] as const).map((side) => ({ signLang, side })),
+);
 
 // ——— top board: toward label + NEXT/NOW + big bilingual station name + clock + car
 export function TopBoard({
@@ -34,6 +50,7 @@ export function TopBoard({
 	clock,
 	car,
 	doorSide,
+	serviceOrigin,
 	showKatakana = false,
 	stationNameMode = "kanji",
 	serviceJa = "各駅停車",
@@ -88,6 +105,11 @@ export function TopBoard({
 					>
 						{lang === "ja" ? serviceJa : serviceEn.toUpperCase()}
 					</div>
+					{serviceOrigin ? (
+						<div className="mt-2 font-mono text-[11px] tracking-[0.1em] text-paper-2 whitespace-nowrap">
+							{`FROM ${serviceOrigin.en}`.toUpperCase()}
+						</div>
+					) : null}
 					<div className="font-body font-bold text-[28px] leading-[1.18] mt-2 text-white whitespace-nowrap">
 						{route.destJa}
 					</div>
@@ -159,22 +181,25 @@ export function TopBoard({
 					</div>
 				</div>
 			</div>
-			<div className="h-5.5">
-				<AnimatedVisibility>
-					{doorSide ? (
-						<p
-							className={[
-								"text-acid text-mono uppercase tracking-widest text-xs will-change-transform",
-								doorSide === "R"
-									? "text-right data-[visibility-state=visible]:animate-door-notice-right-in data-[visibility-state=leaving]:animate-door-notice-right-out"
-									: "data-[visibility-state=visible]:animate-door-notice-left-in data-[visibility-state=leaving]:animate-door-notice-left-out",
-							].join(" ")}
-						>
-							Door on the {doorSide === "L" ? "left" : "right"} side
-							will open
-						</p>
-					) : null}
-				</AnimatedVisibility>
+			<div className="relative h-5.5 overflow-hidden">
+				{DOOR_SIGN_VARIANTS.map(({ signLang, side }) => (
+					<AnimatedVisibility key={`${signLang}-${side}`}>
+						{doorSide === side && lang === signLang ? (
+							<p
+								lang={signLang === "ja" ? "ja" : "en"}
+								className={[
+									"absolute inset-x-0 top-0 text-acid text-mono tracking-widest text-xs will-change-transform",
+									signLang === "en" ? "uppercase" : "font-bold",
+									side === "R"
+										? "text-right data-[visibility-state=visible]:animate-door-notice-right-in data-[visibility-state=leaving]:animate-door-notice-right-out"
+										: "text-left data-[visibility-state=visible]:animate-door-notice-left-in data-[visibility-state=leaving]:animate-door-notice-left-out",
+								].join(" ")}
+							>
+								{DOOR_SIGN_TEXT[signLang][side]}
+							</p>
+						) : null}
+					</AnimatedVisibility>
+				))}
 			</div>
 		</div>
 	);
