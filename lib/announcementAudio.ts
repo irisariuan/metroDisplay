@@ -1,4 +1,6 @@
 import type { Lang, LineId, Phase, Route, Station } from "@/types/metro";
+import { DOOR_OPEN_EFFECT_KEY, SOUND_EFFECTS } from "@/lib/soundEffects";
+import { boundForList } from "@/lib/announcement";
 
 export interface AnnouncementFrameworkOption {
 	key: string;
@@ -230,6 +232,26 @@ export const contentAudioKey = (index: number, lang: Lang) =>
 export const departureToneKey = (station: Station) =>
 	`tone.departure.${station.ja}`;
 
+/** Human-readable name for a queue key, for display in the control surface. */
+export function audioKeyLabel(key: string): string {
+	const framework = ANNOUNCEMENT_FRAMEWORK_OPTIONS.find(
+		(option) => option.key === key,
+	);
+	if (framework) return framework.label;
+
+	const [kind, qualifier, ...rest] = key.split(".");
+	const value = rest.join(".");
+	if (kind === "effect") {
+		const effect = SOUND_EFFECTS.find((option) => option.id === qualifier);
+		return effect ? `SFX · ${effect.label}` : `SFX · ${qualifier}`;
+	}
+	if (kind === "tone") return `TONE · ${value}`;
+	if (kind === "content")
+		return `${qualifier.toUpperCase()} · MSG ${Number(value) + 1}`;
+	if (value) return `${qualifier.toUpperCase()} · ${value}`;
+	return key;
+}
+
 interface AnnouncementAudioSequenceOptions {
 	route: Route;
 	pos: number;
@@ -237,6 +259,8 @@ interface AnnouncementAudioSequenceOptions {
 	lang: Lang;
 	passing: boolean;
 	terminalIndex: number;
+	/** Append the door-open chime after the spoken door side, on arrival only. */
+	doorEffect?: boolean;
 }
 
 interface TrainStartAnnouncementAudioSequenceOptions {
@@ -277,11 +301,7 @@ export function trainStartAnnouncementAudioSequence({
 	const destination = route.stations[terminalIndex];
 	const serviceAudioKey =
 		SERVICE_AUDIO_KEYS[lang][lang === "ja" ? serviceJa : serviceEn];
-	const japaneseBoundForStations = [...majorStations, destination].filter(
-		(station, index, stations) =>
-			stations.findIndex((candidate) => candidate.ja === station.ja) ===
-			index,
-	);
+	const boundForStations = boundForList(route, majorStations, destination);
 	const sequence =
 		lang === "ja"
 			? [
@@ -289,7 +309,7 @@ export function trainStartAnnouncementAudioSequence({
 					"framework.ja.start",
 					lineAudioKey(route.line, "ja"),
 					...(serviceAudioKey ? [serviceAudioKey] : []),
-					...japaneseBoundForStations.map((station) =>
+					...boundForStations.map((station) =>
 						stationAudioKey(station, "ja"),
 					),
 					"framework.ja.boundFor",
@@ -300,9 +320,15 @@ export function trainStartAnnouncementAudioSequence({
 					lineAudioKey(route.line, "en"),
 					...(serviceAudioKey ? [serviceAudioKey] : []),
 					"framework.en.boundFor",
-					stationAudioKey(destination, "en"),
+					// A loop line names the major stops ahead instead of a terminus.
+					...(route.circular
+						? boundForStations.map((station) =>
+								stationAudioKey(station, "en"),
+							)
+						: [stationAudioKey(destination, "en")]),
 				];
-	if (!majorStations.length || lang === "ja") return sequence;
+	// The loop-line direction list already covers the major stops.
+	if (!majorStations.length || lang === "ja" || route.circular) return sequence;
 	sequence.push("framework.en.callingAt");
 	majorStations.forEach((station, index) => {
 		if (index === majorStations.length - 1 && index > 0)
@@ -320,10 +346,15 @@ export function announcementAudioSequence({
 	lang,
 	passing,
 	terminalIndex,
+	doorEffect = false,
 }: AnnouncementAudioSequenceOptions): string[] {
 	const station = route.stations[pos];
 	const stationKey = stationAudioKey(station, lang);
 	const sequence: string[] = [];
+	// The doors are physically opening, so the chime follows the spoken side
+	// once per arrival — the caller suppresses it on the second language.
+	const doorsClip = (side: string) =>
+		doorEffect && phase === "at" ? [side, DOOR_OPEN_EFFECT_KEY] : [side];
 
 	if (passing && phase === "approach") {
 		return [stationKey, `framework.${lang}.passingEnd`];
@@ -334,9 +365,11 @@ export function announcementAudioSequence({
 		sequence.push(stationKey, stationKey, "framework.ja.stationEnd");
 		// if (phase === "approach")
 		sequence.push(
-			station.side === "L"
-				? "framework.ja.doorsLeft"
-				: "framework.ja.doorsRight",
+			...doorsClip(
+				station.side === "L"
+					? "framework.ja.doorsLeft"
+					: "framework.ja.doorsRight",
+			),
 		);
 		if (phase === "at") {
 			sequence.push("framework.ja.foot");
@@ -356,9 +389,11 @@ export function announcementAudioSequence({
 	);
 	// if (phase === "approach")
 	sequence.push(
-		station.side === "L"
-			? "framework.en.doorsLeft"
-			: "framework.en.doorsRight",
+		...doorsClip(
+			station.side === "L"
+				? "framework.en.doorsLeft"
+				: "framework.en.doorsRight",
+		),
 	);
 	if (phase === "at") {
 		sequence.push("framework.en.foot");

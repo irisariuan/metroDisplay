@@ -51,6 +51,32 @@ export function upcomingMajorStations(
 	return majorStations;
 }
 
+/**
+ * Stations a departure announcement names as the direction of travel. Loop
+ * lines have no terminus, so they are described purely by the major stops
+ * ahead; the terminal index only stands in when no major stop is available.
+ */
+export function boundForList(
+	route: Route,
+	majorStations: readonly Station[],
+	destination: Station,
+): Station[] {
+	const stations =
+		route.circular && majorStations.length
+			? [...majorStations]
+			: [...majorStations, destination];
+	return stations.filter(
+		(station, index, all) =>
+			all.findIndex((candidate) => candidate.ja === station.ja) === index,
+	);
+}
+
+/** "A", "A and B", "A, B and C" — spoken-English list joining. */
+function joinEn(names: readonly string[]): string {
+	if (names.length < 2) return names[0] ?? "";
+	return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
 interface TrainStartAnnouncementOptions {
 	terminalIndex: number;
 	serviceJa: string;
@@ -70,13 +96,16 @@ export function trainStartAnnouncement(
 	lang: Lang,
 ) {
 	const destination = route.stations[terminalIndex];
+	// A loop line has no terminus, so it is described by the major stops ahead
+	// rather than by a destination. The terminal is only a last resort there.
+	const boundForStations = boundForList(route, majorStations, destination);
 	if (lang === "ja") {
-		const boundForStations = [...majorStations, destination].filter(
-			(station, index, stations) =>
-				stations.findIndex((candidate) => candidate.ja === station.ja) === index,
-		);
 		return `この電車は${LINES[route.line].ja}${serviceJa}${boundForStations.map((station) => station.ja).join("、")}方面行きです。`;
 	}
+	// On a loop the direction already names the major stops, so repeating them
+	// as a calling-at list would say the same thing twice.
+	if (route.circular)
+		return `This is a ${LINES[route.line].en} ${serviceEn} train for ${joinEn(boundForStations.map((station) => station.en))}.`;
 	const majorStopText = majorStations.length
 		? ` Calling at ${majorStations.map((station) => station.en).join(", ")}.`
 		: "";

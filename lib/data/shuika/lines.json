@@ -1,0 +1,101 @@
+{
+	"CS": {
+		"id": "CS",
+		"code": "C",
+		"ja": "中心原線",
+		"en": "Chūshingen Line",
+		"jaReading": "ちゅうしんげんせん",
+		"color": "#12318f",
+		"textOnColor": "#fff"
+	},
+	"MZ": {
+		"id": "MZ",
+		"code": "M",
+		"ja": "水野線",
+		"jaReading": "みずのせん",
+		"en": "Mizuno Line",
+		"color": "#22a355",
+		"textOnColor": "#fff"
+	},
+	"KW": {
+		"id": "KW",
+		"code": "K",
+		"ja": "北野川灣線",
+		"jaReading": "きたのがわわんせん",
+		"en": "Kitanogawa Bay Line",
+		"color": "#e4632a",
+		"textOnColor": "#fff"
+	},
+	"UK": {
+		"id": "UK",
+		"code": "U",
+		"ja": "私營うかしま線",
+		"jaReading": "しえいうかしません",
+		"en": "Ukashima Line",
+		"color": "#e0359a",
+		"textOnColor": "#fff"
+	},
+	"SD": {
+		"id": "SD",
+		"code": "S",
+		"ja": "水道上線",
+		"jaReading": "すいどううえせん",
+		"en": "Suidōue Line",
+		"color": "#f2b400",
+		"textOnColor": "#111"
+	},
+	"AR": {
+		"id": "AR",
+		"code": "A",
+		"ja": "都鐵荒川線",
+		"jaReading": "とてつあらかわせん",
+		"en": "Toden Arakawa Line",
+		"color": "#d0121b",
+		"textOnColor": "#fff"
+	},
+	"KZ": {
+		"id": "KZ",
+		"code": "Z",
+		"ja": "私營北野川坂線",
+		"jaReading": "しえいきたのがわざかせん",
+		"en": "Kitanogawa-zaka Line",
+		"color": "#2ba9d8",
+		"textOnColor": "#fff"
+	},
+	"KH": {
+		"id": "KH",
+		"code": "H",
+		"ja": "北野川本線",
+		"jaReading": "きたのがわほんせん",
+		"en": "Kitanogawa Main Line",
+		"color": "#a8bf2f",
+		"textOnColor": "#111"
+	},
+	"SG": {
+		"id": "SG",
+		"code": "G",
+		"ja": "水道後線",
+		"jaReading": "すいどうごせん",
+		"en": "Suidōgo Line",
+		"color": "#7d3fb0",
+		"textOnColor": "#fff"
+	},
+	"MG": {
+		"id": "MG",
+		"code": "W",
+		"ja": "私營水口線",
+		"jaReading": "しえいみずぐちせん",
+		"en": "Mizuguchi Line",
+		"color": "#55c2ad",
+		"textOnColor": "#111"
+	},
+	"SN": {
+		"id": "SN",
+		"code": "N",
+		"ja": "新水野線",
+		"jaReading": "しんみずのせん",
+		"en": "Shin-Mizuno Line",
+		"color": "#58b7c8",
+		"textOnColor": "#111"
+	}
+}

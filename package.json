@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "generate:announcement-audio": "bun scripts/generate-announcement-audio.ts",
-    "generate:departure-tones": "bun scripts/generate-departure-tones-elevenlabs.ts"
+    "generate:departure-tones": "bun scripts/generate-departure-tones-elevenlabs.ts",
+    "generate:sound-effects": "bun scripts/generate-sound-effects-elevenlabs.ts",
+    "clean:audio": "bun scripts/clean-files.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

@@ -1,0 +1,1836 @@
+{
+	"YM": {
+		"line": "YM",
+		"destJa": "東京",
+		"destEn": "Tokyo",
+		"towardJa": "品川・渋谷方面",
+		"towardEn": "for Shinagawa and Shibuya",
+		"circular": true,
+		"stations": [
+			{
+				"ja": "東京",
+				"en": "Tokyo",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["JC", "JK", "JT", "JO", "JU", "JE", "M"],
+				"major": true
+			},
+			{
+				"ja": "神田",
+				"en": "Kanda",
+				"side": "R",
+				"distance": 1.3,
+				"xf": ["JC", "JK", "G"],
+				"major": false
+			},
+			{
+				"ja": "秋葉原",
+				"en": "Akihabara",
+				"side": "L",
+				"distance": 0.7,
+				"xf": ["JK", "JB", "H", "TX"],
+				"major": false
+			},
+			{
+				"ja": "御徒町",
+				"en": "Okachimachi",
+				"side": "R",
+				"distance": 1,
+				"xf": ["JK"],
+				"major": false
+			},
+			{
+				"ja": "上野",
+				"en": "Ueno",
+				"side": "L",
+				"distance": 0.6,
+				"xf": ["JK", "JU", "JJ", "G", "H", "KS"],
+				"major": true
+			},
+			{
+				"ja": "鶯谷",
+				"en": "Uguisudani",
+				"side": "R",
+				"distance": 1.1,
+				"xf": ["JK"],
+				"major": false
+			},
+			{
+				"ja": "日暮里",
+				"en": "Nippori",
+				"side": "L",
+				"distance": 0.5,
+				"xf": ["JK", "JJ", "KS", "NT"],
+				"major": true
+			},
+			{
+				"ja": "西日暮里",
+				"en": "Nishi-Nippori",
+				"side": "R",
+				"distance": 1.1,
+				"xf": ["JK", "C", "NT"],
+				"major": false
+			},
+			{
+				"ja": "田端",
+				"en": "Tabata",
+				"side": "L",
+				"distance": 1.7,
+				"xf": ["JK"],
+				"major": true
+			},
+			{
+				"ja": "駒込",
+				"en": "Komagome",
+				"side": "R",
+				"distance": 1.6,
+				"xf": ["N"],
+				"major": false
+			},
+			{
+				"ja": "巣鴨",
+				"en": "Sugamo",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["I"],
+				"major": false
+			},
+			{
+				"ja": "大塚",
+				"en": "Ōtsuka",
+				"side": "R",
+				"distance": 1.8,
+				"xf": [],
+				"major": false
+			},
+			{
+				"ja": "池袋",
+				"en": "Ikebukuro",
+				"side": "L",
+				"distance": 1.2,
+				"xf": ["JA", "JS", "M", "Y", "F", "TJ", "SI"],
+				"major": true
+			},
+			{
+				"ja": "目白",
+				"en": "Mejiro",
+				"side": "R",
+				"distance": 1.4,
+				"xf": [],
+				"major": false
+			},
+			{
+				"ja": "高田馬場",
+				"en": "Takadanobaba",
+				"side": "L",
+				"distance": 1.4,
+				"xf": ["T", "SS"],
+				"major": true
+			},
+			{
+				"ja": "新大久保",
+				"en": "Shin-Ōkubo",
+				"side": "R",
+				"distance": 1.3,
+				"xf": [],
+				"major": false
+			},
+			{
+				"ja": "新宿",
+				"en": "Shinjuku",
+				"side": "L",
+				"distance": 0.7,
+				"xf": ["JC", "JB", "JA", "JS", "M", "S", "E", "KO", "OH"],
+				"major": true
+			},
+			{
+				"ja": "代々木",
+				"en": "Yoyogi",
+				"side": "R",
+				"distance": 1.5,
+				"xf": ["JB", "E"],
+				"major": false
+			},
+			{
+				"ja": "原宿",
+				"en": "Harajuku",
+				"side": "L",
+				"distance": 1.6,
+				"xf": ["C", "F"],
+				"major": false
+			},
+			{
+				"ja": "渋谷",
+				"en": "Shibuya",
+				"side": "R",
+				"distance": 1.6,
+				"xf": ["JA", "JS", "G", "Z", "F", "TY", "DT", "IN"],
+				"major": true
+			},
+			{
+				"ja": "恵比寿",
+				"en": "Ebisu",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["JS", "H"],
+				"major": false
+			},
+			{
+				"ja": "目黒",
+				"en": "Meguro",
+				"side": "R",
+				"distance": 1.2,
+				"xf": ["I", "N", "TM"],
+				"major": true
+			},
+			{
+				"ja": "五反田",
+				"en": "Gotanda",
+				"side": "L",
+				"distance": 0.9,
+				"xf": ["A", "IK"],
+				"major": false
+			},
+			{
+				"ja": "大崎",
+				"en": "Ōsaki",
+				"side": "R",
+				"distance": 2,
+				"xf": ["JA", "JS", "RK"],
+				"major": true
+			},
+			{
+				"ja": "品川",
+				"en": "Shinagawa",
+				"side": "L",
+				"distance": 0.9,
+				"xf": ["JK", "JT", "JO", "KK"],
+				"major": true
+			},
+			{
+				"ja": "高輪ゲートウェイ",
+				"en": "Takanawa Gateway",
+				"side": "R",
+				"distance": 1.3,
+				"xf": ["JK"],
+				"major": false
+			},
+			{
+				"ja": "田町",
+				"en": "Tamachi",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["JK", "A", "I"],
+				"major": false
+			},
+			{
+				"ja": "浜松町",
+				"en": "Hamamatsuchō",
+				"side": "R",
+				"distance": 1.2,
+				"xf": ["JK", "A", "E", "MO"],
+				"major": true
+			},
+			{
+				"ja": "新橋",
+				"en": "Shimbashi",
+				"side": "L",
+				"distance": 1.9,
+				"xf": ["JK", "JT", "JO", "G", "A", "YU"],
+				"major": true
+			},
+			{
+				"ja": "有楽町",
+				"en": "Yūrakuchō",
+				"side": "R",
+				"distance": 0.8,
+				"xf": ["JK", "Y", "H", "C", "M"],
+				"major": true
+			}
+		]
+	},
+	"JC": {
+		"line": "JC",
+		"destJa": "新宿",
+		"destEn": "Shinjuku",
+		"towardJa": "新宿方面",
+		"towardEn": "for Shinjuku",
+		"stations": [
+			{
+				"ja": "東京",
+				"en": "Tokyo",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JK", "JT", "JO", "JU", "JE", "M"],
+				"major": true
+			},
+			{
+				"ja": "神田",
+				"en": "Kanda",
+				"side": "R",
+				"distance": 1.3,
+				"xf": ["YM", "JK", "G"],
+				"major": false
+			},
+			{
+				"ja": "新宿",
+				"en": "Shinjuku",
+				"side": "L",
+				"distance": 0.7,
+				"xf": ["YM", "JB", "JA", "JS", "M", "S", "E", "KO", "OH"],
+				"major": true
+			}
+		]
+	},
+	"JK": {
+		"line": "JK",
+		"destJa": "有楽町",
+		"destEn": "Yūrakuchō",
+		"towardJa": "有楽町方面",
+		"towardEn": "for Yūrakuchō",
+		"stations": [
+			{
+				"ja": "東京",
+				"en": "Tokyo",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JC", "JT", "JO", "JU", "JE", "M"],
+				"major": true
+			},
+			{
+				"ja": "神田",
+				"en": "Kanda",
+				"side": "R",
+				"distance": 1.3,
+				"xf": ["YM", "JC", "G"],
+				"major": false
+			},
+			{
+				"ja": "秋葉原",
+				"en": "Akihabara",
+				"side": "L",
+				"distance": 0.7,
+				"xf": ["YM", "JB", "H", "TX"],
+				"major": false
+			},
+			{
+				"ja": "御徒町",
+				"en": "Okachimachi",
+				"side": "R",
+				"distance": 1,
+				"xf": ["YM"],
+				"major": false
+			},
+			{
+				"ja": "上野",
+				"en": "Ueno",
+				"side": "L",
+				"distance": 0.6,
+				"xf": ["YM", "JU", "JJ", "G", "H", "KS"],
+				"major": false
+			},
+			{
+				"ja": "鶯谷",
+				"en": "Uguisudani",
+				"side": "R",
+				"distance": 1.1,
+				"xf": ["YM"],
+				"major": false
+			},
+			{
+				"ja": "日暮里",
+				"en": "Nippori",
+				"side": "L",
+				"distance": 0.5,
+				"xf": ["YM", "JJ", "KS", "NT"],
+				"major": false
+			},
+			{
+				"ja": "西日暮里",
+				"en": "Nishi-Nippori",
+				"side": "R",
+				"distance": 1.1,
+				"xf": ["YM", "C", "NT"],
+				"major": false
+			},
+			{
+				"ja": "田端",
+				"en": "Tabata",
+				"side": "L",
+				"distance": 1.7,
+				"xf": ["YM"],
+				"major": false
+			},
+			{
+				"ja": "品川",
+				"en": "Shinagawa",
+				"side": "R",
+				"distance": 0.9,
+				"xf": ["YM", "JT", "JO", "KK"],
+				"major": false
+			},
+			{
+				"ja": "高輪ゲートウェイ",
+				"en": "Takanawa Gateway",
+				"side": "L",
+				"distance": 1.3,
+				"xf": ["YM"],
+				"major": false
+			},
+			{
+				"ja": "田町",
+				"en": "Tamachi",
+				"side": "R",
+				"distance": 1.5,
+				"xf": ["YM", "A", "I"],
+				"major": false
+			},
+			{
+				"ja": "浜松町",
+				"en": "Hamamatsuchō",
+				"side": "L",
+				"distance": 1.2,
+				"xf": ["YM", "A", "E", "MO"],
+				"major": false
+			},
+			{
+				"ja": "新橋",
+				"en": "Shimbashi",
+				"side": "R",
+				"distance": 1.9,
+				"xf": ["YM", "JT", "JO", "G", "A", "YU"],
+				"major": false
+			},
+			{
+				"ja": "有楽町",
+				"en": "Yūrakuchō",
+				"side": "L",
+				"distance": 0.8,
+				"xf": ["YM", "Y", "H", "C", "M"],
+				"major": true
+			}
+		]
+	},
+	"JT": {
+		"line": "JT",
+		"destJa": "新橋",
+		"destEn": "Shimbashi",
+		"towardJa": "新橋方面",
+		"towardEn": "for Shimbashi",
+		"stations": [
+			{
+				"ja": "東京",
+				"en": "Tokyo",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JC", "JK", "JO", "JU", "JE", "M"],
+				"major": true
+			},
+			{
+				"ja": "品川",
+				"en": "Shinagawa",
+				"side": "R",
+				"distance": 0.9,
+				"xf": ["YM", "JK", "JO", "KK"],
+				"major": false
+			},
+			{
+				"ja": "新橋",
+				"en": "Shimbashi",
+				"side": "L",
+				"distance": 1.9,
+				"xf": ["YM", "JK", "JO", "G", "A", "YU"],
+				"major": true
+			}
+		]
+	},
+	"JO": {
+		"line": "JO",
+		"destJa": "新橋",
+		"destEn": "Shimbashi",
+		"towardJa": "新橋方面",
+		"towardEn": "for Shimbashi",
+		"stations": [
+			{
+				"ja": "東京",
+				"en": "Tokyo",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JC", "JK", "JT", "JU", "JE", "M"],
+				"major": true
+			},
+			{
+				"ja": "品川",
+				"en": "Shinagawa",
+				"side": "R",
+				"distance": 0.9,
+				"xf": ["YM", "JK", "JT", "KK"],
+				"major": false
+			},
+			{
+				"ja": "新橋",
+				"en": "Shimbashi",
+				"side": "L",
+				"distance": 1.9,
+				"xf": ["YM", "JK", "JT", "G", "A", "YU"],
+				"major": true
+			}
+		]
+	},
+	"JU": {
+		"line": "JU",
+		"destJa": "有楽町",
+		"destEn": "Yūrakuchō",
+		"towardJa": "有楽町方面",
+		"towardEn": "for Yūrakuchō",
+		"stations": [
+			{
+				"ja": "東京",
+				"en": "Tokyo",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JC", "JK", "JT", "JO", "JE", "M"],
+				"major": true
+			},
+			{
+				"ja": "神田",
+				"en": "Kanda",
+				"side": "R",
+				"distance": 1.3,
+				"xf": ["YM", "JC", "JK", "G"],
+				"major": false
+			},
+			{
+				"ja": "御徒町",
+				"en": "Okachimachi",
+				"side": "L",
+				"distance": 1,
+				"xf": ["YM", "JK"],
+				"major": false
+			},
+			{
+				"ja": "上野",
+				"en": "Ueno",
+				"side": "R",
+				"distance": 0.6,
+				"xf": ["YM", "JK", "JJ", "G", "H", "KS"],
+				"major": false
+			},
+			{
+				"ja": "鶯谷",
+				"en": "Uguisudani",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JK"],
+				"major": false
+			},
+			{
+				"ja": "有楽町",
+				"en": "Yūrakuchō",
+				"side": "R",
+				"distance": 0.8,
+				"xf": ["YM", "JK", "Y", "H", "C", "M"],
+				"major": true
+			}
+		]
+	},
+	"JE": {
+		"line": "JE",
+		"destJa": "有楽町",
+		"destEn": "Yūrakuchō",
+		"towardJa": "有楽町方面",
+		"towardEn": "for Yūrakuchō",
+		"stations": [
+			{
+				"ja": "東京",
+				"en": "Tokyo",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JC", "JK", "JT", "JO", "JU", "M"],
+				"major": true
+			},
+			{
+				"ja": "神田",
+				"en": "Kanda",
+				"side": "R",
+				"distance": 1.3,
+				"xf": ["YM", "JC", "JK", "G"],
+				"major": false
+			},
+			{
+				"ja": "有楽町",
+				"en": "Yūrakuchō",
+				"side": "L",
+				"distance": 0.8,
+				"xf": ["YM", "JK", "Y", "H", "C", "M"],
+				"major": true
+			}
+		]
+	},
+	"M": {
+		"line": "M",
+		"destJa": "有楽町",
+		"destEn": "Yūrakuchō",
+		"towardJa": "有楽町方面",
+		"towardEn": "for Yūrakuchō",
+		"stations": [
+			{
+				"ja": "東京",
+				"en": "Tokyo",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JC", "JK", "JT", "JO", "JU", "JE"],
+				"major": true
+			},
+			{
+				"ja": "池袋",
+				"en": "Ikebukuro",
+				"side": "R",
+				"distance": 1.2,
+				"xf": ["YM", "JA", "JS", "Y", "F", "TJ", "SI"],
+				"major": false
+			},
+			{
+				"ja": "新宿",
+				"en": "Shinjuku",
+				"side": "L",
+				"distance": 0.7,
+				"xf": ["YM", "JC", "JB", "JA", "JS", "S", "E", "KO", "OH"],
+				"major": false
+			},
+			{
+				"ja": "有楽町",
+				"en": "Yūrakuchō",
+				"side": "R",
+				"distance": 0.8,
+				"xf": ["YM", "JK", "Y", "H", "C"],
+				"major": true
+			}
+		]
+	},
+	"G": {
+		"line": "G",
+		"destJa": "新橋",
+		"destEn": "Shimbashi",
+		"towardJa": "新橋方面",
+		"towardEn": "for Shimbashi",
+		"stations": [
+			{
+				"ja": "神田",
+				"en": "Kanda",
+				"side": "L",
+				"distance": 1.3,
+				"xf": ["YM", "JC", "JK"],
+				"major": true
+			},
+			{
+				"ja": "上野",
+				"en": "Ueno",
+				"side": "R",
+				"distance": 0.6,
+				"xf": ["YM", "JK", "JU", "JJ", "H", "KS"],
+				"major": false
+			},
+			{
+				"ja": "渋谷",
+				"en": "Shibuya",
+				"side": "L",
+				"distance": 1.6,
+				"xf": ["YM", "JA", "JS", "Z", "F", "TY", "DT", "IN"],
+				"major": false
+			},
+			{
+				"ja": "新橋",
+				"en": "Shimbashi",
+				"side": "R",
+				"distance": 1.9,
+				"xf": ["YM", "JK", "JT", "JO", "A", "YU"],
+				"major": true
+			}
+		]
+	},
+	"JB": {
+		"line": "JB",
+		"destJa": "代々木",
+		"destEn": "Yoyogi",
+		"towardJa": "代々木方面",
+		"towardEn": "for Yoyogi",
+		"stations": [
+			{
+				"ja": "秋葉原",
+				"en": "Akihabara",
+				"side": "L",
+				"distance": 0.7,
+				"xf": ["YM", "JK", "H", "TX"],
+				"major": true
+			},
+			{
+				"ja": "新宿",
+				"en": "Shinjuku",
+				"side": "R",
+				"distance": 0.7,
+				"xf": ["YM", "JC", "JA", "JS", "M", "S", "E", "KO", "OH"],
+				"major": false
+			},
+			{
+				"ja": "代々木",
+				"en": "Yoyogi",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["YM", "E"],
+				"major": true
+			}
+		]
+	},
+	"H": {
+		"line": "H",
+		"destJa": "有楽町",
+		"destEn": "Yūrakuchō",
+		"towardJa": "有楽町方面",
+		"towardEn": "for Yūrakuchō",
+		"stations": [
+			{
+				"ja": "秋葉原",
+				"en": "Akihabara",
+				"side": "L",
+				"distance": 0.7,
+				"xf": ["YM", "JK", "JB", "TX"],
+				"major": true
+			},
+			{
+				"ja": "上野",
+				"en": "Ueno",
+				"side": "R",
+				"distance": 0.6,
+				"xf": ["YM", "JK", "JU", "JJ", "G", "KS"],
+				"major": false
+			},
+			{
+				"ja": "恵比寿",
+				"en": "Ebisu",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["YM", "JS"],
+				"major": false
+			},
+			{
+				"ja": "有楽町",
+				"en": "Yūrakuchō",
+				"side": "R",
+				"distance": 0.8,
+				"xf": ["YM", "JK", "Y", "C", "M"],
+				"major": true
+			}
+		]
+	},
+	"TX": {
+		"line": "TX",
+		"destJa": "御徒町",
+		"destEn": "Okachimachi",
+		"towardJa": "御徒町方面",
+		"towardEn": "for Okachimachi",
+		"stations": [
+			{
+				"ja": "神田",
+				"en": "Kanda",
+				"side": "L",
+				"distance": 1.3,
+				"xf": ["YM", "JC", "JK", "G"],
+				"major": true
+			},
+			{
+				"ja": "秋葉原",
+				"en": "Akihabara",
+				"side": "R",
+				"distance": 0.7,
+				"xf": ["YM", "JK", "JB", "H"],
+				"major": false
+			},
+			{
+				"ja": "御徒町",
+				"en": "Okachimachi",
+				"side": "L",
+				"distance": 1,
+				"xf": ["YM", "JK"],
+				"major": true
+			}
+		]
+	},
+	"JJ": {
+		"line": "JJ",
+		"destJa": "西日暮里",
+		"destEn": "Nishi-Nippori",
+		"towardJa": "西日暮里方面",
+		"towardEn": "for Nishi-Nippori",
+		"stations": [
+			{
+				"ja": "御徒町",
+				"en": "Okachimachi",
+				"side": "L",
+				"distance": 1,
+				"xf": ["YM", "JK"],
+				"major": true
+			},
+			{
+				"ja": "上野",
+				"en": "Ueno",
+				"side": "R",
+				"distance": 0.6,
+				"xf": ["YM", "JK", "JU", "G", "H", "KS"],
+				"major": false
+			},
+			{
+				"ja": "鶯谷",
+				"en": "Uguisudani",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JK"],
+				"major": false
+			},
+			{
+				"ja": "日暮里",
+				"en": "Nippori",
+				"side": "R",
+				"distance": 0.5,
+				"xf": ["YM", "JK", "KS", "NT"],
+				"major": false
+			},
+			{
+				"ja": "西日暮里",
+				"en": "Nishi-Nippori",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JK", "C", "NT"],
+				"major": true
+			}
+		]
+	},
+	"KS": {
+		"line": "KS",
+		"destJa": "西日暮里",
+		"destEn": "Nishi-Nippori",
+		"towardJa": "西日暮里方面",
+		"towardEn": "for Nishi-Nippori",
+		"stations": [
+			{
+				"ja": "御徒町",
+				"en": "Okachimachi",
+				"side": "L",
+				"distance": 1,
+				"xf": ["YM", "JK"],
+				"major": true
+			},
+			{
+				"ja": "上野",
+				"en": "Ueno",
+				"side": "R",
+				"distance": 0.6,
+				"xf": ["YM", "JK", "JU", "JJ", "G", "H"],
+				"major": false
+			},
+			{
+				"ja": "鶯谷",
+				"en": "Uguisudani",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JK"],
+				"major": false
+			},
+			{
+				"ja": "日暮里",
+				"en": "Nippori",
+				"side": "R",
+				"distance": 0.5,
+				"xf": ["YM", "JK", "JJ", "NT"],
+				"major": false
+			},
+			{
+				"ja": "西日暮里",
+				"en": "Nishi-Nippori",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JK", "C", "NT"],
+				"major": true
+			}
+		]
+	},
+	"NT": {
+		"line": "NT",
+		"destJa": "田端",
+		"destEn": "Tabata",
+		"towardJa": "田端方面",
+		"towardEn": "for Tabata",
+		"stations": [
+			{
+				"ja": "鶯谷",
+				"en": "Uguisudani",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JK"],
+				"major": true
+			},
+			{
+				"ja": "日暮里",
+				"en": "Nippori",
+				"side": "R",
+				"distance": 0.5,
+				"xf": ["YM", "JK", "JJ", "KS"],
+				"major": false
+			},
+			{
+				"ja": "西日暮里",
+				"en": "Nishi-Nippori",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JK", "C"],
+				"major": false
+			},
+			{
+				"ja": "田端",
+				"en": "Tabata",
+				"side": "R",
+				"distance": 1.7,
+				"xf": ["YM", "JK"],
+				"major": true
+			}
+		]
+	},
+	"C": {
+		"line": "C",
+		"destJa": "有楽町",
+		"destEn": "Yūrakuchō",
+		"towardJa": "有楽町方面",
+		"towardEn": "for Yūrakuchō",
+		"stations": [
+			{
+				"ja": "西日暮里",
+				"en": "Nishi-Nippori",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JK", "NT"],
+				"major": true
+			},
+			{
+				"ja": "原宿",
+				"en": "Harajuku",
+				"side": "R",
+				"distance": 1.6,
+				"xf": ["YM", "F"],
+				"major": false
+			},
+			{
+				"ja": "有楽町",
+				"en": "Yūrakuchō",
+				"side": "L",
+				"distance": 0.8,
+				"xf": ["YM", "JK", "Y", "H", "M"],
+				"major": true
+			}
+		]
+	},
+	"N": {
+		"line": "N",
+		"destJa": "五反田",
+		"destEn": "Gotanda",
+		"towardJa": "五反田方面",
+		"towardEn": "for Gotanda",
+		"stations": [
+			{
+				"ja": "田端",
+				"en": "Tabata",
+				"side": "L",
+				"distance": 1.7,
+				"xf": ["YM", "JK"],
+				"major": true
+			},
+			{
+				"ja": "駒込",
+				"en": "Komagome",
+				"side": "R",
+				"distance": 1.6,
+				"xf": ["YM"],
+				"major": false
+			},
+			{
+				"ja": "巣鴨",
+				"en": "Sugamo",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "I"],
+				"major": false
+			},
+			{
+				"ja": "恵比寿",
+				"en": "Ebisu",
+				"side": "R",
+				"distance": 1.5,
+				"xf": ["YM", "JS", "H"],
+				"major": false
+			},
+			{
+				"ja": "目黒",
+				"en": "Meguro",
+				"side": "L",
+				"distance": 1.2,
+				"xf": ["YM", "I", "TM"],
+				"major": false
+			},
+			{
+				"ja": "五反田",
+				"en": "Gotanda",
+				"side": "R",
+				"distance": 0.9,
+				"xf": ["YM", "A", "IK"],
+				"major": true
+			}
+		]
+	},
+	"I": {
+		"line": "I",
+		"destJa": "田町",
+		"destEn": "Tamachi",
+		"towardJa": "田町方面",
+		"towardEn": "for Tamachi",
+		"stations": [
+			{
+				"ja": "巣鴨",
+				"en": "Sugamo",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM"],
+				"major": true
+			},
+			{
+				"ja": "目黒",
+				"en": "Meguro",
+				"side": "R",
+				"distance": 1.2,
+				"xf": ["YM", "N", "TM"],
+				"major": false
+			},
+			{
+				"ja": "田町",
+				"en": "Tamachi",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["YM", "JK", "A"],
+				"major": true
+			}
+		]
+	},
+	"JA": {
+		"line": "JA",
+		"destJa": "大崎",
+		"destEn": "Ōsaki",
+		"towardJa": "大崎方面",
+		"towardEn": "for Ōsaki",
+		"stations": [
+			{
+				"ja": "池袋",
+				"en": "Ikebukuro",
+				"side": "L",
+				"distance": 1.2,
+				"xf": ["YM", "JS", "M", "Y", "F", "TJ", "SI"],
+				"major": true
+			},
+			{
+				"ja": "新宿",
+				"en": "Shinjuku",
+				"side": "R",
+				"distance": 0.7,
+				"xf": ["YM", "JC", "JB", "JS", "M", "S", "E", "KO", "OH"],
+				"major": false
+			},
+			{
+				"ja": "渋谷",
+				"en": "Shibuya",
+				"side": "L",
+				"distance": 1.6,
+				"xf": ["YM", "JS", "G", "Z", "F", "TY", "DT", "IN"],
+				"major": false
+			},
+			{
+				"ja": "大崎",
+				"en": "Ōsaki",
+				"side": "R",
+				"distance": 2,
+				"xf": ["YM", "JS", "RK"],
+				"major": true
+			}
+		]
+	},
+	"JS": {
+		"line": "JS",
+		"destJa": "大崎",
+		"destEn": "Ōsaki",
+		"towardJa": "大崎方面",
+		"towardEn": "for Ōsaki",
+		"stations": [
+			{
+				"ja": "池袋",
+				"en": "Ikebukuro",
+				"side": "L",
+				"distance": 1.2,
+				"xf": ["YM", "JA", "M", "Y", "F", "TJ", "SI"],
+				"major": true
+			},
+			{
+				"ja": "新宿",
+				"en": "Shinjuku",
+				"side": "R",
+				"distance": 0.7,
+				"xf": ["YM", "JC", "JB", "JA", "M", "S", "E", "KO", "OH"],
+				"major": false
+			},
+			{
+				"ja": "渋谷",
+				"en": "Shibuya",
+				"side": "L",
+				"distance": 1.6,
+				"xf": ["YM", "JA", "G", "Z", "F", "TY", "DT", "IN"],
+				"major": false
+			},
+			{
+				"ja": "恵比寿",
+				"en": "Ebisu",
+				"side": "R",
+				"distance": 1.5,
+				"xf": ["YM", "H"],
+				"major": false
+			},
+			{
+				"ja": "大崎",
+				"en": "Ōsaki",
+				"side": "L",
+				"distance": 2,
+				"xf": ["YM", "JA", "RK"],
+				"major": true
+			}
+		]
+	},
+	"Y": {
+		"line": "Y",
+		"destJa": "有楽町",
+		"destEn": "Yūrakuchō",
+		"towardJa": "有楽町方面",
+		"towardEn": "for Yūrakuchō",
+		"stations": [
+			{
+				"ja": "東京",
+				"en": "Tokyo",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["YM", "JC", "JK", "JT", "JO", "JU", "JE", "M"],
+				"major": true
+			},
+			{
+				"ja": "大塚",
+				"en": "Ōtsuka",
+				"side": "R",
+				"distance": 1.8,
+				"xf": ["YM"],
+				"major": false
+			},
+			{
+				"ja": "池袋",
+				"en": "Ikebukuro",
+				"side": "L",
+				"distance": 1.2,
+				"xf": ["YM", "JA", "JS", "M", "F", "TJ", "SI"],
+				"major": false
+			},
+			{
+				"ja": "目白",
+				"en": "Mejiro",
+				"side": "R",
+				"distance": 1.4,
+				"xf": ["YM"],
+				"major": false
+			},
+			{
+				"ja": "新橋",
+				"en": "Shimbashi",
+				"side": "L",
+				"distance": 1.9,
+				"xf": ["YM", "JK", "JT", "JO", "G", "A", "YU"],
+				"major": false
+			},
+			{
+				"ja": "有楽町",
+				"en": "Yūrakuchō",
+				"side": "R",
+				"distance": 0.8,
+				"xf": ["YM", "JK", "H", "C", "M"],
+				"major": true
+			}
+		]
+	},
+	"F": {
+		"line": "F",
+		"destJa": "渋谷",
+		"destEn": "Shibuya",
+		"towardJa": "渋谷方面",
+		"towardEn": "for Shibuya",
+		"stations": [
+			{
+				"ja": "池袋",
+				"en": "Ikebukuro",
+				"side": "L",
+				"distance": 1.2,
+				"xf": ["YM", "JA", "JS", "M", "Y", "TJ", "SI"],
+				"major": true
+			},
+			{
+				"ja": "原宿",
+				"en": "Harajuku",
+				"side": "R",
+				"distance": 1.6,
+				"xf": ["YM", "C"],
+				"major": false
+			},
+			{
+				"ja": "渋谷",
+				"en": "Shibuya",
+				"side": "L",
+				"distance": 1.6,
+				"xf": ["YM", "JA", "JS", "G", "Z", "TY", "DT", "IN"],
+				"major": true
+			}
+		]
+	},
+	"TJ": {
+		"line": "TJ",
+		"destJa": "目白",
+		"destEn": "Mejiro",
+		"towardJa": "目白方面",
+		"towardEn": "for Mejiro",
+		"stations": [
+			{
+				"ja": "大塚",
+				"en": "Ōtsuka",
+				"side": "L",
+				"distance": 1.8,
+				"xf": ["YM"],
+				"major": true
+			},
+			{
+				"ja": "池袋",
+				"en": "Ikebukuro",
+				"side": "R",
+				"distance": 1.2,
+				"xf": ["YM", "JA", "JS", "M", "Y", "F", "SI"],
+				"major": false
+			},
+			{
+				"ja": "目白",
+				"en": "Mejiro",
+				"side": "L",
+				"distance": 1.4,
+				"xf": ["YM"],
+				"major": true
+			}
+		]
+	},
+	"SI": {
+		"line": "SI",
+		"destJa": "目白",
+		"destEn": "Mejiro",
+		"towardJa": "目白方面",
+		"towardEn": "for Mejiro",
+		"stations": [
+			{
+				"ja": "大塚",
+				"en": "Ōtsuka",
+				"side": "L",
+				"distance": 1.8,
+				"xf": ["YM"],
+				"major": true
+			},
+			{
+				"ja": "池袋",
+				"en": "Ikebukuro",
+				"side": "R",
+				"distance": 1.2,
+				"xf": ["YM", "JA", "JS", "M", "Y", "F", "TJ"],
+				"major": false
+			},
+			{
+				"ja": "目白",
+				"en": "Mejiro",
+				"side": "L",
+				"distance": 1.4,
+				"xf": ["YM"],
+				"major": true
+			}
+		]
+	},
+	"T": {
+		"line": "T",
+		"destJa": "新大久保",
+		"destEn": "Shin-Ōkubo",
+		"towardJa": "新大久保方面",
+		"towardEn": "for Shin-Ōkubo",
+		"stations": [
+			{
+				"ja": "目白",
+				"en": "Mejiro",
+				"side": "L",
+				"distance": 1.4,
+				"xf": ["YM"],
+				"major": true
+			},
+			{
+				"ja": "高田馬場",
+				"en": "Takadanobaba",
+				"side": "R",
+				"distance": 1.4,
+				"xf": ["YM", "SS"],
+				"major": false
+			},
+			{
+				"ja": "新大久保",
+				"en": "Shin-Ōkubo",
+				"side": "L",
+				"distance": 1.3,
+				"xf": ["YM"],
+				"major": true
+			}
+		]
+	},
+	"SS": {
+		"line": "SS",
+		"destJa": "新大久保",
+		"destEn": "Shin-Ōkubo",
+		"towardJa": "新大久保方面",
+		"towardEn": "for Shin-Ōkubo",
+		"stations": [
+			{
+				"ja": "目白",
+				"en": "Mejiro",
+				"side": "L",
+				"distance": 1.4,
+				"xf": ["YM"],
+				"major": true
+			},
+			{
+				"ja": "高田馬場",
+				"en": "Takadanobaba",
+				"side": "R",
+				"distance": 1.4,
+				"xf": ["YM", "T"],
+				"major": false
+			},
+			{
+				"ja": "新大久保",
+				"en": "Shin-Ōkubo",
+				"side": "L",
+				"distance": 1.3,
+				"xf": ["YM"],
+				"major": true
+			}
+		]
+	},
+	"S": {
+		"line": "S",
+		"destJa": "代々木",
+		"destEn": "Yoyogi",
+		"towardJa": "代々木方面",
+		"towardEn": "for Yoyogi",
+		"stations": [
+			{
+				"ja": "新大久保",
+				"en": "Shin-Ōkubo",
+				"side": "L",
+				"distance": 1.3,
+				"xf": ["YM"],
+				"major": true
+			},
+			{
+				"ja": "新宿",
+				"en": "Shinjuku",
+				"side": "R",
+				"distance": 0.7,
+				"xf": ["YM", "JC", "JB", "JA", "JS", "M", "E", "KO", "OH"],
+				"major": false
+			},
+			{
+				"ja": "代々木",
+				"en": "Yoyogi",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["YM", "JB", "E"],
+				"major": true
+			}
+		]
+	},
+	"E": {
+		"line": "E",
+		"destJa": "浜松町",
+		"destEn": "Hamamatsuchō",
+		"towardJa": "浜松町方面",
+		"towardEn": "for Hamamatsuchō",
+		"stations": [
+			{
+				"ja": "新宿",
+				"en": "Shinjuku",
+				"side": "L",
+				"distance": 0.7,
+				"xf": ["YM", "JC", "JB", "JA", "JS", "M", "S", "KO", "OH"],
+				"major": true
+			},
+			{
+				"ja": "代々木",
+				"en": "Yoyogi",
+				"side": "R",
+				"distance": 1.5,
+				"xf": ["YM", "JB"],
+				"major": false
+			},
+			{
+				"ja": "浜松町",
+				"en": "Hamamatsuchō",
+				"side": "L",
+				"distance": 1.2,
+				"xf": ["YM", "JK", "A", "MO"],
+				"major": true
+			}
+		]
+	},
+	"KO": {
+		"line": "KO",
+		"destJa": "代々木",
+		"destEn": "Yoyogi",
+		"towardJa": "代々木方面",
+		"towardEn": "for Yoyogi",
+		"stations": [
+			{
+				"ja": "新大久保",
+				"en": "Shin-Ōkubo",
+				"side": "L",
+				"distance": 1.3,
+				"xf": ["YM"],
+				"major": true
+			},
+			{
+				"ja": "新宿",
+				"en": "Shinjuku",
+				"side": "R",
+				"distance": 0.7,
+				"xf": ["YM", "JC", "JB", "JA", "JS", "M", "S", "E", "OH"],
+				"major": false
+			},
+			{
+				"ja": "代々木",
+				"en": "Yoyogi",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["YM", "JB", "E"],
+				"major": true
+			}
+		]
+	},
+	"OH": {
+		"line": "OH",
+		"destJa": "代々木",
+		"destEn": "Yoyogi",
+		"towardJa": "代々木方面",
+		"towardEn": "for Yoyogi",
+		"stations": [
+			{
+				"ja": "新大久保",
+				"en": "Shin-Ōkubo",
+				"side": "L",
+				"distance": 1.3,
+				"xf": ["YM"],
+				"major": true
+			},
+			{
+				"ja": "新宿",
+				"en": "Shinjuku",
+				"side": "R",
+				"distance": 0.7,
+				"xf": ["YM", "JC", "JB", "JA", "JS", "M", "S", "E", "KO"],
+				"major": false
+			},
+			{
+				"ja": "代々木",
+				"en": "Yoyogi",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["YM", "JB", "E"],
+				"major": true
+			}
+		]
+	},
+	"Z": {
+		"line": "Z",
+		"destJa": "恵比寿",
+		"destEn": "Ebisu",
+		"towardJa": "恵比寿方面",
+		"towardEn": "for Ebisu",
+		"stations": [
+			{
+				"ja": "原宿",
+				"en": "Harajuku",
+				"side": "L",
+				"distance": 1.6,
+				"xf": ["YM", "C", "F"],
+				"major": true
+			},
+			{
+				"ja": "渋谷",
+				"en": "Shibuya",
+				"side": "R",
+				"distance": 1.6,
+				"xf": ["YM", "JA", "JS", "G", "F", "TY", "DT", "IN"],
+				"major": false
+			},
+			{
+				"ja": "恵比寿",
+				"en": "Ebisu",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["YM", "JS", "H"],
+				"major": true
+			}
+		]
+	},
+	"TY": {
+		"line": "TY",
+		"destJa": "恵比寿",
+		"destEn": "Ebisu",
+		"towardJa": "恵比寿方面",
+		"towardEn": "for Ebisu",
+		"stations": [
+			{
+				"ja": "原宿",
+				"en": "Harajuku",
+				"side": "L",
+				"distance": 1.6,
+				"xf": ["YM", "C", "F"],
+				"major": true
+			},
+			{
+				"ja": "渋谷",
+				"en": "Shibuya",
+				"side": "R",
+				"distance": 1.6,
+				"xf": ["YM", "JA", "JS", "G", "Z", "F", "DT", "IN"],
+				"major": false
+			},
+			{
+				"ja": "恵比寿",
+				"en": "Ebisu",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["YM", "JS", "H"],
+				"major": true
+			}
+		]
+	},
+	"DT": {
+		"line": "DT",
+		"destJa": "恵比寿",
+		"destEn": "Ebisu",
+		"towardJa": "恵比寿方面",
+		"towardEn": "for Ebisu",
+		"stations": [
+			{
+				"ja": "原宿",
+				"en": "Harajuku",
+				"side": "L",
+				"distance": 1.6,
+				"xf": ["YM", "C", "F"],
+				"major": true
+			},
+			{
+				"ja": "渋谷",
+				"en": "Shibuya",
+				"side": "R",
+				"distance": 1.6,
+				"xf": ["YM", "JA", "JS", "G", "Z", "F", "TY", "IN"],
+				"major": false
+			},
+			{
+				"ja": "恵比寿",
+				"en": "Ebisu",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["YM", "JS", "H"],
+				"major": true
+			}
+		]
+	},
+	"IN": {
+		"line": "IN",
+		"destJa": "恵比寿",
+		"destEn": "Ebisu",
+		"towardJa": "恵比寿方面",
+		"towardEn": "for Ebisu",
+		"stations": [
+			{
+				"ja": "原宿",
+				"en": "Harajuku",
+				"side": "L",
+				"distance": 1.6,
+				"xf": ["YM", "C", "F"],
+				"major": true
+			},
+			{
+				"ja": "渋谷",
+				"en": "Shibuya",
+				"side": "R",
+				"distance": 1.6,
+				"xf": ["YM", "JA", "JS", "G", "Z", "F", "TY", "DT"],
+				"major": false
+			},
+			{
+				"ja": "恵比寿",
+				"en": "Ebisu",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["YM", "JS", "H"],
+				"major": true
+			}
+		]
+	},
+	"TM": {
+		"line": "TM",
+		"destJa": "五反田",
+		"destEn": "Gotanda",
+		"towardJa": "五反田方面",
+		"towardEn": "for Gotanda",
+		"stations": [
+			{
+				"ja": "恵比寿",
+				"en": "Ebisu",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["YM", "JS", "H"],
+				"major": true
+			},
+			{
+				"ja": "目黒",
+				"en": "Meguro",
+				"side": "R",
+				"distance": 1.2,
+				"xf": ["YM", "I", "N"],
+				"major": false
+			},
+			{
+				"ja": "五反田",
+				"en": "Gotanda",
+				"side": "L",
+				"distance": 0.9,
+				"xf": ["YM", "A", "IK"],
+				"major": true
+			}
+		]
+	},
+	"A": {
+		"line": "A",
+		"destJa": "新橋",
+		"destEn": "Shimbashi",
+		"towardJa": "新橋方面",
+		"towardEn": "for Shimbashi",
+		"stations": [
+			{
+				"ja": "五反田",
+				"en": "Gotanda",
+				"side": "L",
+				"distance": 0.9,
+				"xf": ["YM", "IK"],
+				"major": true
+			},
+			{
+				"ja": "田町",
+				"en": "Tamachi",
+				"side": "R",
+				"distance": 1.5,
+				"xf": ["YM", "JK", "I"],
+				"major": false
+			},
+			{
+				"ja": "浜松町",
+				"en": "Hamamatsuchō",
+				"side": "L",
+				"distance": 1.2,
+				"xf": ["YM", "JK", "E", "MO"],
+				"major": false
+			},
+			{
+				"ja": "新橋",
+				"en": "Shimbashi",
+				"side": "R",
+				"distance": 1.9,
+				"xf": ["YM", "JK", "JT", "JO", "G", "YU"],
+				"major": true
+			}
+		]
+	},
+	"IK": {
+		"line": "IK",
+		"destJa": "大崎",
+		"destEn": "Ōsaki",
+		"towardJa": "大崎方面",
+		"towardEn": "for Ōsaki",
+		"stations": [
+			{
+				"ja": "目黒",
+				"en": "Meguro",
+				"side": "L",
+				"distance": 1.2,
+				"xf": ["YM", "I", "N", "TM"],
+				"major": true
+			},
+			{
+				"ja": "五反田",
+				"en": "Gotanda",
+				"side": "R",
+				"distance": 0.9,
+				"xf": ["YM", "A"],
+				"major": false
+			},
+			{
+				"ja": "大崎",
+				"en": "Ōsaki",
+				"side": "L",
+				"distance": 2,
+				"xf": ["YM", "JA", "JS", "RK"],
+				"major": true
+			}
+		]
+	},
+	"RK": {
+		"line": "RK",
+		"destJa": "品川",
+		"destEn": "Shinagawa",
+		"towardJa": "品川方面",
+		"towardEn": "for Shinagawa",
+		"stations": [
+			{
+				"ja": "五反田",
+				"en": "Gotanda",
+				"side": "L",
+				"distance": 0.9,
+				"xf": ["YM", "A", "IK"],
+				"major": true
+			},
+			{
+				"ja": "大崎",
+				"en": "Ōsaki",
+				"side": "R",
+				"distance": 2,
+				"xf": ["YM", "JA", "JS"],
+				"major": false
+			},
+			{
+				"ja": "品川",
+				"en": "Shinagawa",
+				"side": "L",
+				"distance": 0.9,
+				"xf": ["YM", "JK", "JT", "JO", "KK"],
+				"major": true
+			}
+		]
+	},
+	"KK": {
+		"line": "KK",
+		"destJa": "高輪ゲートウェイ",
+		"destEn": "Takanawa Gateway",
+		"towardJa": "高輪ゲートウェイ方面",
+		"towardEn": "for Takanawa Gateway",
+		"stations": [
+			{
+				"ja": "大崎",
+				"en": "Ōsaki",
+				"side": "L",
+				"distance": 2,
+				"xf": ["YM", "JA", "JS", "RK"],
+				"major": true
+			},
+			{
+				"ja": "品川",
+				"en": "Shinagawa",
+				"side": "R",
+				"distance": 0.9,
+				"xf": ["YM", "JK", "JT", "JO"],
+				"major": false
+			},
+			{
+				"ja": "高輪ゲートウェイ",
+				"en": "Takanawa Gateway",
+				"side": "L",
+				"distance": 1.3,
+				"xf": ["YM", "JK"],
+				"major": true
+			}
+		]
+	},
+	"MO": {
+		"line": "MO",
+		"destJa": "新橋",
+		"destEn": "Shimbashi",
+		"towardJa": "新橋方面",
+		"towardEn": "for Shimbashi",
+		"stations": [
+			{
+				"ja": "田町",
+				"en": "Tamachi",
+				"side": "L",
+				"distance": 1.5,
+				"xf": ["YM", "JK", "A", "I"],
+				"major": true
+			},
+			{
+				"ja": "浜松町",
+				"en": "Hamamatsuchō",
+				"side": "R",
+				"distance": 1.2,
+				"xf": ["YM", "JK", "A", "E"],
+				"major": false
+			},
+			{
+				"ja": "新橋",
+				"en": "Shimbashi",
+				"side": "L",
+				"distance": 1.9,
+				"xf": ["YM", "JK", "JT", "JO", "G", "A", "YU"],
+				"major": true
+			}
+		]
+	},
+	"YU": {
+		"line": "YU",
+		"destJa": "有楽町",
+		"destEn": "Yūrakuchō",
+		"towardJa": "有楽町方面",
+		"towardEn": "for Yūrakuchō",
+		"stations": [
+			{
+				"ja": "浜松町",
+				"en": "Hamamatsuchō",
+				"side": "L",
+				"distance": 1.2,
+				"xf": ["YM", "JK", "A", "E", "MO"],
+				"major": true
+			},
+			{
+				"ja": "新橋",
+				"en": "Shimbashi",
+				"side": "R",
+				"distance": 1.9,
+				"xf": ["YM", "JK", "JT", "JO", "G", "A"],
+				"major": false
+			},
+			{
+				"ja": "有楽町",
+				"en": "Yūrakuchō",
+				"side": "L",
+				"distance": 0.8,
+				"xf": ["YM", "JK", "Y", "H", "C", "M"],
+				"major": true
+			}
+		]
+	}
+}

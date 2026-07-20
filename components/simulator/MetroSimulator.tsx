@@ -26,6 +26,7 @@ import {
 	type SimulatorControlState,
 	type StationNameMode,
 	type CustomMarqueePreset,
+	DisplayAnnouncement,
 } from "@/components/simulator/simulatorControlState";
 import type {
 	LineId,
@@ -35,6 +36,7 @@ import type {
 	Route,
 	EditableRoute,
 	Routes,
+	AnnouncementContentType,
 } from "@/types/metro";
 import { shuffle } from "@/lib/utils";
 
@@ -606,12 +608,14 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		dispatch({
 			type: "applyMarqueePlaylist",
 			presetId: builtinPreset.id,
-			items: builtinPreset.items.map((item) => ({
-				...item,
-				type: item.type as AnnouncementContent["type"],
-				ja: item.ja ?? "",
-				enabled: true,
-			})),
+			items: builtinPreset.items.map(
+				(item: Omit<DisplayAnnouncement, "enabled">) => ({
+					...item,
+					type: item.type as AnnouncementContentType,
+					ja: item.ja ?? "",
+					enabled: true,
+				}),
+			),
 		});
 		setPresets((current) =>
 			current.map((preset) =>
@@ -882,7 +886,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 				alertLeaving={alertLeaving}
 				tickerItems={announcementContents.tickerItems}
 				tickerColor={
-					nextMarqueeMessageVisible ? annColor : "var(--paper)"
+					nextMarqueeMessageVisible && !announcementContents.departureAnnouncementPlaying ? annColor : "var(--paper)"
 				}
 				hasTransfers={hasCurrentTransfers}
 				transferExpanded={transferExpanded}
@@ -937,6 +941,9 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 						announcementContents.playDepartureAnnouncement,
 					stopAnnouncementAudio:
 						announcementContents.stopAnnouncementAudio,
+					isAudioClipAvailable:
+						announcementContents.isAudioClipAvailable,
+					audioQueue: announcementContents.audioQueue,
 				}}
 			/>
 		</>

@@ -39,6 +39,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-public/audio/announcements
-public/audio/tones
-public/audio/manifest.json
+public/audio/

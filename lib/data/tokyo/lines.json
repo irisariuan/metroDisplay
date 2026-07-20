@@ -1,0 +1,371 @@
+{
+	"YM": {
+		"id": "YM",
+		"code": "JY",
+		"ja": "JR山手線",
+		"jaReading": "じぇいあーるやまのてせん",
+		"en": "JR Yamanote Line",
+		"color": "#9acd32",
+		"textOnColor": "#111"
+	},
+	"JC": {
+		"id": "JC",
+		"code": "JC",
+		"ja": "JR中央線快速",
+		"jaReading": "じぇいあーるちゅうおうせんかいそく",
+		"en": "JR Chūō Line (Rapid)",
+		"color": "#f15a22",
+		"textOnColor": "#fff"
+	},
+	"JK": {
+		"id": "JK",
+		"code": "JK",
+		"ja": "JR京浜東北線",
+		"jaReading": "じぇいあーるけいひんとうほくせん",
+		"en": "JR Keihin-Tōhoku Line",
+		"color": "#00b2e5",
+		"textOnColor": "#111"
+	},
+	"JT": {
+		"id": "JT",
+		"code": "JT",
+		"ja": "JR東海道線",
+		"jaReading": "じぇいあーるとうかいどうせん",
+		"en": "JR Tōkaidō Line",
+		"color": "#f68b1e",
+		"textOnColor": "#111"
+	},
+	"JO": {
+		"id": "JO",
+		"code": "JO",
+		"ja": "JR横須賀・総武快速線",
+		"jaReading": "じぇいあーるよこすかそうぶかいそくせん",
+		"en": "JR Yokosuka / Sōbu Rapid Line",
+		"color": "#0067c0",
+		"textOnColor": "#fff"
+	},
+	"JU": {
+		"id": "JU",
+		"code": "JU",
+		"ja": "JR宇都宮・高崎線",
+		"jaReading": "じぇいあーるうつのみやたかさきせん",
+		"en": "JR Utsunomiya / Takasaki Line",
+		"color": "#ff7e1d",
+		"textOnColor": "#111"
+	},
+	"JE": {
+		"id": "JE",
+		"code": "JE",
+		"ja": "JR京葉線",
+		"jaReading": "じぇいあーるけいようせん",
+		"en": "JR Keiyō Line",
+		"color": "#c9252c",
+		"textOnColor": "#fff"
+	},
+	"M": {
+		"id": "M",
+		"code": "M",
+		"ja": "東京メトロ丸ノ内線",
+		"jaReading": "とうきょうめとろまるのうちせん",
+		"en": "Tokyo Metro Marunouchi Line",
+		"color": "#f62e36",
+		"textOnColor": "#fff"
+	},
+	"G": {
+		"id": "G",
+		"code": "G",
+		"ja": "東京メトロ銀座線",
+		"jaReading": "とうきょうめとろぎんざせん",
+		"en": "Tokyo Metro Ginza Line",
+		"color": "#ff9500",
+		"textOnColor": "#111"
+	},
+	"JB": {
+		"id": "JB",
+		"code": "JB",
+		"ja": "JR中央・総武線各駅停車",
+		"jaReading": "じぇいあーるちゅうおうそうぶせんかくえきていしゃ",
+		"en": "JR Chūō-Sōbu Line (Local)",
+		"color": "#ffd400",
+		"textOnColor": "#111"
+	},
+	"H": {
+		"id": "H",
+		"code": "H",
+		"ja": "東京メトロ日比谷線",
+		"jaReading": "とうきょうめとろひびやせん",
+		"en": "Tokyo Metro Hibiya Line",
+		"color": "#b5b5ac",
+		"textOnColor": "#111"
+	},
+	"TX": {
+		"id": "TX",
+		"code": "TX",
+		"ja": "つくばエクスプレス",
+		"jaReading": "つくばえくすぷれす",
+		"en": "Tsukuba Express",
+		"color": "#00a7db",
+		"textOnColor": "#fff"
+	},
+	"JJ": {
+		"id": "JJ",
+		"code": "JJ",
+		"ja": "JR常磐線快速",
+		"jaReading": "じぇいあーるじょうばんせんかいそく",
+		"en": "JR Jōban Line (Rapid)",
+		"color": "#00b48d",
+		"textOnColor": "#fff"
+	},
+	"KS": {
+		"id": "KS",
+		"code": "KS",
+		"ja": "京成本線",
+		"jaReading": "けいせいほんせん",
+		"en": "Keisei Main Line",
+		"color": "#0855a3",
+		"textOnColor": "#fff"
+	},
+	"NT": {
+		"id": "NT",
+		"code": "NT",
+		"ja": "日暮里・舎人ライナー",
+		"jaReading": "にっぽりとねりらいなー",
+		"en": "Nippori-Toneri Liner",
+		"color": "#cd7d00",
+		"textOnColor": "#fff"
+	},
+	"C": {
+		"id": "C",
+		"code": "C",
+		"ja": "東京メトロ千代田線",
+		"jaReading": "とうきょうめとろちよだせん",
+		"en": "Tokyo Metro Chiyoda Line",
+		"color": "#00bb85",
+		"textOnColor": "#111"
+	},
+	"N": {
+		"id": "N",
+		"code": "N",
+		"ja": "東京メトロ南北線",
+		"jaReading": "とうきょうめとろなんぼくせん",
+		"en": "Tokyo Metro Namboku Line",
+		"color": "#00ac9b",
+		"textOnColor": "#fff"
+	},
+	"I": {
+		"id": "I",
+		"code": "I",
+		"ja": "都営三田線",
+		"jaReading": "とえいみたせん",
+		"en": "Toei Mita Line",
+		"color": "#0079c2",
+		"textOnColor": "#fff"
+	},
+	"JA": {
+		"id": "JA",
+		"code": "JA",
+		"ja": "JR埼京線",
+		"jaReading": "じぇいあーるさいきょうせん",
+		"en": "JR Saikyō Line",
+		"color": "#00ac9a",
+		"textOnColor": "#fff"
+	},
+	"JS": {
+		"id": "JS",
+		"code": "JS",
+		"ja": "JR湘南新宿ライン",
+		"jaReading": "じぇいあーるしょうなんしんじゅくらいん",
+		"en": "JR Shōnan-Shinjuku Line",
+		"color": "#e21f26",
+		"textOnColor": "#fff"
+	},
+	"Y": {
+		"id": "Y",
+		"code": "Y",
+		"ja": "東京メトロ有楽町線",
+		"jaReading": "とうきょうめとろゆうらくちょうせん",
+		"en": "Tokyo Metro Yūrakuchō Line",
+		"color": "#c1a470",
+		"textOnColor": "#111"
+	},
+	"F": {
+		"id": "F",
+		"code": "F",
+		"ja": "東京メトロ副都心線",
+		"jaReading": "とうきょうめとろふくとしんせん",
+		"en": "Tokyo Metro Fukutoshin Line",
+		"color": "#9c5e31",
+		"textOnColor": "#fff"
+	},
+	"TJ": {
+		"id": "TJ",
+		"code": "TJ",
+		"ja": "東武東上線",
+		"jaReading": "とうぶとうじょうせん",
+		"en": "Tōbu Tōjō Line",
+		"color": "#f18f00",
+		"textOnColor": "#111"
+	},
+	"SI": {
+		"id": "SI",
+		"code": "SI",
+		"ja": "西武池袋線",
+		"jaReading": "せいぶいけぶくろせん",
+		"en": "Seibu Ikebukuro Line",
+		"color": "#ff6600",
+		"textOnColor": "#fff"
+	},
+	"T": {
+		"id": "T",
+		"code": "T",
+		"ja": "東京メトロ東西線",
+		"jaReading": "とうきょうめとろとうざいせん",
+		"en": "Tokyo Metro Tōzai Line",
+		"color": "#009bbf",
+		"textOnColor": "#fff"
+	},
+	"SS": {
+		"id": "SS",
+		"code": "SS",
+		"ja": "西武新宿線",
+		"jaReading": "せいぶしんじゅくせん",
+		"en": "Seibu Shinjuku Line",
+		"color": "#eb6ea5",
+		"textOnColor": "#111"
+	},
+	"S": {
+		"id": "S",
+		"code": "S",
+		"ja": "都営新宿線",
+		"jaReading": "とえいしんじゅくせん",
+		"en": "Toei Shinjuku Line",
+		"color": "#6cbb5a",
+		"textOnColor": "#111"
+	},
+	"E": {
+		"id": "E",
+		"code": "E",
+		"ja": "都営大江戸線",
+		"jaReading": "とえいおおえどせん",
+		"en": "Toei Ōedo Line",
+		"color": "#b6007a",
+		"textOnColor": "#fff"
+	},
+	"KO": {
+		"id": "KO",
+		"code": "KO",
+		"ja": "京王線",
+		"jaReading": "けいおうせん",
+		"en": "Keiō Line",
+		"color": "#dd0077",
+		"textOnColor": "#fff"
+	},
+	"OH": {
+		"id": "OH",
+		"code": "OH",
+		"ja": "小田急小田原線",
+		"jaReading": "おだきゅうおだわらせん",
+		"en": "Odakyū Odawara Line",
+		"color": "#0083ce",
+		"textOnColor": "#fff"
+	},
+	"Z": {
+		"id": "Z",
+		"code": "Z",
+		"ja": "東京メトロ半蔵門線",
+		"jaReading": "とうきょうめとろはんぞうもんせん",
+		"en": "Tokyo Metro Hanzōmon Line",
+		"color": "#8f76d6",
+		"textOnColor": "#fff"
+	},
+	"TY": {
+		"id": "TY",
+		"code": "TY",
+		"ja": "東急東横線",
+		"jaReading": "とうきゅうとうよこせん",
+		"en": "Tōkyū Tōyoko Line",
+		"color": "#da0442",
+		"textOnColor": "#fff"
+	},
+	"DT": {
+		"id": "DT",
+		"code": "DT",
+		"ja": "東急田園都市線",
+		"jaReading": "とうきゅうでんえんとしせん",
+		"en": "Tōkyū Den-en-toshi Line",
+		"color": "#00a95f",
+		"textOnColor": "#fff"
+	},
+	"IN": {
+		"id": "IN",
+		"code": "IN",
+		"ja": "京王井の頭線",
+		"jaReading": "けいおういのかしらせん",
+		"en": "Keiō Inokashira Line",
+		"color": "#1d7fd0",
+		"textOnColor": "#fff"
+	},
+	"TM": {
+		"id": "TM",
+		"code": "MG",
+		"ja": "東急目黒線",
+		"jaReading": "とうきゅうめぐろせん",
+		"en": "Tōkyū Meguro Line",
+		"color": "#009cd2",
+		"textOnColor": "#fff"
+	},
+	"A": {
+		"id": "A",
+		"code": "A",
+		"ja": "都営浅草線",
+		"jaReading": "とえいあさくさせん",
+		"en": "Toei Asakusa Line",
+		"color": "#e85298",
+		"textOnColor": "#fff"
+	},
+	"IK": {
+		"id": "IK",
+		"code": "IK",
+		"ja": "東急池上線",
+		"jaReading": "とうきゅういけがみせん",
+		"en": "Tōkyū Ikegami Line",
+		"color": "#ec6d81",
+		"textOnColor": "#111"
+	},
+	"RK": {
+		"id": "RK",
+		"code": "R",
+		"ja": "りんかい線",
+		"jaReading": "りんかいせん",
+		"en": "Rinkai Line",
+		"color": "#00559d",
+		"textOnColor": "#fff"
+	},
+	"KK": {
+		"id": "KK",
+		"code": "KK",
+		"ja": "京急本線",
+		"jaReading": "けいきゅうほんせん",
+		"en": "Keikyū Main Line",
+		"color": "#ed1a3d",
+		"textOnColor": "#fff"
+	},
+	"MO": {
+		"id": "MO",
+		"code": "MO",
+		"ja": "東京モノレール",
+		"jaReading": "とうきょうものれーる",
+		"en": "Tokyo Monorail",
+		"color": "#cc0033",
+		"textOnColor": "#fff"
+	},
+	"YU": {
+		"id": "YU",
+		"code": "U",
+		"ja": "ゆりかもめ",
+		"jaReading": "ゆりかもめ",
+		"en": "Yurikamome",
+		"color": "#0086d1",
+		"textOnColor": "#fff"
+	}
+}

@@ -11,9 +11,12 @@ import { ServiceControls } from "@/components/simulator/controls/ServiceControls
 import { TrainControls } from "@/components/simulator/controls/TrainControls";
 import {
 	ANNOUNCEMENT_FRAMEWORK_OPTIONS,
+	audioKeyLabel,
 	contentAudioKey,
+	departureToneKey,
 	stationAudioKey,
 } from "@/lib/announcementAudio";
+import { SOUND_EFFECTS, soundEffectKey } from "@/lib/soundEffects";
 import {
 	setControl,
 	type CustomMarqueePreset,
@@ -125,6 +128,8 @@ interface SimulatorControlsProps {
 		playCurrentAnnouncement: (language: "ja" | "en") => void;
 		playDepartureAnnouncement: (language: "ja" | "en") => void;
 		stopAnnouncementAudio: () => void;
+		isAudioClipAvailable: (key: string) => boolean;
+		audioQueue: { current: string | null; pending: string[] };
 	};
 }
 
@@ -204,6 +209,8 @@ export function SimulatorControls({
 		playCurrentAnnouncement,
 		playDepartureAnnouncement,
 		stopAnnouncementAudio,
+		isAudioClipAvailable,
+		audioQueue,
 	} = context;
 	const set = <K extends keyof SimulatorControlState>(
 		field: K,
@@ -1183,6 +1190,21 @@ export function SimulatorControls({
 						>
 							■ STOP AUDIO
 						</button>
+						{isAudioClipAvailable(
+							departureToneKey(currentStation),
+						) ? (
+							<button
+								type="button"
+								className="lc-btn bg-paper text-sm text-ink"
+								onClick={() =>
+									playAnnouncementKeys([
+										departureToneKey(currentStation),
+									])
+								}
+							>
+								♪ STATION TONE
+							</button>
+						) : null}
 						<button
 							type="button"
 							className="lc-btn bg-magenta text-sm text-ink"
@@ -1214,6 +1236,63 @@ export function SimulatorControls({
 						>
 							▶ ENGLISH
 						</button>
+					</div>
+					{SOUND_EFFECTS.some((effect) =>
+						isAudioClipAvailable(soundEffectKey(effect.id)),
+					) ? (
+						<div className="mt-2 rounded-md border-2 border-ink bg-paper-2 p-2">
+							<div className="mb-1.5 font-mono text-[10px] font-bold tracking-widest">
+								SOUND EFFECTS
+							</div>
+							<div className="flex flex-wrap gap-1.5">
+								{SOUND_EFFECTS.filter((effect) =>
+									isAudioClipAvailable(soundEffectKey(effect.id)),
+								).map((effect) => (
+									<button
+										key={effect.id}
+										type="button"
+										title={effect.description}
+										className="lc-btn bg-paper text-sm text-ink"
+										onClick={() =>
+											playAnnouncementKeys([
+												soundEffectKey(effect.id),
+											])
+										}
+									>
+										♪ {effect.label}
+									</button>
+								))}
+							</div>
+						</div>
+					) : null}
+					<div className="mt-2 rounded-md border-2 border-ink bg-paper-2 p-2">
+						<div className="mb-1.5 font-mono text-[10px] font-bold tracking-widest">
+							AUDIO QUEUE
+							{audioQueue.pending.length
+								? ` · ${audioQueue.pending.length} WAITING`
+								: ""}
+						</div>
+						{audioQueue.current || audioQueue.pending.length ? (
+							<div className="flex flex-wrap gap-1.5">
+								{audioQueue.current ? (
+									<span className="rounded-[5px] border-2 border-ink bg-acid px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink">
+										▶ {audioKeyLabel(audioQueue.current)}
+									</span>
+								) : null}
+								{audioQueue.pending.map((key, index) => (
+									<span
+										key={`${key}:${index}`}
+										className="rounded-[5px] border-2 border-ink bg-paper px-1.5 py-0.5 font-mono text-[10px] font-bold text-muted"
+									>
+										{index + 1}. {audioKeyLabel(key)}
+									</span>
+								))}
+							</div>
+						) : (
+							<div className="font-mono text-[10px] font-bold tracking-widest text-muted">
+								IDLE
+							</div>
+						)}
 					</div>
 					<label className="mt-2.5 flex items-center gap-3 font-mono text-[10px] font-bold tracking-widest">
 						MAJOR STOPS IN DEPARTURE

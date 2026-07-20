@@ -1,0 +1,12 @@
+[
+	{
+		"id": "shuika",
+		"label": "SHUIKA METRO",
+		"lineId": "CS"
+	},
+	{
+		"id": "yamanote",
+		"label": "TOKYO · YAMANOTE",
+		"lineId": "YM"
+	}
+]

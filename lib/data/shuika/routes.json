@@ -1,0 +1,739 @@
+{
+	"CS": {
+		"line": "CS",
+		"destJa": "聖橋東",
+		"destEn": "Hijiribashi-Higashi",
+		"towardJa": "聖橋・聖橋東",
+		"towardEn": "for Hijiribashi",
+		"stations": [
+			{
+				"ja": "荒川",
+				"en": "Arakawa",
+				"side": "R",
+				"distance": 1,
+				"xf": ["AR"]
+			},
+			{
+				"ja": "西森原",
+				"en": "Nishi-Morihara",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["MG"]
+			},
+			{
+				"ja": "国会議事堂前",
+				"en": "Kokkai-Gijidō-mae",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "森原",
+				"en": "Morihara",
+				"side": "R",
+				"distance": 1,
+				"xf": ["MZ"]
+			},
+			{
+				"ja": "中心原南",
+				"en": "Chūshingen-Minami",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["SN"]
+			},
+			{
+				"ja": "中心原",
+				"en": "Chūshingen",
+				"side": "R",
+				"distance": 1,
+				"xf": ["SD"]
+			},
+			{
+				"ja": "聖橋西",
+				"en": "Hijiribashi-Nishi",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "聖橋公園",
+				"en": "Hijiribashi-Kōen",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "聖橋",
+				"en": "Hijiribashi",
+				"side": "R",
+				"distance": 1,
+				"xf": ["KW"]
+			},
+			{
+				"ja": "中聖橋",
+				"en": "Naka-Hijiribashi",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "新中聖橋",
+				"en": "Shin-Naka-Hijiribashi",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "聖橋東",
+				"en": "Hijiribashi-Higashi",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["SN"]
+			}
+		]
+	},
+	"MZ": {
+		"line": "MZ",
+		"destJa": "聖橋北",
+		"destEn": "Hijiribashi-Kita",
+		"towardJa": "水道上・聖橋北",
+		"towardEn": "for Hijiribashi-Kita",
+		"circular": true,
+		"stations": [
+			{
+				"ja": "森原南",
+				"en": "Morihara-Minami",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["SG"]
+			},
+			{
+				"ja": "森原",
+				"en": "Morihara",
+				"side": "R",
+				"distance": 1,
+				"xf": ["CS"]
+			},
+			{
+				"ja": "森原小學前",
+				"en": "Morihara-Shōgaku-mae",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "森原東",
+				"en": "Morihara-Higashi",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "中心原北",
+				"en": "Chūshingen-Kita",
+				"side": "R",
+				"distance": 1,
+				"xf": ["SD"]
+			},
+			{
+				"ja": "水道上南",
+				"en": "Suidōue-Minami",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "水道上",
+				"en": "Suidōue",
+				"side": "R",
+				"distance": 1,
+				"xf": ["KZ"]
+			},
+			{
+				"ja": "水道上火車站",
+				"en": "Suidōue Rail Terminal",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "北野川坂",
+				"en": "Kitanogawa-zaka",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["KZ"]
+			},
+			{
+				"ja": "聖橋北",
+				"en": "Hijiribashi-Kita",
+				"side": "R",
+				"distance": 1,
+				"xf": ["KW"]
+			}
+		]
+	},
+	"KW": {
+		"line": "KW",
+		"destJa": "新北野川",
+		"destEn": "Shin-Kitanogawa",
+		"towardJa": "北野川灣・新北野川",
+		"towardEn": "for Shin-Kitanogawa",
+		"stations": [
+			{
+				"ja": "南聖橋",
+				"en": "Minami-Hijiribashi",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["SN"]
+			},
+			{
+				"ja": "聖橋",
+				"en": "Hijiribashi",
+				"side": "R",
+				"distance": 1,
+				"xf": ["CS"]
+			},
+			{
+				"ja": "聖橋北",
+				"en": "Hijiribashi-Kita",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["MZ"]
+			},
+			{
+				"ja": "北野川灣港前",
+				"en": "Kitanogawa-Bay-Port",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["UK", "KH"]
+			},
+			{
+				"ja": "北野川灣轉運站",
+				"en": "Kitanogawa-Bay Transit Center",
+				"side": "R",
+				"distance": 1,
+				"xf": ["KH"]
+			},
+			{
+				"ja": "北野川灣",
+				"en": "Kitanogawa-Bay",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "北野川灣東",
+				"en": "Kitanogawa-Bay-Higashi",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "新北野川",
+				"en": "Shin-Kitanogawa",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			}
+		]
+	},
+	"UK": {
+		"line": "UK",
+		"destJa": "中聖橋上",
+		"destEn": "Naka-Hijiribashi-Ue",
+		"towardJa": "真海・中聖橋上",
+		"towardEn": "for Naka-Hijiribashi-Ue",
+		"stations": [
+			{
+				"ja": "西うかしま",
+				"en": "Nishi-Ukashima",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["AR"]
+			},
+			{
+				"ja": "うかしま",
+				"en": "Ukashima",
+				"side": "R",
+				"distance": 1,
+				"xf": ["MG"]
+			},
+			{
+				"ja": "中うかしま",
+				"en": "Naka-Ukashima",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "醫學大學前",
+				"en": "Igakudaigaku-mae",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "真海",
+				"en": "Shinkai",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "新中心原北",
+				"en": "Shin-Chūshingen-Kita",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "都鐵中心原火車站",
+				"en": "Toden Chūshingen Station",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["SD"]
+			},
+			{
+				"ja": "北野川灣港前",
+				"en": "Kitanogawa-Bay-Port",
+				"side": "R",
+				"distance": 1,
+				"xf": ["KW", "KH"]
+			},
+			{
+				"ja": "新聖橋",
+				"en": "Shin-Hijiribashi",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "聖橋灣",
+				"en": "Hijiribashi-Wan",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "中聖橋上",
+				"en": "Naka-Hijiribashi-Ue",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			}
+		]
+	},
+	"SD": {
+		"line": "SD",
+		"destJa": "中心原",
+		"destEn": "Chūshingen",
+		"towardJa": "水道上・中心原",
+		"towardEn": "for Chūshingen",
+		"stations": [
+			{
+				"ja": "登海北",
+				"en": "Tōkai-Kita",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "登海",
+				"en": "Tōkai",
+				"side": "R",
+				"distance": 1,
+				"xf": ["MG"]
+			},
+			{
+				"ja": "登海東",
+				"en": "Tōkai-Higashi",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "新水道上",
+				"en": "Shin-Suidōue",
+				"side": "R",
+				"distance": 1,
+				"xf": ["KZ"]
+			},
+			{
+				"ja": "都鐵中心原火車站",
+				"en": "Toden Chūshingen Station",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["UK"]
+			},
+			{
+				"ja": "中心原北",
+				"en": "Chūshingen-Kita",
+				"side": "R",
+				"distance": 1,
+				"xf": ["MZ"]
+			},
+			{
+				"ja": "中心原",
+				"en": "Chūshingen",
+				"side": "R",
+				"distance": 1,
+				"xf": ["CS"]
+			}
+		]
+	},
+	"AR": {
+		"line": "AR",
+		"destJa": "荒川",
+		"destEn": "Arakawa",
+		"towardJa": "荒川北・荒川",
+		"towardEn": "for Arakawa",
+		"stations": [
+			{
+				"ja": "西うかしま",
+				"en": "Nishi-Ukashima",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["UK"]
+			},
+			{
+				"ja": "新荒川北",
+				"en": "Shin-Arakawa-Kita",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "荒川公園前",
+				"en": "Arakawa-Kōen-mae",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "荒川北",
+				"en": "Arakawa-Kita",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "荒川",
+				"en": "Arakawa",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["CS"]
+			}
+		]
+	},
+	"KZ": {
+		"line": "KZ",
+		"destJa": "水道上",
+		"destEn": "Suidōue",
+		"towardJa": "北野川坂・水道上",
+		"towardEn": "for Suidōue",
+		"stations": [
+			{
+				"ja": "安涌",
+				"en": "Anyū",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "内口",
+				"en": "Uchiguchi",
+				"side": "R",
+				"distance": 1,
+				"xf": ["MG"]
+			},
+			{
+				"ja": "北野川坂北",
+				"en": "Kitanogawa-zaka-Kita",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "新水道上",
+				"en": "Shin-Suidōue",
+				"side": "R",
+				"distance": 1,
+				"xf": ["SD"]
+			},
+			{
+				"ja": "北野川坂",
+				"en": "Kitanogawa-zaka",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["MZ"]
+			},
+			{
+				"ja": "水道上",
+				"en": "Suidōue",
+				"side": "R",
+				"distance": 1,
+				"xf": ["MZ"]
+			}
+		]
+	},
+	"KH": {
+		"line": "KH",
+		"destJa": "重工第一區",
+		"destEn": "Jūkō Daiichi-ku",
+		"towardJa": "空港・重工第一區",
+		"towardEn": "for Jūkō Daiichi-ku",
+		"stations": [
+			{
+				"ja": "北野川灣港前",
+				"en": "Kitanogawa-Bay-Port",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["KW", "UK"]
+			},
+			{
+				"ja": "北野川灣轉運站",
+				"en": "Kitanogawa-Bay Transit Center",
+				"side": "R",
+				"distance": 1,
+				"xf": ["KW"]
+			},
+			{
+				"ja": "北野川灣北",
+				"en": "Kitanogawa-Bay-Kita",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "新北野川国際空港",
+				"en": "Shin-Kitanogawa Int'l Airport",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "重工第一區",
+				"en": "Jūkō Daiichi-ku",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			}
+		]
+	},
+	"SG": {
+		"line": "SG",
+		"destJa": "水道後",
+		"destEn": "Suidōgo",
+		"towardJa": "水道後廣場・水道後",
+		"towardEn": "for Suidōgo",
+		"stations": [
+			{
+				"ja": "南森原火車站",
+				"en": "Minami-Morihara Rail Terminal",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["MG"]
+			},
+			{
+				"ja": "新森原",
+				"en": "Shin-Morihara",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "森原南",
+				"en": "Morihara-Minami",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["MZ"]
+			},
+			{
+				"ja": "水道後西",
+				"en": "Suidōgo-Nishi",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "新水道後",
+				"en": "Shin-Suidōgo",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "水道後廣場前",
+				"en": "Suidōgo-Hiroba-mae",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "水道後南",
+				"en": "Suidōgo-Minami",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "水道後北",
+				"en": "Suidōgo-Kita",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "水道後",
+				"en": "Suidōgo",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			}
+		]
+	},
+	"MG": {
+		"line": "MG",
+		"destJa": "内口",
+		"destEn": "Uchiguchi",
+		"towardJa": "うかしま・内口",
+		"towardEn": "for Uchiguchi",
+		"stations": [
+			{
+				"ja": "南森原火車站",
+				"en": "Minami-Morihara Rail Terminal",
+				"side": "R",
+				"distance": 1,
+				"xf": ["SG"]
+			},
+			{
+				"ja": "荒川火車站",
+				"en": "Arakawa Rail Terminal",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "西森原",
+				"en": "Nishi-Morihara",
+				"side": "R",
+				"distance": 1,
+				"xf": ["CS"]
+			},
+			{
+				"ja": "森原北",
+				"en": "Morihara-Kita",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "うかしま東",
+				"en": "Ukashima-Higashi",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "新森原北",
+				"en": "Shin-Morihara-Kita",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "南うかしま",
+				"en": "Minami-Ukashima",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "うかしま",
+				"en": "Ukashima",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["UK"]
+			},
+			{
+				"ja": "北うかしま",
+				"en": "Kita-Ukashima",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "新登海",
+				"en": "Shin-Tōkai",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "登海",
+				"en": "Tōkai",
+				"side": "R",
+				"distance": 1,
+				"xf": ["SD"]
+			},
+			{
+				"ja": "内口",
+				"en": "Uchiguchi",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["KZ"]
+			}
+		]
+	},
+	"SN": {
+		"line": "SN",
+		"destJa": "聖橋東",
+		"destEn": "Hijiribashi-Higashi",
+		"towardJa": "水道後・聖橋東",
+		"towardEn": "for Hijiribashi-Higashi",
+		"stations": [
+			{
+				"ja": "中心原南",
+				"en": "Chūshingen-Minami",
+				"side": "L",
+				"distance": 1.1,
+				"xf": ["CS"]
+			},
+			{
+				"ja": "新水道後北",
+				"en": "Shin-Suidōgo-Kita",
+				"side": "R",
+				"distance": 0.9,
+				"xf": []
+			},
+			{
+				"ja": "水道後火車站",
+				"en": "Suidōgo Rail Terminal",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "南聖橋",
+				"en": "Minami-Hijiribashi",
+				"side": "R",
+				"distance": 1,
+				"xf": ["KW"]
+			},
+			{
+				"ja": "新南聖橋",
+				"en": "Shin-Minami-Hijiribashi",
+				"side": "L",
+				"distance": 0.8,
+				"xf": []
+			},
+			{
+				"ja": "聖橋東",
+				"en": "Hijiribashi-Higashi",
+				"side": "R",
+				"distance": 1,
+				"xf": ["CS"]
+			}
+		]
+	}
+}

@@ -14,6 +14,7 @@ import {
 import type { Lang, LineId, Route } from "@/types/metro";
 import type {
 	AnnouncementAudioHandle,
+	AnnouncementQueue,
 	AutoAudioSequence,
 } from "./AnnouncementAudio";
 import { journeyEventFor, type Journey } from "./simulatorJourney";
@@ -181,20 +182,29 @@ export function useSimulatorAnnouncements({
 					],
 		[lang, langMode, journey.phase, journey.pos, route, serviceInfo],
 	);
+	// Auto mode announces in both languages back to back, mirroring the ticker.
+	const announcementLangs = React.useMemo<readonly Lang[]>(
+		() => (langMode === "auto" ? (["ja", "en"] as const) : [lang]),
+		[lang, langMode],
+	);
 	const stationSequence = React.useMemo(
 		() =>
-			announcementAudioSequence({
+			announcementLangs.flatMap((announcementLang, index) =>
+				announcementAudioSequence({
 					route,
 					pos: journey.pos,
 					phase: journey.phase,
-					lang,
+					lang: announcementLang,
 					passing: passingNext,
 					terminalIndex: serviceDestinationIndex,
-			}),
+					// The doors open once, so only the leading language chimes.
+					doorEffect: index === 0,
+				}),
+			),
 		[
+			announcementLangs,
 			journey.phase,
 			journey.pos,
-			lang,
 			passingNext,
 			route,
 			serviceDestinationIndex,
@@ -202,17 +212,19 @@ export function useSimulatorAnnouncements({
 	);
 	const departureSequence = React.useMemo(
 		() =>
-			trainStartAnnouncementAudioSequence({
+			announcementLangs.flatMap((announcementLang) =>
+				trainStartAnnouncementAudioSequence({
 					route,
-					lang,
+					lang: announcementLang,
 					terminalIndex: serviceDestinationIndex,
 					...departureService,
 					majorStations: departureMajorStations,
-			}),
+				}),
+			),
 		[
+			announcementLangs,
 			departureMajorStations,
 			departureService,
-			lang,
 			route,
 			serviceDestinationIndex,
 		],
@@ -230,28 +242,33 @@ export function useSimulatorAnnouncements({
 					? []
 					: [
 							{
-								id: `announcement:${eventId}:${lang}`,
+								id: `announcement:${eventId}`,
 								keys: stationSequence,
 							},
 						];
 			case "departed":
 				return [
 					{
-						id: `${isDepartureAnnouncementStage ? "departure" : "tone"}:${eventId}:${lang}`,
-						keys: isDepartureAnnouncementStage
-							? [...departureToneSequence, ...departureSequence]
-							: departureToneSequence,
+						id: `tone:${eventId}`,
+						keys: departureToneSequence,
 						priority: true,
-						onPlaybackChange: isDepartureAnnouncementStage
-							? setDepartureAnnouncementPlaying
-							: undefined,
 					},
+					...(isDepartureAnnouncementStage
+						? [
+								{
+									id: `departure:${eventId}`,
+									keys: departureSequence,
+									onPlaybackChange:
+										setDepartureAnnouncementPlaying,
+								},
+							]
+						: []),
 				];
 			case "almost-arrive":
 				return stationAnnouncementVisible
 					? [
 							{
-								id: `announcement:${eventId}:${lang}`,
+								id: `announcement:${eventId}`,
 								keys: stationSequence,
 							},
 						]
@@ -265,7 +282,6 @@ export function useSimulatorAnnouncements({
 		isDepartureAnnouncementStage,
 		isInitialEntry,
 		journeyEvent,
-		lang,
 		lineId,
 		serviceId,
 		stationAnnouncementVisible,
@@ -280,18 +296,14 @@ export function useSimulatorAnnouncements({
 
 	const departureSequenceFor = React.useCallback(
 		(announcementLang: Lang) =>
-			[
-				...departureToneSequence,
-				...trainStartAnnouncementAudioSequence({
-					route,
-					lang: announcementLang,
-					terminalIndex: serviceDestinationIndex,
-					...departureService,
-					majorStations: departureMajorStations,
-				}),
-			],
+			trainStartAnnouncementAudioSequence({
+				route,
+				lang: announcementLang,
+				terminalIndex: serviceDestinationIndex,
+				...departureService,
+				majorStations: departureMajorStations,
+			}),
 		[
-			departureToneSequence,
 			departureMajorStations,
 			departureService,
 			route,
@@ -310,6 +322,23 @@ export function useSimulatorAnnouncements({
 		},
 		[departureSequenceFor],
 	);
+	const [manifestClipKeys, setManifestClipKeys] = React.useState<
+		ReadonlySet<string>
+	>(() => new Set());
+	const handleClipKeysChange = React.useCallback(
+		(keys: string[]) => setManifestClipKeys(new Set(keys)),
+		[],
+	);
+	/** A clip is playable once the manifest lists it or an upload overrides it. */
+	const isAudioClipAvailable = React.useCallback(
+		(key: string) =>
+			Boolean(announcementAudioOverrides[key]) || manifestClipKeys.has(key),
+		[announcementAudioOverrides, manifestClipKeys],
+	);
+	const [audioQueue, setAudioQueue] = React.useState<AnnouncementQueue>({
+		current: null,
+		pending: [],
+	});
 	const stopAnnouncementAudio = React.useCallback(() => {
 		departurePlaybackIdRef.current += 1;
 		setDepartureAnnouncementPlaying(false);
@@ -321,21 +350,18 @@ export function useSimulatorAnnouncements({
 				void playDepartureAnnouncement(announcementLang);
 				return;
 			}
-			const sequence = [
-				...departureToneSequence,
-				...announcementAudioSequence({
-					route,
-					pos: journey.pos,
-					phase: journey.phase,
-					lang: announcementLang,
-					passing: passingNext,
-					terminalIndex: serviceDestinationIndex,
-				}),
-			];
+			const sequence = announcementAudioSequence({
+				route,
+				pos: journey.pos,
+				phase: journey.phase,
+				lang: announcementLang,
+				passing: passingNext,
+				terminalIndex: serviceDestinationIndex,
+				doorEffect: true,
+			});
 			void audioRef.current?.playKeys(sequence);
 		},
 		[
-			departureToneSequence,
 			isDepartureAnnouncementStage,
 			journey.phase,
 			journey.pos,
@@ -352,12 +378,17 @@ export function useSimulatorAnnouncements({
 			autoSequences,
 			overrides: announcementAudioOverrides,
 			volume: announcementVolume,
+			onClipKeysChange: handleClipKeysChange,
+			onQueueChange: setAudioQueue,
 		},
+		isAudioClipAvailable,
+		audioQueue,
 		tickerItems,
 		playAnnouncementKeys: (keys: string[]) =>
 			void audioRef.current?.playKeys(keys),
 		playCurrentAnnouncement,
 		playDepartureAnnouncement,
 		stopAnnouncementAudio,
+		departureAnnouncementPlaying,
 	};
 }
