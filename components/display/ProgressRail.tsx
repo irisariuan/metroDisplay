@@ -66,7 +66,7 @@ export function ProgressRail({
 			applyTarget(el, frac);
 		});
 		return () => cancelAnimationFrame(frame);
-	}, [frac, applyTarget]);
+	}, [frac, origin, applyTarget]);
 
 	// A single-page route clears instantly, then redraws to the first station.
 	React.useEffect(() => {

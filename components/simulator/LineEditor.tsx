@@ -14,6 +14,7 @@ import { LineColorEditor } from "./LineColorEditor";
 interface LineEditorProps {
 	route: EditableRoute;
 	lineId: LineId;
+	transferLineIds: LineId[];
 	setLineField: (field: LineEditorField, value: string) => void;
 	setStationField: (
 		index: number,
@@ -51,6 +52,7 @@ function IconBtn({ label, onClick, disabled }: IconBtnProps) {
 export function LineEditor({
 	route,
 	lineId,
+	transferLineIds,
 	setLineField,
 	setStationField,
 	toggleSide,
@@ -121,7 +123,7 @@ export function LineEditor({
 			<div
 				className="grid items-center px-2 pb-0.5 font-mono text-xs tracking-widest text-muted"
 				style={{
-					gridTemplateColumns: "1fr 3fr 3fr 3fr 3fr 1fr 2fr 1.5fr 3fr 3.5fr",
+					gridTemplateColumns: "1fr 3fr 3fr 3fr 3fr 2fr 2fr 1.5fr 3fr 3.5fr",
 				}}
 			>
 				<span>#</span>
@@ -144,7 +146,7 @@ export function LineEditor({
 						className="grid items-center rounded-lg border-2 border-ink bg-paper px-2 py-1.5"
 						style={{
 							gridTemplateColumns:
-								"1fr 3fr 3fr 3fr 3fr 1fr 2fr 1.5fr 3fr 1fr",
+								"1fr 3fr 3fr 3fr 3fr 2fr 2fr 1.5fr 3fr 1fr",
 							gap: 8,
 						}}
 					>
@@ -218,7 +220,12 @@ export function LineEditor({
 						</button>
 						{/* transfers toggles */}
 						<div className="flex flex-wrap gap-1">
-							{Object.keys(LINES)
+							{transferLineIds.filter((lid) => lid !== lineId).length === 0 &&
+								<p className="font-mono text-sm text-muted text-center w-full">
+									—
+								</p>
+							}
+							{transferLineIds
 								.filter((lid) => lid !== lineId)
 								.map((lid) => {
 									const on = (st.xf || []).includes(

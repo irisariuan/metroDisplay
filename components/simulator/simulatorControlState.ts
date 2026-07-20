@@ -1,9 +1,7 @@
 import type React from "react";
 import {
 	DEFAULT_MARQUEE_CONTENT,
-	MARQUEE_CONTENT_PRESETS,
 	SPEED_PRESETS,
-	type MarqueeContentPresetId,
 } from "@/lib/constants";
 import type {
 	AnnouncementContent,
@@ -22,9 +20,15 @@ export interface DisplayAnnouncement extends AnnouncementContent {
 	enabled: boolean;
 }
 
+export interface CustomMarqueePreset {
+	id: string;
+	label: string;
+	items: DisplayAnnouncement[];
+}
+
 export interface SimulatorControlState {
 	presetId: SimulatorPresetId;
-	marqueePresetId: MarqueeContentPresetId;
+	marqueePresetId: string;
 	lineId: LineId;
 	/** active stopping pattern: "local" or a ServiceVariant id on the route */
 	serviceId: string;
@@ -79,7 +83,11 @@ type UpdateAnnouncementAction = {
 
 export type SimulatorControlAction =
 	| SetControlAction
-	| { type: "applyMarqueePreset"; presetId: MarqueeContentPresetId }
+	| {
+			type: "applyMarqueePlaylist";
+			presetId: string;
+			items: DisplayAnnouncement[];
+		}
 	| UpdateAnnouncementAction
 	| { type: "removeMarqueeItem"; index: number }
 	| { type: "addMarqueeItem" };
@@ -93,7 +101,7 @@ export const initialSimulatorControlState: SimulatorControlState = {
 	travelDirection: 1,
 	speedKmh: SPEED_PRESETS.normal,
 	simulationSpeed: 2,
-	stationStayMs: 10000,
+	stationStayMs: 30000,
 	langMode: "auto",
 	lang: "ja",
 	langMs: 10000,
@@ -147,20 +155,11 @@ export function simulatorControlReducer(
 				: value;
 		return { ...state, [action.field]: nextValue } as SimulatorControlState;
 	}
-	if (action.type === "applyMarqueePreset") {
-		const preset = MARQUEE_CONTENT_PRESETS.find(
-			(item) => item.id === action.presetId,
-		);
-		if (!preset) return state;
+	if (action.type === "applyMarqueePlaylist") {
 		return {
 			...state,
 			marqueePresetId: action.presetId,
-			announcements: preset.items.map((item) => ({
-				...item,
-				type: item.type as AnnouncementContentType,
-				ja: item.ja ?? "",
-				enabled: true,
-			})),
+			announcements: action.items.map((item) => ({ ...item })),
 		};
 	}
 	if (action.type === "updateAnnouncement") {

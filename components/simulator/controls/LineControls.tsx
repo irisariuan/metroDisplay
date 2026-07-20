@@ -193,6 +193,7 @@ export function LineControls({
 				<LineEditor
 					route={route}
 					lineId={lineId}
+					transferLineIds={visibleLineIds}
 					setLineField={setLineField}
 					setStationField={setStationField}
 					toggleSide={toggleSide}

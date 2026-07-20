@@ -203,6 +203,18 @@ export const ANNOUNCEMENT_FRAMEWORK_OPTIONS: AnnouncementFrameworkOption[] = [
 		text: "Please watch your step.",
 		lang: "en",
 	},
+	{
+		key: "framework.ja.startThanks",
+		label: "JA · ご乗車ありがとうございます",
+		text: "本日も、ご乗車ありがとうございます。",
+		lang: "ja",
+	},
+	{
+		key: "framework.en.startThanks",
+		label: "EN · Thank you for riding",
+		text: "Thank you for riding with us today.",
+		lang: "en",
+	},
 ];
 
 export const stationAudioKey = (station: Station, lang: Lang) =>
@@ -213,6 +225,10 @@ export const lineAudioKey = (lineId: LineId, lang: Lang) =>
 
 export const contentAudioKey = (index: number, lang: Lang) =>
 	`content.${lang}.${index}`;
+
+/** Queue key and URL for an optional per-station departure melody. */
+export const departureToneKey = (station: Station) =>
+	`tone.departure.${station.ja}`;
 
 interface AnnouncementAudioSequenceOptions {
 	route: Route;
@@ -269,6 +285,7 @@ export function trainStartAnnouncementAudioSequence({
 	const sequence =
 		lang === "ja"
 			? [
+					"framework.ja.startThanks",
 					"framework.ja.start",
 					lineAudioKey(route.line, "ja"),
 					...(serviceAudioKey ? [serviceAudioKey] : []),
@@ -278,6 +295,7 @@ export function trainStartAnnouncementAudioSequence({
 					"framework.ja.boundFor",
 				]
 			: [
+					"framework.en.startThanks",
 					"framework.en.start",
 					lineAudioKey(route.line, "en"),
 					...(serviceAudioKey ? [serviceAudioKey] : []),

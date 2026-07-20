@@ -8,11 +8,15 @@ import {
 } from "@/lib/announcement";
 import {
 	announcementAudioSequence,
+	departureToneKey,
 	trainStartAnnouncementAudioSequence,
 } from "@/lib/announcementAudio";
 import type { Lang, LineId, Route } from "@/types/metro";
-import type { AnnouncementAudioHandle } from "./AnnouncementAudio";
-import type { Journey } from "./simulatorJourney";
+import type {
+	AnnouncementAudioHandle,
+	AutoAudioSequence,
+} from "./AnnouncementAudio";
+import { journeyEventFor, type Journey } from "./simulatorJourney";
 import type { LanguageMode } from "./simulatorControlState";
 
 interface UseSimulatorAnnouncementsOptions {
@@ -70,23 +74,25 @@ export function useSimulatorAnnouncements({
 		travelDirection > 0 ? serviceStartIndex : serviceEndIndex;
 	const suppressCircularStartDeparture =
 		Boolean(route.circular) && !route.stations[departureStartIndex]?.major;
-	const isInitialEntry =
-		journey.from === null && journey.phase === "approach";
+	const journeyEvent = React.useMemo(
+		() => journeyEventFor(journey, nextMarqueeThreshold / 100),
+		[journey, nextMarqueeThreshold],
+	);
+	const isInitialEntry = journey.from === null && journeyEvent === null;
 	const isAtDepartureStartStation =
 		!suppressCircularStartDeparture &&
-		journey.pos === departureStartIndex &&
-		journey.phase === "at";
+		journeyEvent?.type === "arrived" &&
+		journeyEvent.stationIndex === departureStartIndex;
 	const isDepartingStartStation =
 		!suppressCircularStartDeparture &&
-		journey.phase === "approach" &&
-		journey.from === departureStartIndex;
+		journeyEvent?.type === "departed" &&
+		journeyEvent.stationIndex === departureStartIndex;
 	const isDepartingMajorStation =
-		journey.phase === "approach" &&
-		journey.from !== null &&
-		Boolean(route.stations[journey.from]?.major);
+		journeyEvent?.type === "departed" &&
+		Boolean(route.stations[journeyEvent.stationIndex]?.major);
 	const departureOriginIndex =
 		isDepartingMajorStation || isDepartingStartStation
-			? (journey.from ?? journey.pos)
+			? (journeyEvent?.stationIndex ?? journey.pos)
 			: journey.pos;
 	const departureMajorStations = React.useMemo(
 		() =>
@@ -106,8 +112,14 @@ export function useSimulatorAnnouncements({
 		],
 	);
 	const isDepartureAnnouncementStage =
-		(isDepartingStartStation || isDepartingMajorStation) &&
-		journey.progress < nextMarqueeThreshold / 100;
+		isDepartingStartStation || isDepartingMajorStation;
+	const departureToneSequence = React.useMemo(
+		() =>
+			journeyEvent?.type === "departed"
+				? [departureToneKey(route.stations[journeyEvent.stationIndex])]
+				: [],
+		[journeyEvent, route],
+	);
 	const showDepartureMessages =
 		isAtDepartureStartStation || departureAnnouncementPlaying;
 	const departureService = React.useMemo(
@@ -172,12 +184,12 @@ export function useSimulatorAnnouncements({
 	const stationSequence = React.useMemo(
 		() =>
 			announcementAudioSequence({
-				route,
-				pos: journey.pos,
-				phase: journey.phase,
-				lang,
-				passing: passingNext,
-				terminalIndex: serviceDestinationIndex,
+					route,
+					pos: journey.pos,
+					phase: journey.phase,
+					lang,
+					passing: passingNext,
+					terminalIndex: serviceDestinationIndex,
 			}),
 		[
 			journey.phase,
@@ -191,11 +203,11 @@ export function useSimulatorAnnouncements({
 	const departureSequence = React.useMemo(
 		() =>
 			trainStartAnnouncementAudioSequence({
-				route,
-				lang,
-				terminalIndex: serviceDestinationIndex,
-				...departureService,
-				majorStations: departureMajorStations,
+					route,
+					lang,
+					terminalIndex: serviceDestinationIndex,
+					...departureService,
+					majorStations: departureMajorStations,
 			}),
 		[
 			departureMajorStations,
@@ -207,6 +219,59 @@ export function useSimulatorAnnouncements({
 	);
 	const stationAnnouncementVisible =
 		nextMarqueeMessageVisible || !remainingMarqueeItems.length;
+	const autoSequences = React.useMemo<AutoAudioSequence[]>(() => {
+		if (!announcementAudioEnabled || !journeyEvent || isInitialEntry)
+			return [];
+
+		const eventId = `${lineId}:${serviceId}:${journeyEvent.id}:${travelDirection}`;
+		switch (journeyEvent.type) {
+			case "arrived":
+				return isAtDepartureStartStation || !stationAnnouncementVisible
+					? []
+					: [
+							{
+								id: `announcement:${eventId}:${lang}`,
+								keys: stationSequence,
+							},
+						];
+			case "departed":
+				return [
+					{
+						id: `${isDepartureAnnouncementStage ? "departure" : "tone"}:${eventId}:${lang}`,
+						keys: isDepartureAnnouncementStage
+							? [...departureToneSequence, ...departureSequence]
+							: departureToneSequence,
+						priority: true,
+						onPlaybackChange: isDepartureAnnouncementStage
+							? setDepartureAnnouncementPlaying
+							: undefined,
+					},
+				];
+			case "almost-arrive":
+				return stationAnnouncementVisible
+					? [
+							{
+								id: `announcement:${eventId}:${lang}`,
+								keys: stationSequence,
+							},
+						]
+					: [];
+		}
+	}, [
+		announcementAudioEnabled,
+		departureSequence,
+		departureToneSequence,
+		isAtDepartureStartStation,
+		isDepartureAnnouncementStage,
+		isInitialEntry,
+		journeyEvent,
+		lang,
+		lineId,
+		serviceId,
+		stationAnnouncementVisible,
+		stationSequence,
+		travelDirection,
+	]);
 	const tickerItems = showDepartureMessages
 		? departureAnnouncementItems
 		: stationAnnouncementVisible
@@ -215,14 +280,18 @@ export function useSimulatorAnnouncements({
 
 	const departureSequenceFor = React.useCallback(
 		(announcementLang: Lang) =>
-			trainStartAnnouncementAudioSequence({
-				route,
-				lang: announcementLang,
-				terminalIndex: serviceDestinationIndex,
-				...departureService,
-				majorStations: departureMajorStations,
-			}),
+			[
+				...departureToneSequence,
+				...trainStartAnnouncementAudioSequence({
+					route,
+					lang: announcementLang,
+					terminalIndex: serviceDestinationIndex,
+					...departureService,
+					majorStations: departureMajorStations,
+				}),
+			],
 		[
+			departureToneSequence,
 			departureMajorStations,
 			departureService,
 			route,
@@ -252,17 +321,21 @@ export function useSimulatorAnnouncements({
 				void playDepartureAnnouncement(announcementLang);
 				return;
 			}
-			const sequence = announcementAudioSequence({
-				route,
-				pos: journey.pos,
-				phase: journey.phase,
-				lang: announcementLang,
-				passing: passingNext,
-				terminalIndex: serviceDestinationIndex,
-			});
+			const sequence = [
+				...departureToneSequence,
+				...announcementAudioSequence({
+					route,
+					pos: journey.pos,
+					phase: journey.phase,
+					lang: announcementLang,
+					passing: passingNext,
+					terminalIndex: serviceDestinationIndex,
+				}),
+			];
 			void audioRef.current?.playKeys(sequence);
 		},
 		[
+			departureToneSequence,
 			isDepartureAnnouncementStage,
 			journey.phase,
 			journey.pos,
@@ -276,21 +349,9 @@ export function useSimulatorAnnouncements({
 	return {
 		audioRef,
 		audioProps: {
-			autoEnabled:
-				announcementAudioEnabled &&
-				!isInitialEntry &&
-				!isAtDepartureStartStation &&
-				(stationAnnouncementVisible || isDepartureAnnouncementStage),
-			sequence: isDepartureAnnouncementStage
-				? departureSequence
-				: stationSequence,
+			autoSequences,
 			overrides: announcementAudioOverrides,
 			volume: announcementVolume,
-			statusKey: `${lineId}:${serviceId}:${serviceStartIndex}:${serviceEndIndex}:${journey.pos}:${journey.phase}:${travelDirection}:${passingNext}:${isDepartureAnnouncementStage ? "departure" : "station"}`,
-			language: lang,
-			onAutoPlaybackChange: isDepartureAnnouncementStage
-				? setDepartureAnnouncementPlaying
-				: undefined,
 		},
 		tickerItems,
 		playAnnouncementKeys: (keys: string[]) =>

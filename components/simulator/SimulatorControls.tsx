@@ -16,6 +16,7 @@ import {
 } from "@/lib/announcementAudio";
 import {
 	setControl,
+	type CustomMarqueePreset,
 	type DisplayAnnouncement,
 	type SimulatorControlAction,
 	type SimulatorControlState,
@@ -96,10 +97,12 @@ interface SimulatorControlsProps {
 		toggleServiceStop: (index: number) => void;
 		addLine: () => void;
 		presets: SimulatorPreset[];
+		marqueePresets: CustomMarqueePreset[];
 		pickPreset: (presetId: SimulatorPresetId) => void;
 		addPreset: () => void;
 		setPresetLabel: (label: string) => void;
 		togglePresetLine: (lineId: LineId) => void;
+		pickMarqueePreset: (presetId: string) => void;
 		pickLine: (lineId: LineId) => void;
 		setLineField: (field: LineEditorField, value: string) => void;
 		setStationField: (
@@ -177,10 +180,12 @@ export function SimulatorControls({
 		toggleServiceStop,
 		addLine,
 		presets,
+		marqueePresets,
 		pickPreset,
 		addPreset,
 		setPresetLabel,
 		togglePresetLine,
+		pickMarqueePreset,
 		pickLine,
 		setLineField,
 		setStationField,
@@ -773,18 +778,31 @@ export function SimulatorControls({
 								type="button"
 								className="lc-btn"
 								aria-pressed={marqueePresetId === preset.id}
-								onClick={() =>
-									dispatch({
-										type: "applyMarqueePreset",
-										presetId: preset.id,
-									})
-								}
+								onClick={() => pickMarqueePreset(preset.id)}
 								style={{
 									background:
 										marqueePresetId === preset.id
 											? "var(--acid)"
 											: "var(--paper)",
 									color: "var(--ink)",
+									fontSize: 11,
+								}}
+							>
+								{preset.label}
+							</button>
+						))}
+						{marqueePresets.map((preset) => (
+							<button
+								key={preset.id}
+								type="button"
+								className="lc-btn"
+								aria-label={`Use ${preset.label} marquee preset`}
+								onClick={() =>
+									pickMarqueePreset(preset.id)
+								}
+								style={{
+									background: "var(--violet)",
+									color: "var(--paper)",
 									fontSize: 11,
 								}}
 							>

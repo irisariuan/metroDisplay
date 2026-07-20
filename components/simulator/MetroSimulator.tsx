@@ -8,6 +8,7 @@ import {
 	type SimulatorPreset,
 	type SimulatorPresetId,
 } from "@/lib/metro-data";
+import { MARQUEE_CONTENT_PRESETS } from "@/lib/constants";
 import { useClock } from "@/hooks/useClock";
 import { SimulatorDisplay } from "@/components/simulator/SimulatorDisplay";
 import { SimulatorControls } from "@/components/simulator/SimulatorControls";
@@ -24,6 +25,7 @@ import {
 	setControl,
 	type SimulatorControlState,
 	type StationNameMode,
+	type CustomMarqueePreset,
 } from "@/components/simulator/simulatorControlState";
 import type {
 	LineId,
@@ -120,6 +122,9 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 			lineIds: [...preset.lineIds],
 			marqueePresetId: preset.id === "yamanote" ? "yamanote" : "shuika",
 		})),
+	);
+	const [marqueePresets, setMarqueePresets] = useState<CustomMarqueePreset[]>(
+		[],
 	);
 	const [routes, setRoutes] = useState<Routes>(() => {
 		const cloned = { ...ROUTES };
@@ -265,7 +270,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 						return [labelAnnouncementContent(item, lang)];
 					}),
 			).flat(),
-		[announcements, langMode],
+		[announcements, lang, langMode],
 	);
 	const announcementContents = useSimulatorAnnouncements({
 		route,
@@ -458,9 +463,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	}, [journey.pos, serviceEndIndex, serviceStartIndex]);
 
 	function pickLine(id: LineId) {
-		const matchingPreset = presets.find(
-			(preset) => preset.lineId === id,
-		);
+		const matchingPreset = presets.find((preset) => preset.lineId === id);
 		updateControl("presetId", matchingPreset?.id ?? "custom");
 		setLineId(id);
 		updateControl("serviceId", "local");
@@ -472,10 +475,31 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		const preset = presets.find((item) => item.id === id);
 		if (!preset) return;
 		updateControl("presetId", id);
-		dispatch({
-			type: "applyMarqueePreset",
-			presetId: preset.marqueePresetId,
-		});
+		const customMarqueePreset = marqueePresets.find(
+			(item) => item.id === preset.marqueePresetId,
+		);
+		if (customMarqueePreset) {
+			dispatch({
+				type: "applyMarqueePlaylist",
+				presetId: customMarqueePreset.id,
+				items: customMarqueePreset.items,
+			});
+		} else {
+			const builtinMarqueePreset = MARQUEE_CONTENT_PRESETS.find(
+				(item) => item.id === preset.marqueePresetId,
+			);
+			if (builtinMarqueePreset)
+				dispatch({
+					type: "applyMarqueePlaylist",
+					presetId: builtinMarqueePreset.id,
+					items: builtinMarqueePreset.items.map((item) => ({
+						...item,
+						type: item.type as AnnouncementContent["type"],
+						ja: item.ja ?? "",
+						enabled: true,
+					})),
+				});
+		}
 		setLineId(preset.lineId);
 		updateControl("serviceId", "local");
 		setTravelDirection(1);
@@ -484,26 +508,49 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 
 	function addPreset() {
 		const id = `preset-${Date.now().toString(36)}`;
+		const marqueePresetId = `marquee-${id}`;
 		const preset: SimulatorPreset = {
 			id,
 			label: `NEW PRESET ${presets.filter((item) => item.id.startsWith("preset-")).length + 1}`,
 			lineId,
 			lineIds: [lineId],
-			marqueePresetId: controls.marqueePresetId,
+			marqueePresetId,
 		};
+		const items = controls.announcements.map((item) => ({ ...item }));
 		setPresets((current) => [...current, preset]);
+		setMarqueePresets((current) => [
+			...current,
+			{ id: marqueePresetId, label: preset.label, items },
+		]);
 		updateControl("presetId", id);
+		dispatch({
+			type: "applyMarqueePlaylist",
+			presetId: marqueePresetId,
+			items,
+		});
 	}
 
 	function setPresetLabel(label: string) {
 		if (!["shuika", "yamanote"].includes(controls.presetId))
-			setPresets((current) =>
-				current.map((preset) =>
+			setPresets((current) => {
+				const nextLabel = label || "UNTITLED PRESET";
+				const edited = current.find(
+					(preset) => preset.id === controls.presetId,
+				);
+				if (edited)
+					setMarqueePresets((items) =>
+						items.map((item) =>
+							item.id === edited.marqueePresetId
+								? { ...item, label: nextLabel }
+								: item,
+						),
+					);
+				return current.map((preset) =>
 					preset.id === controls.presetId
-						? { ...preset, label: label || "UNTITLED PRESET" }
+						? { ...preset, label: nextLabel }
 						: preset,
-				),
-			);
+				);
+			});
 	}
 
 	function togglePresetLine(id: LineId) {
@@ -523,7 +570,9 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 				};
 			}),
 		);
-		const activePreset = presets.find((preset) => preset.id === controls.presetId);
+		const activePreset = presets.find(
+			(preset) => preset.id === controls.presetId,
+		);
 		if (activePreset?.lineId === id && activePreset.lineIds.length > 1) {
 			const nextLineId = activePreset.lineIds.find((item) => item !== id);
 			if (nextLineId) {
@@ -539,6 +588,55 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 			}
 		}
 	}
+
+	function pickMarqueePreset(id: string) {
+		const customPreset = marqueePresets.find((preset) => preset.id === id);
+		if (customPreset) {
+			dispatch({
+				type: "applyMarqueePlaylist",
+				presetId: customPreset.id,
+				items: customPreset.items,
+			});
+			return;
+		}
+		const builtinPreset = MARQUEE_CONTENT_PRESETS.find(
+			(preset) => preset.id === id,
+		);
+		if (!builtinPreset) return;
+		dispatch({
+			type: "applyMarqueePlaylist",
+			presetId: builtinPreset.id,
+			items: builtinPreset.items.map((item) => ({
+				...item,
+				type: item.type as AnnouncementContent["type"],
+				ja: item.ja ?? "",
+				enabled: true,
+			})),
+		});
+		setPresets((current) =>
+			current.map((preset) =>
+				preset.id === controls.presetId
+					? { ...preset, marqueePresetId: id }
+					: preset,
+			),
+		);
+	}
+
+	useEffect(() => {
+		if (!controls.marqueePresetId.startsWith("marquee-")) return;
+		setMarqueePresets((current) =>
+			current.map((preset) =>
+				preset.id === controls.marqueePresetId
+					? {
+							...preset,
+							items: controls.announcements.map((item) => ({
+								...item,
+							})),
+						}
+					: preset,
+			),
+		);
+	}, [controls.announcements, controls.marqueePresetId]);
 
 	// ——— express service editing (variants live on the route, skip flags on stations)
 	const SERVICE_PRESETS = [
@@ -811,10 +909,12 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					toggleServiceStop,
 					addLine,
 					presets,
+					marqueePresets,
 					pickPreset,
 					addPreset,
 					setPresetLabel,
 					togglePresetLine,
+					pickMarqueePreset,
 					pickLine,
 					setLineField,
 					setStationField,

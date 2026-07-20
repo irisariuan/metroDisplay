@@ -618,7 +618,7 @@ export interface SimulatorPreset {
 	label: string;
 	lineId: LineId;
 	lineIds: LineId[];
-	marqueePresetId: "shuika" | "yamanote" | "safety";
+	marqueePresetId: string;
 }
 export type SimulatorPresetId = string;
 

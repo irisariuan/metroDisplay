@@ -7,10 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "generate:announcement-audio": "bun scripts/generate-announcement-audio.ts"
+    "generate:announcement-audio": "bun scripts/generate-announcement-audio.ts",
+    "generate:departure-tones": "bun scripts/generate-departure-tones-elevenlabs.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
+    "inquirer": "^14.0.2",
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4"

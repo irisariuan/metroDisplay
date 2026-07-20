@@ -7,6 +7,62 @@ export interface Journey {
 	from: number | null;
 }
 
+export type JourneyEventType = "arrived" | "departed" | "almost-arrive";
+
+export interface JourneyEvent {
+	id: string;
+	type: JourneyEventType;
+	/** Station the event concerns: origin for departure, target otherwise. */
+	stationIndex: number;
+	fromIndex: number | null;
+	targetIndex: number;
+}
+
+/**
+ * Convert continuous movement state into one of the simulator's discrete
+ * public events. The returned id stays stable while that event is active, so
+ * consumers can safely process it once.
+ */
+export function journeyEventFor(
+	journey: Journey,
+	almostArriveThreshold: number,
+): JourneyEvent | null {
+	if (journey.phase === "at")
+		return {
+			id: `arrived:${journey.from ?? "entry"}:${journey.pos}`,
+			type: "arrived",
+			stationIndex: journey.pos,
+			fromIndex: journey.from,
+			targetIndex: journey.pos,
+		};
+
+	const threshold = Math.min(1, Math.max(0, almostArriveThreshold));
+	// A departure is always observable for at least the first movement state,
+	// even when the configured almost-arrival threshold is 0%.
+	if (
+		journey.from !== null &&
+		(journey.progress === 0 || journey.progress < threshold)
+	)
+		return {
+			id: `departed:${journey.from}:${journey.pos}`,
+			type: "departed",
+			stationIndex: journey.from,
+			fromIndex: journey.from,
+			targetIndex: journey.pos,
+		};
+
+	if (journey.progress >= threshold)
+		return {
+			id: `almost-arrive:${journey.from ?? "entry"}:${journey.pos}`,
+			type: "almost-arrive",
+			stationIndex: journey.pos,
+			fromIndex: journey.from,
+			targetIndex: journey.pos,
+		};
+
+	return null;
+}
+
 export interface JourneyBounds {
 	stationCount: number;
 	circular: boolean;

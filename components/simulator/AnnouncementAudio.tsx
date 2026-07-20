@@ -15,14 +15,17 @@ export interface AnnouncementAudioHandle {
 	stop: () => void;
 }
 
+export interface AutoAudioSequence {
+	id: string;
+	keys: string[];
+	priority?: boolean;
+	onPlaybackChange?: (playing: boolean) => void;
+}
+
 interface AnnouncementAudioProps {
-	autoEnabled: boolean;
-	sequence: string[];
+	autoSequences: AutoAudioSequence[];
 	overrides: Record<string, string>;
 	volume: number;
-	statusKey: string;
-	language: "ja" | "en";
-	onAutoPlaybackChange?: (playing: boolean) => void;
 }
 
 interface PendingSequence {
@@ -36,13 +39,9 @@ export const AnnouncementAudio = React.forwardRef<
 	AnnouncementAudioProps
 >(function AnnouncementAudio(
 	{
-		autoEnabled,
-		sequence,
+		autoSequences,
 		overrides,
 		volume,
-		statusKey,
-		language,
-		onAutoPlaybackChange,
 	},
 	ref,
 ) {
@@ -52,14 +51,11 @@ export const AnnouncementAudio = React.forwardRef<
 	const queueGeneration = React.useRef(0);
 	const activeGeneration = React.useRef<number | null>(null);
 	const finishCurrentClip = React.useRef<(() => void) | null>(null);
-	const playedForStatus = React.useRef({
-		statusKey: "",
-		languages: new Set<string>(),
-	});
+	const playedAutoSequenceIds = React.useRef(new Set<string>());
 
 	React.useEffect(() => {
 		let active = true;
-		void fetch("/audio/announcements/manifest.json")
+		void fetch("/audio/manifest.json")
 			.then((response) => {
 				if (!response.ok) throw new Error("Announcement manifest unavailable");
 				return response.json() as Promise<AnnouncementManifest>;
@@ -154,29 +150,18 @@ export const AnnouncementAudio = React.forwardRef<
 	React.useImperativeHandle(ref, () => ({ playKeys, stop }), [playKeys, stop]);
 
 	React.useEffect(() => {
-		if (playedForStatus.current.statusKey !== statusKey) {
-			playedForStatus.current = {
-				statusKey,
-				languages: new Set<string>(),
-			};
+		if (!manifest) return;
+		for (const entry of autoSequences) {
+			if (playedAutoSequenceIds.current.has(entry.id)) continue;
+			playedAutoSequenceIds.current.add(entry.id);
+			if (entry.priority) {
+				entry.onPlaybackChange?.(true);
+				void playKeys(entry.keys).finally(() =>
+					entry.onPlaybackChange?.(false),
+				);
+			} else enqueueKeys(entry.keys, entry.onPlaybackChange);
 		}
-		if (
-			!manifest ||
-			!autoEnabled ||
-			playedForStatus.current.languages.has(language)
-		)
-			return;
-		playedForStatus.current.languages.add(language);
-		enqueueKeys(sequence, onAutoPlaybackChange);
-	}, [
-		autoEnabled,
-		enqueueKeys,
-		language,
-		manifest,
-		onAutoPlaybackChange,
-		sequence,
-		statusKey,
-	]);
+	}, [autoSequences, enqueueKeys, manifest, playKeys]);
 
 	React.useEffect(() => {
 		if (audioRef.current)
