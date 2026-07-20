@@ -14,7 +14,9 @@ import { SimulatorDisplay } from "@/components/simulator/SimulatorDisplay";
 import { SimulatorControls } from "@/components/simulator/SimulatorControls";
 import { AnnouncementAudio } from "@/components/simulator/AnnouncementAudio";
 import {
-	advanceJourney,
+	beginJourneyLeg,
+	completeJourneyLeg,
+	navigateJourney,
 	type Journey,
 	type JourneyBounds,
 } from "@/components/simulator/simulatorJourney";
@@ -31,7 +33,6 @@ import {
 import type {
 	LineId,
 	Lang,
-	Phase,
 	AnnouncementContent,
 	Route,
 	EditableRoute,
@@ -118,6 +119,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		progress: 0,
 		from: null,
 	});
+	const [manualTravel, setManualTravel] = useState(false);
 	const [presets, setPresets] = useState<SimulatorPreset[]>(() =>
 		SIMULATOR_PRESETS.map((preset) => ({
 			...preset,
@@ -311,14 +313,24 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		stateRef.current.endIndex = serviceEndIndex;
 	}, [N, route.circular, serviceEndIndex, serviceStartIndex, skipStations]);
 
-	function advance(dir: number) {
-		setJourney((current) => advanceJourney(current, dir, stateRef.current));
+	function beginAutoLeg(dir: number) {
+		setJourney((current) =>
+			beginJourneyLeg(current, dir, stateRef.current),
+		);
+	}
+
+	function navigate(dir: number) {
+		setAuto(false);
+		setTravelDirection(dir);
+		const next = navigateJourney(journey, dir, stateRef.current);
+		setJourney(next);
+		setManualTravel(next.phase === "approach");
 	}
 
 	// Auto travel advances real progress rather than a CSS-only transition, so pause freezes in place.
 	useEffect(() => {
-		if (!auto) return undefined;
 		if (journey.phase === "at") {
+			if (!auto) return undefined;
 			let nextDirection = travelDirection;
 			if (
 				!route.circular &&
@@ -332,10 +344,11 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 				// marquee for the entire dwell. Only reverse when departure begins.
 				if (nextDirection !== travelDirection)
 					dispatch(setControl("travelDirection", nextDirection));
-				advance(nextDirection);
+				beginAutoLeg(nextDirection);
 			}, stationStayMs);
 			return () => clearTimeout(id);
 		}
+		if (!auto && !manualTravel) return undefined;
 		const tickMs = 50;
 		const id = setInterval(() => {
 			setJourney((j) => {
@@ -345,6 +358,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					j.progress + tickMs / travelDuration,
 				);
 				if (
+					auto &&
 					pauseAtPageBreak &&
 					isPageBoundaryLeg &&
 					j.progress < 0.5 &&
@@ -354,29 +368,11 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					return { ...j, progress: 0.499 };
 				}
 				if (progress === 1) {
-					// pass through skipped stations without dwelling
-					const {
-						stationCount,
-						circular,
-						skippedStations,
-						startIndex,
-						endIndex,
-					} = stateRef.current;
-					const canContinue =
-						travelDirection > 0
-							? j.pos < endIndex || circular
-							: j.pos > startIndex || circular;
-					if (skippedStations.has(j.pos) && canContinue)
-						return {
-							pos:
-								travelDirection > 0
-									? (j.pos + 1) % stationCount
-									: (j.pos - 1 + stationCount) % stationCount,
-							phase: "approach" as Phase,
-							progress: 0,
-							from: j.pos,
-						};
-					return { ...j, phase: "at" as Phase, progress };
+					return completeJourneyLeg(
+						j,
+						travelDirection,
+						stateRef.current,
+					);
 				}
 				return { ...j, progress };
 			});
@@ -384,6 +380,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		return () => clearInterval(id);
 	}, [
 		auto,
+		manualTravel,
 		speedKmh,
 		simulationSpeed,
 		lineId,
@@ -400,6 +397,10 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		stationStayMs,
 		dispatch,
 	]);
+
+	useEffect(() => {
+		if (journey.phase === "at") setManualTravel(false);
+	}, [journey.phase]);
 
 	useEffect(() => {
 		if (journey.phase !== "at") {
@@ -465,7 +466,12 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	}, [journey.pos, serviceEndIndex, serviceStartIndex]);
 
 	function pickLine(id: LineId) {
-		const matchingPreset = presets.find((preset) => preset.lineId === id);
+		const activePreset = presets.find(
+			(preset) => preset.id === controls.presetId,
+		);
+		const matchingPreset = activePreset?.lineIds.includes(id)
+			? activePreset
+			: presets.find((preset) => preset.lineIds.includes(id));
 		updateControl("presetId", matchingPreset?.id ?? "custom");
 		setLineId(id);
 		updateControl("serviceId", "local");
@@ -930,7 +936,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					moveStation,
 					setDest,
 					toggleCircular,
-					advance,
+					advance: navigate,
 					clearAlert,
 					uploadAnnouncementAudio,
 					playAnnouncementKeys:

@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import "dotenv/config";
 import inquirer from "inquirer";
-import { DEFAULT_MARQUEE_CONTENT } from "../lib/constants";
+import { MARQUEE_CONTENT_PRESETS } from "../lib/constants";
 import { LINES, ROUTES } from "../lib/metro-data";
 import { ANNOUNCEMENT_FRAMEWORK_OPTIONS } from "../lib/announcementAudio";
 import type { Station } from "../types/metro";
@@ -81,24 +81,26 @@ function collectClips(): Clip[] {
 			},
 		);
 	}
-	DEFAULT_MARQUEE_CONTENT.forEach((item, index) => {
-		clips.push(
-			{
-				key: `content.ja.${index}`,
-				text: item.ja ?? "",
-				speechText: item.jaReading ?? item.ja ?? "",
-				lang: "ja",
-				category: "content",
-			},
-			{
-				key: `content.en.${index}`,
-				text: item.en,
-				speechText: item.enReading ?? item.en,
-				lang: "en",
-				category: "content",
-			},
-		);
-	});
+	for (const preset of MARQUEE_CONTENT_PRESETS) {
+		preset.items.forEach((item, index) => {
+			clips.push(
+				{
+					key: `content.${preset.id}.ja.${index}`,
+					text: `${preset.label} · ${item.ja ?? ""}`,
+					speechText: item.jaReading ?? item.ja ?? "",
+					lang: "ja",
+					category: "content",
+				},
+				{
+					key: `content.${preset.id}.en.${index}`,
+					text: `${preset.label} · ${item.en}`,
+					speechText: item.enReading ?? item.en,
+					lang: "en",
+					category: "content",
+				},
+			);
+		});
+	}
 	return clips.filter((clip) => clip.speechText.trim());
 }
 

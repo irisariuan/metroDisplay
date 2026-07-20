@@ -71,68 +71,83 @@ export interface JourneyBounds {
 	endIndex: number;
 }
 
-/** Calculate one manual/automatic phase step without depending on React state. */
-export function advanceJourney(
+const normalizedDirection = (direction: number) =>
+	direction < 0 ? -1 : 1;
+
+const canDepart = (
+	position: number,
+	direction: number,
+	{ circular, startIndex, endIndex }: JourneyBounds,
+) =>
+	circular ||
+	(normalizedDirection(direction) > 0
+		? position < endIndex
+		: position > startIndex);
+
+/** Begin the adjacent leg from a station, matching autoplay departure logic. */
+export function beginJourneyLeg(
 	journey: Journey,
 	direction: number,
-	{
-		stationCount,
-		circular,
-		skippedStations,
-		startIndex,
-		endIndex,
-	}: JourneyBounds,
+	bounds: JourneyBounds,
 ): Journey {
-	if (direction > 0) {
-		if (journey.phase === "approach") {
-			if (
-				skippedStations.has(journey.pos) &&
-				(journey.pos < endIndex || circular)
-			) {
-				return {
-					pos: (journey.pos + 1) % stationCount,
-					phase: "approach",
-					progress: 0,
-					from: journey.pos,
-				};
-			}
-			return { ...journey, phase: "at", progress: 1 };
-		}
-
-		if (journey.pos === endIndex && !circular) return journey;
-		return {
-			pos: (journey.pos + 1) % stationCount,
-			phase: "approach",
-			progress: 0,
-			from: journey.pos,
-		};
-	}
-
-	if (journey.phase === "approach") {
-		if (journey.pos === startIndex && !circular)
-			return { ...journey, phase: "at", progress: 1 };
-		const target = (journey.pos - 1 + stationCount) % stationCount;
-		if (skippedStations.has(target) && (target > startIndex || circular)) {
-			return {
-				pos: target,
-				phase: "approach",
-				progress: 0,
-				from: journey.pos,
-			};
-		}
-		return {
-			pos: target,
-			phase: "at",
-			progress: 1,
-			from: journey.pos,
-		};
-	}
-
-	if (journey.pos === startIndex && !circular) return journey;
+	const step = normalizedDirection(direction);
+	if (!canDepart(journey.pos, step, bounds)) return journey;
 	return {
-		pos: (journey.pos - 1 + stationCount) % stationCount,
+		pos:
+			(journey.pos + step + bounds.stationCount) % bounds.stationCount,
 		phase: "approach",
 		progress: 0,
 		from: journey.pos,
 	};
+}
+
+/**
+ * Start or redirect a manual trip. Reversing mid-leg swaps its endpoints and
+ * mirrors progress, so the marker and fill continue from their current point.
+ */
+export function navigateJourney(
+	journey: Journey,
+	direction: number,
+	bounds: JourneyBounds,
+): Journey {
+	const step = normalizedDirection(direction);
+	if (journey.phase === "at")
+		return beginJourneyLeg(journey, step, bounds);
+
+	if (journey.from === null) {
+		if (step > 0) return journey;
+		return beginJourneyLeg(
+			{ ...journey, phase: "at", progress: 1 },
+			step,
+			bounds,
+		);
+	}
+
+	const currentStep =
+		(journey.from + 1) % bounds.stationCount === journey.pos ? 1 : -1;
+	if (step === currentStep) return journey;
+	return {
+		pos: journey.from,
+		phase: "approach",
+		progress: 1 - journey.progress,
+		from: journey.pos,
+	};
+}
+
+/** Arrive at the target or continue through a skipped stop, as autoplay does. */
+export function completeJourneyLeg(
+	journey: Journey,
+	direction: number,
+	bounds: JourneyBounds,
+): Journey {
+	if (journey.phase !== "approach") return journey;
+	if (bounds.skippedStations.has(journey.pos)) {
+		const next = beginJourneyLeg(
+			{ ...journey, phase: "at", progress: 1 },
+			direction,
+			bounds,
+		);
+		if (next.phase === "approach") return next;
+	}
+	return { ...journey, phase: "at", progress: 1 };
 }

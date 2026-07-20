@@ -24,6 +24,12 @@ export const ANNOUNCEMENT_FRAMEWORK_OPTIONS: AnnouncementFrameworkOption[] = [
 		lang: "ja",
 	},
 	{
+		key: "framework.ja.desu",
+		label: "JA · です。",
+		text: "です。",
+		lang: "ja",
+	},
+	{
 		key: "framework.ja.doorsLeft",
 		label: "JA · 左側のドア",
 		text: "左側のドアが開きます。",
@@ -225,8 +231,8 @@ export const stationAudioKey = (station: Station, lang: Lang) =>
 export const lineAudioKey = (lineId: LineId, lang: Lang) =>
 	`line.${lang}.${lineId}`;
 
-export const contentAudioKey = (index: number, lang: Lang) =>
-	`content.${lang}.${index}`;
+export const contentAudioKey = (presetId: string, index: number, lang: Lang) =>
+	`content.${presetId}.${lang}.${index}`;
 
 /** Queue key and URL for an optional per-station departure melody. */
 export const departureToneKey = (station: Station) =>
@@ -246,8 +252,10 @@ export function audioKeyLabel(key: string): string {
 		return effect ? `SFX · ${effect.label}` : `SFX · ${qualifier}`;
 	}
 	if (kind === "tone") return `TONE · ${value}`;
-	if (kind === "content")
-		return `${qualifier.toUpperCase()} · MSG ${Number(value) + 1}`;
+	if (kind === "content") {
+		const [language = "", index = ""] = rest;
+		return `${qualifier.toUpperCase()} · ${language.toUpperCase()} · MSG ${Number(index) + 1}`;
+	}
 	if (value) return `${qualifier.toUpperCase()} · ${value}`;
 	return key;
 }
@@ -298,6 +306,7 @@ export function trainStartAnnouncementAudioSequence({
 	serviceEn,
 	majorStations = [],
 }: TrainStartAnnouncementAudioSequenceOptions): string[] {
+	if (route.circular) return [];
 	const destination = route.stations[terminalIndex];
 	const serviceAudioKey =
 		SERVICE_AUDIO_KEYS[lang][lang === "ja" ? serviceJa : serviceEn];
@@ -320,15 +329,10 @@ export function trainStartAnnouncementAudioSequence({
 					lineAudioKey(route.line, "en"),
 					...(serviceAudioKey ? [serviceAudioKey] : []),
 					"framework.en.boundFor",
-					// A loop line names the major stops ahead instead of a terminus.
-					...(route.circular
-						? boundForStations.map((station) =>
-								stationAudioKey(station, "en"),
-							)
-						: [stationAudioKey(destination, "en")]),
+					stationAudioKey(destination, "en"),
 				];
-	// The loop-line direction list already covers the major stops.
-	if (!majorStations.length || lang === "ja" || route.circular) return sequence;
+	if (!majorStations.length || lang === "ja")
+		return sequence;
 	sequence.push("framework.en.callingAt");
 	majorStations.forEach((station, index) => {
 		if (index === majorStations.length - 1 && index > 0)
@@ -362,7 +366,13 @@ export function announcementAudioSequence({
 
 	if (lang === "ja") {
 		if (phase === "approach") sequence.push("framework.ja.approach");
-		sequence.push(stationKey, stationKey, "framework.ja.stationEnd");
+		sequence.push(
+			stationKey,
+			stationKey,
+			phase === "approach"
+				? "framework.ja.stationEnd"
+				: "framework.ja.desu",
+		);
 		// if (phase === "approach")
 		sequence.push(
 			...doorsClip(
@@ -373,7 +383,8 @@ export function announcementAudioSequence({
 		);
 		if (phase === "at") {
 			sequence.push("framework.ja.foot");
-			if (pos === terminalIndex) sequence.push("framework.ja.terminal");
+			if (!route.circular && pos === terminalIndex)
+				sequence.push("framework.ja.terminal");
 		}
 		if (station.xf?.length)
 			sequence.push(
@@ -397,7 +408,8 @@ export function announcementAudioSequence({
 	);
 	if (phase === "at") {
 		sequence.push("framework.en.foot");
-		if (pos === terminalIndex) sequence.push("framework.en.terminal");
+		if (!route.circular && pos === terminalIndex)
+			sequence.push("framework.en.terminal");
 	}
 	if (station.xf?.length)
 		sequence.push(

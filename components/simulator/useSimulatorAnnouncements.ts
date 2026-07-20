@@ -81,14 +81,17 @@ export function useSimulatorAnnouncements({
 	);
 	const isInitialEntry = journey.from === null && journeyEvent === null;
 	const isAtDepartureStartStation =
+		!route.circular &&
 		!suppressCircularStartDeparture &&
 		journeyEvent?.type === "arrived" &&
 		journeyEvent.stationIndex === departureStartIndex;
 	const isDepartingStartStation =
+		!route.circular &&
 		!suppressCircularStartDeparture &&
 		journeyEvent?.type === "departed" &&
 		journeyEvent.stationIndex === departureStartIndex;
 	const isDepartingMajorStation =
+		!route.circular &&
 		journeyEvent?.type === "departed" &&
 		Boolean(route.stations[journeyEvent.stationIndex]?.major);
 	const departureOriginIndex =

@@ -1,14 +1,13 @@
 "use client";
 
 import React from "react";
-import { Switch } from "@/components/ds";
+import { Button, Switch } from "@/components/ds";
 import {
 	MARQUEE_CONTENT_PRESETS,
 	SPEED_PRESETS,
 } from "@/lib/constants";
 import { LineControls } from "@/components/simulator/controls/LineControls";
 import { ServiceControls } from "@/components/simulator/controls/ServiceControls";
-import { TrainControls } from "@/components/simulator/controls/TrainControls";
 import {
 	ANNOUNCEMENT_FRAMEWORK_OPTIONS,
 	audioKeyLabel,
@@ -326,22 +325,85 @@ export function SimulatorControls({
 				setServiceField={setServiceField}
 				toggleServiceStop={toggleServiceStop}
 			/>
-			{/* transport + options */}
+			{/* train + display options */}
 			<div className="grid grid-cols-2 items-stretch gap-3">
-				<TrainControls
-					auto={auto}
-					onPrevious={() => {
-						setAuto(false);
-						setTravelDirection(-1);
-						advance(-1);
-					}}
-					onToggleAuto={() => setAuto((value) => !value)}
-					onNext={() => {
-						setAuto(false);
-						setTravelDirection(1);
-						advance(1);
-					}}
-				/>
+				<div
+					className="rounded-xl border-3 border-ink bg-acid p-3 text-ink"
+					style={{ boxShadow: "4px 4px 0 var(--magenta)" }}
+				>
+					<div className="mb-2 font-mono text-sm tracking-widest text-muted">
+						TRAIN CONTROL
+					</div>
+					<div className="grid grid-cols-3 items-center gap-1.5">
+						<Button
+							variant="ghost"
+							size="s"
+							onClick={() => advance(-1)}
+						>
+							PREV
+						</Button>
+						<Button
+							variant={auto ? "primary" : "accent"}
+							size="m"
+							onClick={() => setAuto((value) => !value)}
+						>
+							{auto ? "PAUSE" : "PLAY"}
+						</Button>
+						<Button
+							variant="ghost"
+							size="s"
+							onClick={() => advance(1)}
+						>
+							NEXT
+						</Button>
+					</div>
+					<div className="mt-2 flex items-center justify-between gap-2 rounded-md border-2 border-ink bg-paper p-2">
+						<span className="font-mono text-[10px] font-bold tracking-widest">
+							RUN DIRECTION
+						</span>
+						<div className="flex gap-1.25">
+							<button
+								onClick={() => setTravelDirection(1)}
+								className="cursor-pointer rounded-[5px] border-2 border-ink px-1.75 py-1.25 font-mono text-[10px] font-bold"
+								style={{
+									background:
+										travelDirection > 0
+											? "var(--blue)"
+											: "var(--paper)",
+									color:
+										travelDirection > 0
+											? "#fff"
+											: "var(--ink)",
+								}}
+							>
+								FORWARD ››
+							</button>
+							<button
+								onClick={() => setTravelDirection(-1)}
+								className="cursor-pointer rounded-[5px] border-2 border-ink px-1.75 py-1.25 font-mono text-[10px] font-bold"
+								style={{
+									background:
+										travelDirection < 0
+											? "var(--violet)"
+											: "var(--paper)",
+									color:
+										travelDirection < 0
+											? "#fff"
+											: "var(--ink)",
+								}}
+							>
+								‹‹ REVERSE
+							</button>
+						</div>
+					</div>
+					<div className="mt-2 rounded-md border-2 border-ink bg-paper p-2">
+						<Switch
+							checked={pauseAtPageBreak}
+							onChange={setPauseAtPageBreak}
+							label="PAUSE AT PAGE BREAK"
+						/>
+					</div>
+				</div>
 				{/* speed */}
 				<div
 					className="rounded-xl border-3 border-ink bg-blue p-3"
@@ -987,9 +1049,10 @@ export function SimulatorControls({
 										<div className="grid grid-cols-2 gap-1">
 											{(["ja", "en"] as const).map(
 												(audioLang) => {
-													const key = contentAudioKey(
-														index,
-														audioLang,
+											const key = contentAudioKey(
+												marqueePresetId,
+												index,
+												audioLang,
 													);
 													return (
 														<AudioClipControl
@@ -1035,67 +1098,6 @@ export function SimulatorControls({
 								))}
 							</div>
 						</div>
-					</div>
-				</section>
-				{/* running controls */}
-				<section
-					className="col-span-full rounded-xl border-3 border-ink bg-acid p-3"
-					style={{ boxShadow: "4px 4px 0 var(--ink)" }}
-				>
-					<div className="mb-2.5 font-display text-[28px] leading-[0.85]">
-						RUNNING CONTROLS
-					</div>
-					<div
-						className="grid items-center gap-3"
-						style={{
-							gridTemplateColumns:
-								"minmax(240px, 1fr) repeat(3, auto)",
-						}}
-					>
-						<div className="flex items-center justify-between gap-2 rounded-md border-2 border-ink bg-paper p-2">
-							<span className="font-mono text-[10px] font-bold tracking-widest">
-								RUN DIRECTION
-							</span>
-							<div className="flex gap-1.25">
-								<button
-									onClick={() => setTravelDirection(1)}
-									className="cursor-pointer rounded-[5px] border-2 border-ink px-1.75 py-1.25 font-mono text-[10px] font-bold"
-									style={{
-										background:
-											travelDirection > 0
-												? "var(--blue)"
-												: "var(--paper)",
-										color:
-											travelDirection > 0
-												? "#fff"
-												: "var(--ink)",
-									}}
-								>
-									FORWARD ››
-								</button>
-								<button
-									onClick={() => setTravelDirection(-1)}
-									className="cursor-pointer rounded-[5px] border-2 border-ink px-1.75 py-1.25 font-mono text-[10px] font-bold"
-									style={{
-										background:
-											travelDirection < 0
-												? "var(--violet)"
-												: "var(--paper)",
-										color:
-											travelDirection < 0
-												? "#fff"
-												: "var(--ink)",
-									}}
-								>
-									‹‹ REVERSE
-								</button>
-							</div>
-						</div>
-						<Switch
-							checked={pauseAtPageBreak}
-							onChange={setPauseAtPageBreak}
-							label="PAUSE AT PAGE BREAK"
-						/>
 					</div>
 				</section>
 				<section

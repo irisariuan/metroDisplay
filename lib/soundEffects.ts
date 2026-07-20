@@ -1,51 +1,35 @@
-/**
- * Non-speech clips: chimes, beeps and door sounds. Unlike station melodies
- * these are shared across the whole network, so they are keyed by id alone.
- */
+import soundEffectData from "@/lib/data/sound-effects.json";
+
+/** Non-speech clips: chimes, beeps and door sounds. */
 export interface SoundEffect {
 	id: string;
 	label: string;
-	/** Shown in the control surface so the operator knows what will play. */
 	description: string;
-	/** Sent to the sound-generation model by scripts/generate-sound-effects. */
+	/** Sent to the sound-generation model by the sound-effects script. */
 	prompt: string;
 	durationSeconds: number;
 }
 
-export const SOUND_EFFECTS: SoundEffect[] = [
-	{
-		id: "door-open",
-		label: "DOOR OPEN",
-		description: "Soft two-note chime as the doors slide open.",
-		prompt:
-			"A soft, clean two-note electronic chime marking train doors opening. Bright bell-like tone, no speech, no ambience, no reverb tail.",
-		durationSeconds: 2,
-	},
-	{
-		id: "door-close",
-		label: "DOOR CLOSE",
-		description: "Repeating warning chime before the doors close.",
-		prompt:
-			"A repeating urgent electronic warning chime used before subway train doors close. Steady even pulses, no speech, no ambience.",
-		durationSeconds: 3,
-	},
-	{
-		id: "attention-chime",
-		label: "ATTENTION",
-		description: "Two-tone chime that precedes an onboard announcement.",
-		prompt:
-			"A calm descending two-tone public address chime announcing that a message follows. Clean synthesised bell, no speech, no ambience.",
-		durationSeconds: 2,
-	},
-	{
-		id: "boarding-beep",
-		label: "BOARDING",
-		description: "Locator beep at the doorway while boarding is open.",
-		prompt:
-			"A short melody placed at a train doorway to guide boarding passengers. Steady bell-like tone, no speech, no ambience.",
-		durationSeconds: 3,
-	},
-];
+export interface SoundEffectPreset {
+	id: string;
+	label: string;
+	effectIds: string[];
+}
+
+export const SOUND_EFFECTS = soundEffectData.effects as SoundEffect[];
+export const SOUND_EFFECT_PRESETS =
+	soundEffectData.presets as SoundEffectPreset[];
+export const DEFAULT_SOUND_EFFECT_PRESET_ID = soundEffectData.defaultPresetId;
+
+const knownEffectIds = new Set(SOUND_EFFECTS.map((effect) => effect.id));
+for (const preset of SOUND_EFFECT_PRESETS) {
+	for (const effectId of preset.effectIds) {
+		if (!knownEffectIds.has(effectId))
+			throw new Error(
+				`Sound-effect preset ${preset.id} references unknown effect ${effectId}`,
+			);
+	}
+}
 
 /** Queue key for a shared, non-speech effect clip. */
 export const soundEffectKey = (id: string) => `effect.${id}`;

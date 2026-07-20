@@ -1,0 +1,55 @@
+{
+	"defaultPresetId": "onboard",
+	"effects": [
+		{
+			"id": "door-open",
+			"label": "DOOR OPEN",
+			"description": "Soft two-note chime as the doors slide open.",
+			"prompt": "A soft, clean two-note electronic chime marking train doors opening. Bright bell-like tone, no speech, no ambience, no reverb tail.",
+			"durationSeconds": 2
+		},
+		{
+			"id": "door-close",
+			"label": "DOOR CLOSE",
+			"description": "Repeating warning chime before the doors close.",
+			"prompt": "A repeating urgent electronic warning chime used before subway train doors close. Steady even pulses, no speech, no ambience.",
+			"durationSeconds": 3
+		},
+		{
+			"id": "attention-chime",
+			"label": "ATTENTION",
+			"description": "Two-tone chime that precedes an onboard announcement.",
+			"prompt": "A calm descending two-tone public address chime announcing that a message follows. Clean synthesised bell, no speech, no ambience.",
+			"durationSeconds": 2
+		},
+		{
+			"id": "boarding-beep",
+			"label": "BOARDING",
+			"description": "Locator beep at the doorway while boarding is open.",
+			"prompt": "A short melody placed at a train doorway to guide boarding passengers. Steady bell-like tone, no speech, no ambience.",
+			"durationSeconds": 3
+		}
+	],
+	"presets": [
+		{
+			"id": "onboard",
+			"label": "ONBOARD TRAIN",
+			"effectIds": [
+				"door-open",
+				"door-close",
+				"attention-chime",
+				"boarding-beep"
+			]
+		},
+		{
+			"id": "doors",
+			"label": "DOOR EFFECTS",
+			"effectIds": ["door-open", "door-close", "boarding-beep"]
+		},
+		{
+			"id": "announcements",
+			"label": "ANNOUNCEMENT EFFECTS",
+			"effectIds": ["attention-chime"]
+		}
+	]
+}

@@ -71,12 +71,6 @@ export function boundForList(
 	);
 }
 
-/** "A", "A and B", "A, B and C" — spoken-English list joining. */
-function joinEn(names: readonly string[]): string {
-	if (names.length < 2) return names[0] ?? "";
-	return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
-}
-
 interface TrainStartAnnouncementOptions {
 	terminalIndex: number;
 	serviceJa: string;
@@ -95,17 +89,15 @@ export function trainStartAnnouncement(
 	}: TrainStartAnnouncementOptions,
 	lang: Lang,
 ) {
+	if (route.circular)
+		return lang === "ja"
+			? `この電車は${LINES[route.line].ja}${serviceJa}です。`
+			: `This is a ${LINES[route.line].en} ${serviceEn} train.`;
 	const destination = route.stations[terminalIndex];
-	// A loop line has no terminus, so it is described by the major stops ahead
-	// rather than by a destination. The terminal is only a last resort there.
 	const boundForStations = boundForList(route, majorStations, destination);
 	if (lang === "ja") {
 		return `この電車は${LINES[route.line].ja}${serviceJa}${boundForStations.map((station) => station.ja).join("、")}方面行きです。`;
 	}
-	// On a loop the direction already names the major stops, so repeating them
-	// as a calling-at list would say the same thing twice.
-	if (route.circular)
-		return `This is a ${LINES[route.line].en} ${serviceEn} train for ${joinEn(boundForStations.map((station) => station.en))}.`;
 	const majorStopText = majorStations.length
 		? ` Calling at ${majorStations.map((station) => station.en).join(", ")}.`
 		: "";
@@ -125,7 +117,9 @@ export function announcement(
 			? `この電車は${service.ja}です。${st.ja}には停まりません。ご注意ください。`
 			: `This train is the ${service.en} service and does not stop at ${st.en}. Please be careful.`;
 	}
-	const last = pos === (service?.terminalIndex ?? route.stations.length - 1);
+	const last =
+		!route.circular &&
+		pos === (service?.terminalIndex ?? route.stations.length - 1);
 	const sideJa = st.side === "L" ? "左" : "右";
 	const sideEn = st.side === "L" ? "left" : "right";
 	const xfJa =
