@@ -2,7 +2,10 @@
 
 import React from "react";
 import { Switch } from "@/components/ds";
-import { SPEED_PRESETS } from "@/lib/constants";
+import {
+	MARQUEE_CONTENT_PRESETS,
+	SPEED_PRESETS,
+} from "@/lib/constants";
 import { LineControls } from "@/components/simulator/controls/LineControls";
 import { ServiceControls } from "@/components/simulator/controls/ServiceControls";
 import { TrainControls } from "@/components/simulator/controls/TrainControls";
@@ -18,6 +21,7 @@ import {
 	type SimulatorControlState,
 	type StationNameMode,
 } from "@/components/simulator/simulatorControlState";
+import type { SimulatorPreset, SimulatorPresetId } from "@/lib/metro-data";
 import type {
 	AnnouncementContentType,
 	EditableRoute,
@@ -91,6 +95,11 @@ interface SimulatorControlsProps {
 		) => void;
 		toggleServiceStop: (index: number) => void;
 		addLine: () => void;
+		presets: SimulatorPreset[];
+		pickPreset: (presetId: SimulatorPresetId) => void;
+		addPreset: () => void;
+		setPresetLabel: (label: string) => void;
+		togglePresetLine: (lineId: LineId) => void;
 		pickLine: (lineId: LineId) => void;
 		setLineField: (field: LineEditorField, value: string) => void;
 		setStationField: (
@@ -154,6 +163,7 @@ export function SimulatorControls({
 		announcementAudioEnabled,
 		announcementVolume,
 		departureMajorStationCount,
+		marqueePresetId,
 	} = state;
 	const {
 		route,
@@ -166,6 +176,11 @@ export function SimulatorControls({
 		setServiceField,
 		toggleServiceStop,
 		addLine,
+		presets,
+		pickPreset,
+		addPreset,
+		setPresetLabel,
+		togglePresetLine,
 		pickLine,
 		setLineField,
 		setStationField,
@@ -267,12 +282,18 @@ export function SimulatorControls({
 	return (
 		<div className="mt-5.5 flex flex-col gap-4 rounded-3xl border-3 border-ink bg-paper p-4.5 shadow-hard-s">
 			<LineControls
+				presets={presets}
+				presetId={state.presetId}
 				lineId={lineId}
 				route={route}
 				showEditor={showEditor}
 				onAddLine={addLine}
 				onToggleEditor={() => setShowEditor((value) => !value)}
 				onPickLine={pickLine}
+				onPickPreset={pickPreset}
+				onAddPreset={addPreset}
+				onSetPresetLabel={setPresetLabel}
+				onTogglePresetLine={togglePresetLine}
 				setLineField={setLineField}
 				setStationField={setStationField}
 				toggleSide={toggleSide}
@@ -741,6 +762,35 @@ export function SimulatorControls({
 				>
 					<div className="mb-3 inline-block rounded-none border-2 border-ink bg-acid px-2.5 py-1.5 font-display text-[28px] leading-[0.85] text-ink shadow-[3px_3px_0_var(--ink)]">
 						LOWER MARQUEE
+					</div>
+					<div className="mb-3 flex flex-wrap items-center gap-2 border-b-2 border-ink pb-3">
+						<span className="font-mono text-xs font-bold tracking-widest">
+							CONTENT PRESET
+						</span>
+						{MARQUEE_CONTENT_PRESETS.map((preset) => (
+							<button
+								key={preset.id}
+								type="button"
+								className="lc-btn"
+								aria-pressed={marqueePresetId === preset.id}
+								onClick={() =>
+									dispatch({
+										type: "applyMarqueePreset",
+										presetId: preset.id,
+									})
+								}
+								style={{
+									background:
+										marqueePresetId === preset.id
+											? "var(--acid)"
+											: "var(--paper)",
+									color: "var(--ink)",
+									fontSize: 11,
+								}}
+							>
+								{preset.label}
+							</button>
+						))}
 					</div>
 					<div
 						className="grid items-start gap-4"

@@ -251,18 +251,24 @@ a:hover {
 	}
 }
 
+/* Starts from the centered position so the first frame matches the static
+   (non-overflowing) layout, then scans to the start and to the end. */
 @keyframes stationLabelMarquee {
 	0%,
-	12% {
+	10% {
+		transform: translateX(0px);
+	}
+	32%,
+	44% {
 		transform: translateX(var(--marquee-start, 0px));
 	}
-	45%,
-	57% {
+	68%,
+	80% {
 		transform: translateX(var(--marquee-end, 0px));
 	}
-	90%,
+	95%,
 	100% {
-		transform: translateX(var(--marquee-start, 0px));
+		transform: translateX(0px);
 	}
 }
 @keyframes doorPop {

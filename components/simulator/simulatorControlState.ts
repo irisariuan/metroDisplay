@@ -1,11 +1,17 @@
 import type React from "react";
-import { DEFAULT_MARQUEE_CONTENT, SPEED_PRESETS } from "@/lib/constants";
+import {
+	DEFAULT_MARQUEE_CONTENT,
+	MARQUEE_CONTENT_PRESETS,
+	SPEED_PRESETS,
+	type MarqueeContentPresetId,
+} from "@/lib/constants";
 import type {
 	AnnouncementContent,
 	AnnouncementContentType,
 	Lang,
 	LineId,
 } from "@/types/metro";
+import type { SimulatorPresetId } from "@/lib/metro-data";
 
 export type AlertScope = "marquee" | "lower" | "monitor";
 export type TransferDisplayMode = "auto" | "full" | "split";
@@ -17,6 +23,8 @@ export interface DisplayAnnouncement extends AnnouncementContent {
 }
 
 export interface SimulatorControlState {
+	presetId: SimulatorPresetId;
+	marqueePresetId: MarqueeContentPresetId;
 	lineId: LineId;
 	/** active stopping pattern: "local" or a ServiceVariant id on the route */
 	serviceId: string;
@@ -71,11 +79,14 @@ type UpdateAnnouncementAction = {
 
 export type SimulatorControlAction =
 	| SetControlAction
+	| { type: "applyMarqueePreset"; presetId: MarqueeContentPresetId }
 	| UpdateAnnouncementAction
 	| { type: "removeMarqueeItem"; index: number }
 	| { type: "addMarqueeItem" };
 
 export const initialSimulatorControlState: SimulatorControlState = {
+	presetId: "shuika",
+	marqueePresetId: "shuika",
 	lineId: "CS",
 	serviceId: "local",
 	auto: true,
@@ -135,6 +146,22 @@ export function simulatorControlReducer(
 				? (value as (previous: unknown) => unknown)(state[action.field])
 				: value;
 		return { ...state, [action.field]: nextValue } as SimulatorControlState;
+	}
+	if (action.type === "applyMarqueePreset") {
+		const preset = MARQUEE_CONTENT_PRESETS.find(
+			(item) => item.id === action.presetId,
+		);
+		if (!preset) return state;
+		return {
+			...state,
+			marqueePresetId: action.presetId,
+			announcements: preset.items.map((item) => ({
+				...item,
+				type: item.type as AnnouncementContentType,
+				ja: item.ja ?? "",
+				enabled: true,
+			})),
+		};
 	}
 	if (action.type === "updateAnnouncement") {
 		return {

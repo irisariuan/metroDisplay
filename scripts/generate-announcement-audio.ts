@@ -100,11 +100,23 @@ function collectClips() {
 	return clips;
 }
 
+interface ManifestClip {
+	key: string;
+	url: string;
+	text: string;
+	speechText: string;
+	lang: string;
+	category: string;
+	voiceId: string;
+	languageBoost: string;
+	hash: string;
+}
+
 async function requestAudio(
-	clip: { speechText: any; lang: string },
+	clip: Pick<ManifestClip, "speechText" | "lang">,
 	token: string,
 ) {
-	let lastError;
+	let lastError: Error;
 	for (let attempt = 1; attempt <= 8; attempt += 1) {
 		try {
 			await waitForPredictionSlot();
@@ -191,7 +203,9 @@ async function main() {
 	}
 
 	let completed = 0;
-	async function generate(clip) {
+	async function generate(
+		clip: Omit<ManifestClip, "url" | "voiceId" | "languageBoost" | "hash">,
+	) {
 		const voiceId = voiceIds[clip.lang];
 		const languageBoost = languageBoosts[clip.lang];
 		const hash = createHash("sha256")

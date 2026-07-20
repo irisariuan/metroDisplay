@@ -1,7 +1,13 @@
 "use client";
 /* Simulator engine + controls + mount */
-import React from "react";
-import { LINES, ROUTES } from "@/lib/metro-data";
+import React, { useMemo } from "react";
+import {
+	LINES,
+	ROUTES,
+	SIMULATOR_PRESETS,
+	type SimulatorPreset,
+	type SimulatorPresetId,
+} from "@/lib/metro-data";
 import { useClock } from "@/hooks/useClock";
 import { SimulatorDisplay } from "@/components/simulator/SimulatorDisplay";
 import { SimulatorControls } from "@/components/simulator/SimulatorControls";
@@ -19,7 +25,16 @@ import {
 	type SimulatorControlState,
 	type StationNameMode,
 } from "@/components/simulator/simulatorControlState";
-import type { LineId, Lang, Phase, AnnouncementContent } from "@/types/metro";
+import type {
+	LineId,
+	Lang,
+	Phase,
+	AnnouncementContent,
+	Route,
+	EditableRoute,
+	Routes,
+} from "@/types/metro";
+import { shuffle } from "@/lib/utils";
 
 const { useState, useEffect, useRef } = React;
 
@@ -99,11 +114,18 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		progress: 0,
 		from: null,
 	});
-	const [routes, setRoutes] = useState<any>(() => {
-		const cloned = JSON.parse(JSON.stringify(ROUTES));
-		Object.values(cloned).forEach((route: any) => {
+	const [presets, setPresets] = useState<SimulatorPreset[]>(() =>
+		SIMULATOR_PRESETS.map((preset) => ({
+			...preset,
+			lineIds: [...preset.lineIds],
+			marqueePresetId: preset.id === "yamanote" ? "yamanote" : "shuika",
+		})),
+	);
+	const [routes, setRoutes] = useState<Routes>(() => {
+		const cloned = { ...ROUTES };
+		Object.values(cloned).forEach((route) => {
 			route.circular = !!route.circular;
-			route.stations.forEach((station: any, index: number) => {
+			route.stations.forEach((station, index: number) => {
 				if (!Number.isFinite(Number(station.distance))) {
 					station.distance = index === 0 ? 0 : 2;
 				}
@@ -124,12 +146,11 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	const activeService =
 		serviceId === "local"
 			? null
-			: (route.services || []).find((sv: any) => sv.id === serviceId) ||
-				null;
+			: (route.services || []).find((sv) => sv.id === serviceId) || null;
 	const serviceStopIndices = React.useMemo(() => {
 		if (!activeService) return route.stations.map((_, index) => index);
 		return route.stations
-			.map((station: any, index: number) =>
+			.map((station, index) =>
 				station.skip?.includes(activeService.id) ? -1 : index,
 			)
 			.filter((index: number) => index >= 0);
@@ -212,7 +233,8 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		item: AnnouncementContent,
 		itemLang: Lang,
 	) => {
-		if (!item.displayable) throw new Error("Cannot label a non-displayable announcement");
+		if (!item.displayable)
+			throw new Error("Cannot label a non-displayable announcement");
 		const label =
 			item.type === "ad"
 				? itemLang === "ja"
@@ -223,19 +245,28 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					: "METRO NOTICE";
 		return `${label} · ${itemLang === "ja" ? item.ja || item.en : item.en}`;
 	};
-	const remainingMarqueeItems = announcements
-		.filter((item) => item.enabled && item.en.trim() && item.displayable)
-		.flatMap((item) => {
-			if (langMode === "auto") {
-				return [
-					item.ja.trim()
-						? labelAnnouncementContent(item, "ja")
-						: null,
-					labelAnnouncementContent(item, "en"),
-				].filter(Boolean);
-			}
-			return [labelAnnouncementContent(item, lang)];
-		});
+	const remainingMarqueeItems = useMemo(
+		() =>
+			shuffle(
+				announcements
+					.filter(
+						(item) =>
+							item.enabled && item.en.trim() && item.displayable,
+					)
+					.map((item) => {
+						if (langMode === "auto") {
+							return [
+								item.ja.trim()
+									? labelAnnouncementContent(item, "ja")
+									: null,
+								labelAnnouncementContent(item, "en"),
+							].filter(Boolean);
+						}
+						return [labelAnnouncementContent(item, lang)];
+					}),
+			).flat(),
+		[announcements, langMode],
+	);
 	const announcementContents = useSimulatorAnnouncements({
 		route,
 		lineId,
@@ -288,9 +319,14 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					(journey.pos === serviceStartIndex && travelDirection < 0))
 			) {
 				nextDirection = -travelDirection;
-				dispatch(setControl("travelDirection", nextDirection));
 			}
-			const id = setTimeout(() => advance(nextDirection), stationStayMs);
+			const id = setTimeout(() => {
+				// Keep the destination direction and its arrival copy on the lower
+				// marquee for the entire dwell. Only reverse when departure begins.
+				if (nextDirection !== travelDirection)
+					dispatch(setControl("travelDirection", nextDirection));
+				advance(nextDirection);
+			}, stationStayMs);
 			return () => clearTimeout(id);
 		}
 		const tickMs = 50;
@@ -422,10 +458,86 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	}, [journey.pos, serviceEndIndex, serviceStartIndex]);
 
 	function pickLine(id: LineId) {
+		const matchingPreset = presets.find(
+			(preset) => preset.lineId === id,
+		);
+		updateControl("presetId", matchingPreset?.id ?? "custom");
 		setLineId(id);
 		updateControl("serviceId", "local");
 		setTravelDirection(1);
 		setJourney({ pos: 0, phase: "approach", progress: 0, from: null });
+	}
+
+	function pickPreset(id: SimulatorPresetId) {
+		const preset = presets.find((item) => item.id === id);
+		if (!preset) return;
+		updateControl("presetId", id);
+		dispatch({
+			type: "applyMarqueePreset",
+			presetId: preset.marqueePresetId,
+		});
+		setLineId(preset.lineId);
+		updateControl("serviceId", "local");
+		setTravelDirection(1);
+		setJourney({ pos: 0, phase: "approach", progress: 0, from: null });
+	}
+
+	function addPreset() {
+		const id = `preset-${Date.now().toString(36)}`;
+		const preset: SimulatorPreset = {
+			id,
+			label: `NEW PRESET ${presets.filter((item) => item.id.startsWith("preset-")).length + 1}`,
+			lineId,
+			lineIds: [lineId],
+			marqueePresetId: controls.marqueePresetId,
+		};
+		setPresets((current) => [...current, preset]);
+		updateControl("presetId", id);
+	}
+
+	function setPresetLabel(label: string) {
+		if (!["shuika", "yamanote"].includes(controls.presetId))
+			setPresets((current) =>
+				current.map((preset) =>
+					preset.id === controls.presetId
+						? { ...preset, label: label || "UNTITLED PRESET" }
+						: preset,
+				),
+			);
+	}
+
+	function togglePresetLine(id: LineId) {
+		if (["shuika", "yamanote"].includes(controls.presetId)) return;
+		setPresets((current) =>
+			current.map((preset) => {
+				if (preset.id !== controls.presetId) return preset;
+				const included = preset.lineIds.includes(id);
+				if (included && preset.lineIds.length === 1) return preset;
+				const lineIds = included
+					? preset.lineIds.filter((item) => item !== id)
+					: [...preset.lineIds, id];
+				return {
+					...preset,
+					lineIds,
+					lineId: lineIds.includes(lineId) ? lineId : lineIds[0],
+				};
+			}),
+		);
+		const activePreset = presets.find((preset) => preset.id === controls.presetId);
+		if (activePreset?.lineId === id && activePreset.lineIds.length > 1) {
+			const nextLineId = activePreset.lineIds.find((item) => item !== id);
+			if (nextLineId) {
+				setLineId(nextLineId);
+				updateControl("serviceId", "local");
+				setTravelDirection(1);
+				setJourney({
+					pos: 0,
+					phase: "approach",
+					progress: 0,
+					from: null,
+				});
+			}
+		}
 	}
 
 	// ——— express service editing (variants live on the route, skip flags on stations)
@@ -451,8 +563,8 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	};
 	const removeService = (id: string) => {
 		editRoute((r) => {
-			r.services = (r.services || []).filter((sv: any) => sv.id !== id);
-			r.stations.forEach((station: any) => {
+			r.services = (r.services || []).filter((sv) => sv.id !== id);
+			r.stations.forEach((station) => {
 				if (station.skip)
 					station.skip = station.skip.filter((x: string) => x !== id);
 			});
@@ -461,7 +573,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	};
 	const setServiceField = (id: string, field: "ja" | "en", value: string) =>
 		editRoute((r) => {
-			const sv = (r.services || []).find((x: any) => x.id === id);
+			const sv = (r.services || []).find((x) => x.id === id);
 			if (sv) sv[field] = value;
 		});
 	const toggleServiceStop = (index: number) => {
@@ -471,7 +583,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 			station.skip = station.skip || [];
 			const currentlyStops = !station.skip.includes(serviceId);
 			const enabledCount = r.stations.filter(
-				(candidate: any) => !candidate.skip?.includes(serviceId),
+				(candidate) => !candidate.skip?.includes(serviceId),
 			).length;
 			if (currentlyStops && enabledCount <= 1) return;
 			station.skip = station.skip.includes(serviceId)
@@ -481,8 +593,8 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	};
 
 	// ——— line editing (operates on the selected line's clone)
-	function editRoute(mutator: (r: any) => void) {
-		setRoutes((prev: any) => {
+	function editRoute(mutator: (r: EditableRoute) => void) {
+		setRoutes((prev) => {
 			const next = { ...prev };
 			const r = JSON.parse(JSON.stringify(prev[lineId]));
 			mutator(r);
@@ -498,20 +610,19 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 			const blue = parseInt(hex.slice(4, 6), 16);
 			// Keep line codes and controls legible against the selected brand color.
 			const brightness = (red * 299 + green * 587 + blue * 114) / 1000;
-			(LINES as any)[lineId].color = value;
-			(LINES as any)[lineId].textOnColor =
-				brightness > 160 ? "#111" : "#fff";
+			LINES[lineId].color = value;
+			LINES[lineId].textOnColor = brightness > 160 ? "#111" : "#fff";
 		} else {
-			(LINES as any)[lineId][field] = value;
+			LINES[lineId][field] = value;
 		}
 		setLineRevision((revision) => revision + 1);
 	};
 	const addLine = () => {
 		let lineNumber = 1;
-		while ((LINES as any)[`LN${lineNumber}`]) lineNumber += 1;
+		while (LINES[`LN${lineNumber}`]) lineNumber += 1;
 		const id = `LN${lineNumber}`;
 		const usedCodes = new Set(
-			Object.keys(LINES).map((key) => (LINES as any)[key].code),
+			Object.keys(LINES).map((key) => LINES[key].code),
 		);
 		const code =
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -519,7 +630,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 				.find((candidate) => !usedCodes.has(candidate)) ||
 			`L${lineNumber}`;
 		const colors = ["#0b7a75", "#c23c52", "#5b4bb7", "#b05d14", "#1677a8"];
-		(LINES as any)[id] = {
+		LINES[id] = {
 			id,
 			code,
 			ja: `新路線${lineNumber}`,
@@ -527,7 +638,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 			color: colors[(lineNumber - 1) % colors.length],
 			textOnColor: "#fff",
 		};
-		setRoutes((previous: any) => ({
+		setRoutes((previous) => ({
 			...previous,
 			[id]: {
 				line: id,
@@ -559,11 +670,12 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 			},
 		}));
 		setLineId(id as LineId);
+		updateControl("presetId", "custom");
 		setTravelDirection(1);
 		setJourney({ pos: 0, phase: "approach", progress: 0, from: null });
 		setShowEditor(true);
 	};
-	const setStationField = (i: number, f: string, v: any) =>
+	const setStationField = (i: number, f: string, v) =>
 		editRoute((r) => {
 			r.stations[i][f] =
 				f === "distance" ? Math.max(0, Number(v) || 0) : v;
@@ -698,6 +810,11 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 					setServiceField,
 					toggleServiceStop,
 					addLine,
+					presets,
+					pickPreset,
+					addPreset,
+					setPresetLabel,
+					togglePresetLine,
 					pickLine,
 					setLineField,
 					setStationField,

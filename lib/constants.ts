@@ -154,3 +154,59 @@ export const DEFAULT_MARQUEE_CONTENT: AnnouncementContent[] = [
 		displayable: true,
 	},
 ];
+
+export const MARQUEE_CONTENT_PRESETS = [
+	{
+		id: "shuika",
+		label: "SHUIKA METRO",
+		items: DEFAULT_MARQUEE_CONTENT,
+	},
+	{
+		id: "yamanote",
+		label: "JR YAMANOTE",
+		items: [
+			{
+				type: "notice",
+				en: "Please set mobile phones to silent mode and refrain from talking on the phone.",
+				ja: "車内ではマナーモードに設定の上、通話はご遠慮ください。",
+				displayable: true,
+			},
+			{
+				type: "notice",
+				en: "Please give up your seat to passengers who need it.",
+				ja: "優先席を必要とされるお客さまにお譲りください。",
+				displayable: true,
+			},
+			{
+				type: "notice",
+				en: "Please do not rush onto the train as the doors are closing.",
+				ja: "駆け込み乗車は大変危険ですのでおやめください。",
+				displayable: true,
+			},
+			{
+				type: "notice",
+				en: "Please keep your backpack in front of you when the train is crowded.",
+				ja: "車内混雑時は、リュックを前にお持ちください。",
+				displayable: true,
+			},
+			{
+				type: "notice",
+				en: "Please take all your belongings with you when leaving the train.",
+				ja: "お降りの際は、お忘れ物のないようご注意ください。",
+				displayable: true,
+			},
+		],
+	},
+	{
+		id: "safety",
+		label: "SAFETY ONLY",
+		items: DEFAULT_MARQUEE_CONTENT.filter((item) => item.type === "notice"),
+	},
+] as const satisfies ReadonlyArray<{
+	id: string;
+	label: string;
+	items: readonly AnnouncementContent[];
+}>;
+
+export type MarqueeContentPresetId =
+	(typeof MARQUEE_CONTENT_PRESETS)[number]["id"];

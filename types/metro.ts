@@ -1,15 +1,16 @@
-export type LineId =
-	| "CS" // 中心原線
-	| "MZ" // 水野線
-	| "KW" // 北野川灣線
-	| "UK" // 私營うかしま線
-	| "SD" // 水道上線
-	| "AR" // 都鐵荒川線
-	| "KZ" // 私營北野川坂線
-	| "KH" // 北野川本線
-	| "SG" // 水道後線
-	| "MG" // 私營水口線
-	| "SN"; // 新水野線
+export type LineId = string
+	// | "CS" // 中心原線
+	// | "MZ" // 水野線
+	// | "KW" // 北野川灣線
+	// | "UK" // 私營うかしま線
+	// | "SD" // 水道上線
+	// | "AR" // 都鐵荒川線
+	// | "KZ" // 私營北野川坂線
+	// | "KH" // 北野川本線
+	// | "SG" // 水道後線
+	// | "MG" // 私營水口線
+	// | "SN" // 新水野線
+	// | "YM"; // JR 山手線
 
 export type Side = "L" | "R";
 
@@ -81,7 +82,7 @@ export type RouteDestinationField = "destJa" | "destEn";
 
 export type Lines = Record<LineId, LineMeta>;
 export type AnnotatedLines = Record<LineId, AnnotatedLineMeta>;
-export type Routes = Record<LineId, Route>;
+export type Routes = Record<LineId, EditableRoute>;
 
 export type AnnouncementContentType = "ad" | "notice" | 'sound';
 
