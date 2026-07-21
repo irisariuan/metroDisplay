@@ -84,11 +84,31 @@ export const AnnouncementAudio = React.forwardRef<
 	const playedAutoSequenceIds = React.useRef(new Set<string>());
 	// Remaining keys of the sequence being drained; index 0 is the audible clip.
 	const activeClipKeys = React.useRef<string[]>([]);
+	// Warmed clips, keyed by URL, so a clip about to play is already in the
+	// browser cache and starts without a network round-trip. Kept in a ref so
+	// the elements survive re-renders and are not garbage collected.
+	const preloadedClips = React.useRef(new Map<string, HTMLAudioElement>());
 	// Held in refs so publishing the queue never re-creates the drain loop.
 	const queueListener = React.useRef(onQueueChange);
 	const clipResolver = React.useRef({ manifest, overrides });
 	queueListener.current = onQueueChange;
 	clipResolver.current = { manifest, overrides };
+
+	// Warm the browser cache for the given keys so playback is instant. Each
+	// unique URL is fetched once via a detached <audio preload="auto">.
+	const preloadKeys = React.useCallback((keys: string[]) => {
+		if (typeof Audio === "undefined") return;
+		const { manifest: current, overrides: currentOverrides } =
+			clipResolver.current;
+		for (const key of keys) {
+			const url = currentOverrides[key] ?? current?.clips[key]?.url;
+			if (!url || preloadedClips.current.has(url)) continue;
+			const clip = new Audio();
+			clip.preload = "auto";
+			clip.src = url;
+			preloadedClips.current.set(url, clip);
+		}
+	}, []);
 
 	const publishQueue = React.useCallback(() => {
 		const listener = queueListener.current;
@@ -177,17 +197,19 @@ export const AnnouncementAudio = React.forwardRef<
 	const enqueueKeys = React.useCallback(
 		(keys: string[], onPlaybackChange?: (playing: boolean) => void) => {
 			if (!manifest || !keys.length) return;
+			preloadKeys(keys);
 			pendingSequences.current.push({ keys, onPlaybackChange });
 			publishQueue();
 			void drainQueue(queueGeneration.current);
 		},
-		[drainQueue, manifest, publishQueue],
+		[drainQueue, manifest, preloadKeys, publishQueue],
 	);
 
 	// User-triggered playback always takes control immediately.
 	const playKeys = React.useCallback(
 		async (keys: string[]) => {
 			if (!manifest || !keys.length) return;
+			preloadKeys(keys);
 			const generation = ++queueGeneration.current;
 			pendingSequences.current = [{ keys }];
 			activeClipKeys.current = [];
@@ -196,7 +218,7 @@ export const AnnouncementAudio = React.forwardRef<
 			finishCurrentClip.current?.();
 			await drainQueue(generation);
 		},
-		[drainQueue, manifest, publishQueue],
+		[drainQueue, manifest, preloadKeys, publishQueue],
 	);
 
 	const stop = React.useCallback(() => {
@@ -234,6 +256,24 @@ export const AnnouncementAudio = React.forwardRef<
 	React.useEffect(() => {
 		if (manifest) onClipKeysChange?.(Object.keys(manifest.clips));
 	}, [manifest, onClipKeysChange]);
+
+	// Framework clips are the connective phrases every announcement leans on, so
+	// warm them all as soon as the manifest resolves.
+	React.useEffect(() => {
+		if (!manifest) return;
+		preloadKeys(
+			Object.keys(manifest.clips).filter((key) =>
+				key.startsWith("framework."),
+			),
+		);
+	}, [manifest, preloadKeys]);
+
+	// Auto sequences are the announcements about to fire; warm their station and
+	// line clips ahead of playback so nothing stalls mid-sentence.
+	React.useEffect(() => {
+		if (!manifest) return;
+		preloadKeys(autoSequences.flatMap((sequence) => sequence.keys));
+	}, [autoSequences, manifest, preloadKeys]);
 
 	React.useEffect(() => {
 		if (audioRef.current)

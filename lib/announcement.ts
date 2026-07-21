@@ -89,14 +89,28 @@ export function trainStartAnnouncement(
 	}: TrainStartAnnouncementOptions,
 	lang: Lang,
 ) {
-	if (route.circular)
-		return lang === "ja"
-			? `この電車は${LINES[route.line].ja}${serviceJa}です。`
-			: `This is a ${LINES[route.line].en} ${serviceEn} train.`;
+	if (route.circular) {
+		if (lang === "en")
+			return `This is a ${LINES[route.line].en} ${serviceEn} train.`;
+		// Loop lines have no terminus, so they are described purely by the
+		// major stops ahead as the direction (…方面).
+		const circularVia = majorStations.length
+			? `${majorStations.map((station) => station.ja).join("、")}方面`
+			: "";
+		return `この電車は${LINES[route.line].ja}（${serviceJa}）${circularVia}です。`;
+	}
 	const destination = route.stations[terminalIndex];
-	const boundForStations = boundForList(route, majorStations, destination);
+	// The destination is named on its own as the terminus (ゆき); the 方面 list
+	// only carries the major stops ahead, so drop the terminus from it to avoid
+	// naming the same station twice.
+	const viaStations = majorStations.filter(
+		(station) => station.ja !== destination.ja,
+	);
 	if (lang === "ja") {
-		return `この電車は${LINES[route.line].ja}${serviceJa}${boundForStations.map((station) => station.ja).join("、")}方面行きです。`;
+		const viaText = viaStations.length
+			? `、${viaStations.map((station) => station.ja).join("、")}方面`
+			: "";
+		return `この電車は${LINES[route.line].ja}（${serviceJa}）${destination.ja}ゆき${viaText}です。`;
 	}
 	const majorStopText = majorStations.length
 		? ` Calling at ${majorStations.map((station) => station.en).join(", ")}.`

@@ -1,6 +1,5 @@
 import type { Lang, LineId, Phase, Route, Station } from "@/types/metro";
 import { DOOR_OPEN_EFFECT_KEY, SOUND_EFFECTS } from "@/lib/soundEffects";
-import { boundForList } from "@/lib/announcement";
 
 export interface AnnouncementFrameworkOption {
 	key: string;
@@ -125,6 +124,18 @@ export const ANNOUNCEMENT_FRAMEWORK_OPTIONS: AnnouncementFrameworkOption[] = [
 		key: "framework.ja.boundFor",
 		label: "JA · 方面",
 		text: "方面行きです。",
+		lang: "ja",
+	},
+	{
+		key: "framework.ja.yuki",
+		label: "JA · ゆき",
+		text: "ゆき",
+		lang: "ja",
+	},
+	{
+		key: "framework.ja.homen",
+		label: "JA · 方面です。",
+		text: "方面です。",
 		lang: "ja",
 	},
 	{
@@ -306,11 +317,28 @@ export function trainStartAnnouncementAudioSequence({
 	serviceEn,
 	majorStations = [],
 }: TrainStartAnnouncementAudioSequenceOptions): string[] {
-	if (route.circular) return [];
-	const destination = route.stations[terminalIndex];
 	const serviceAudioKey =
 		SERVICE_AUDIO_KEYS[lang][lang === "ja" ? serviceJa : serviceEn];
-	const boundForStations = boundForList(route, majorStations, destination);
+	if (route.circular) {
+		// Loop lines have no terminus, so they are announced purely by the major
+		// stops ahead as the direction (…方面です。). English keeps its short form.
+		if (lang !== "ja" || !majorStations.length) return [];
+		return [
+			"framework.ja.startThanks",
+			"framework.ja.start",
+			lineAudioKey(route.line, "ja"),
+			...(serviceAudioKey ? [serviceAudioKey] : []),
+			...majorStations.map((station) => stationAudioKey(station, "ja")),
+			"framework.ja.homen",
+		];
+	}
+	const destination = route.stations[terminalIndex];
+	// Mirror announcement.ts: the terminus is spoken first (…ゆき), then the
+	// major stops ahead as the direction (…方面です。). Drop the terminus from
+	// that direction list so it is never named twice.
+	const viaStations = majorStations.filter(
+		(station) => station.ja !== destination.ja,
+	);
 	const sequence =
 		lang === "ja"
 			? [
@@ -318,10 +346,14 @@ export function trainStartAnnouncementAudioSequence({
 					"framework.ja.start",
 					lineAudioKey(route.line, "ja"),
 					...(serviceAudioKey ? [serviceAudioKey] : []),
-					...boundForStations.map((station) =>
+					stationAudioKey(destination, "ja"),
+					"framework.ja.yuki",
+					...viaStations.map((station) =>
 						stationAudioKey(station, "ja"),
 					),
-					"framework.ja.boundFor",
+					viaStations.length
+						? "framework.ja.homen"
+						: "framework.ja.desu",
 				]
 			: [
 					"framework.en.startThanks",
