@@ -17,6 +17,12 @@ const LABEL_GAP = 6;
 const BOUNDARY_INSET = 8;
 const DEFAULT_MAX_WIDTH = 240;
 const MARQUEE_EDGE_PADDING = 4;
+// Only applied while a line is marqueeing: fade both edges so glyphs dissolve in
+// and out of the clip window rather than being cut off. The fade widths animate
+// (see maskStationLabelMarquee) so whichever end the scan has reached clears to
+// 0, keeping the flush glyphs crisp there.
+const FADE_MASK =
+	"linear-gradient(to right, transparent 0, #000 var(--fade-left), #000 calc(100% - var(--fade-right)), transparent 100%)";
 
 interface LabelLayout {
 	viewportWidth: number;
@@ -264,6 +270,17 @@ export function StationNameLabel({
 						transition:
 							"width .35s var(--ease-pop), transform .35s var(--ease-pop)",
 						zIndex: focused ? 3 : 1,
+						...(marqueeing
+							? {
+									maskImage: FADE_MASK,
+									WebkitMaskImage: FADE_MASK,
+									// Same 9s/1.25s timing as the label's marquee
+									// scan so the fades track it; `both` holds the
+									// centered (both-edge) fades before it starts.
+									animation:
+										"maskStationLabelMarquee 9s ease-in-out 1.25s infinite both",
+								}
+							: {}),
 					}}
 				>
 					<div

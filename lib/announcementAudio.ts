@@ -128,14 +128,14 @@ export const ANNOUNCEMENT_FRAMEWORK_OPTIONS: AnnouncementFrameworkOption[] = [
 	},
 	{
 		key: "framework.ja.yuki",
-		label: "JA · ゆき",
-		text: "ゆき",
+		label: "JA · ゆきです",
+		text: "ゆきです",
 		lang: "ja",
 	},
 	{
 		key: "framework.ja.homen",
-		label: "JA · 方面です。",
-		text: "方面です。",
+		label: "JA · 方面",
+		text: "方面",
 		lang: "ja",
 	},
 	{
@@ -329,13 +329,13 @@ export function trainStartAnnouncementAudioSequence({
 			lineAudioKey(route.line, "ja"),
 			...(serviceAudioKey ? [serviceAudioKey] : []),
 			...majorStations.map((station) => stationAudioKey(station, "ja")),
-			"framework.ja.homen",
+			"framework.ja.boundFor",
 		];
 	}
 	const destination = route.stations[terminalIndex];
-	// Mirror announcement.ts: the terminus is spoken first (…ゆき), then the
-	// major stops ahead as the direction (…方面です。). Drop the terminus from
-	// that direction list so it is never named twice.
+	// Mirror announcement.ts: natural Japanese names the direction first — the
+	// major stops ahead as …方面 — then the terminus last as …ゆきです。 Drop the
+	// terminus from that direction list so it is never named twice.
 	const viaStations = majorStations.filter(
 		(station) => station.ja !== destination.ja,
 	);
@@ -346,14 +346,12 @@ export function trainStartAnnouncementAudioSequence({
 					"framework.ja.start",
 					lineAudioKey(route.line, "ja"),
 					...(serviceAudioKey ? [serviceAudioKey] : []),
-					stationAudioKey(destination, "ja"),
-					"framework.ja.yuki",
 					...viaStations.map((station) =>
 						stationAudioKey(station, "ja"),
 					),
-					viaStations.length
-						? "framework.ja.homen"
-						: "framework.ja.desu",
+					...(viaStations.length ? ["framework.ja.homen"] : []),
+					stationAudioKey(destination, "ja"),
+					"framework.ja.yuki"
 				]
 			: [
 					"framework.en.startThanks",

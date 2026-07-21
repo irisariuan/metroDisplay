@@ -281,6 +281,57 @@ a:hover {
 		transform: none;
 	}
 }
+
+/* Marquee edge fade. Registered as lengths so they interpolate; the edge the
+   text has scrolled up against drops to 0 so its flush glyphs stay crisp, while
+   the edge still hiding text keeps its fade. Each keyframe set mirrors the
+   timing of the marquee transform it pairs with. */
+@property --fade-left {
+	syntax: "<length>";
+	inherits: false;
+	initial-value: 0px;
+}
+@property --fade-right {
+	syntax: "<length>";
+	inherits: false;
+	initial-value: 0px;
+}
+/* Pairs with @keyframes mq (left→right scroll, alternate): text starts flush
+   left (no left fade, hidden on the right) and ends flush right. */
+@keyframes maskMq {
+	from {
+		--fade-left: 0px;
+		--fade-right: 40px;
+	}
+	to {
+		--fade-left: 40px;
+		--fade-right: 0px;
+	}
+}
+/* Pairs with @keyframes stationLabelMarquee (centered scan to start, then end).
+   Centered = both sides hide text; at each extreme that edge clears. */
+@keyframes maskStationLabelMarquee {
+	0%,
+	10% {
+		--fade-left: 22px;
+		--fade-right: 22px;
+	}
+	32%,
+	44% {
+		--fade-left: 0px;
+		--fade-right: 22px;
+	}
+	68%,
+	80% {
+		--fade-left: 22px;
+		--fade-right: 0px;
+	}
+	95%,
+	100% {
+		--fade-left: 22px;
+		--fade-right: 22px;
+	}
+}
 @keyframes doorNoticeLeftLoop {
 	0%,
 	100% {

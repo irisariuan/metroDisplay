@@ -41,6 +41,7 @@ import type {
 	AnnouncementContentType,
 } from "@/types/metro";
 import { shuffle } from "@/lib/utils";
+import { upcomingMajorStations } from "@/lib/announcement";
 
 const { useState, useEffect, useRef } = React;
 
@@ -179,10 +180,24 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		travelDirection > 0 ? serviceEndIndex : serviceStartIndex;
 	const serviceOriginIndex =
 		travelDirection > 0 ? serviceStartIndex : serviceEndIndex;
+	// Loop lines have no terminus, so the top board's "for" points at the
+	// nearest major stop ahead instead of the physical end of the station list.
+	// Falls back to the service terminus when no major stop lies ahead.
+	const circularBoundFor = route.circular
+		? upcomingMajorStations(route, {
+				fromIndex: journey.pos,
+				direction: travelDirection,
+				count: 1,
+				serviceStopIndices,
+				circular: true,
+			})[0]
+		: undefined;
+	const destinationStation =
+		circularBoundFor ?? route.stations[serviceDestinationIndex];
 	const displayRoute = {
 		...route,
-		destJa: route.stations[serviceDestinationIndex].ja,
-		destEn: route.stations[serviceDestinationIndex].en,
+		destJa: destinationStation.ja,
+		destEn: destinationStation.en,
 	};
 	const serviceOrigin = activeService
 		? route.stations[serviceOriginIndex]
@@ -459,11 +474,16 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		return () => clearInterval(id);
 	}, [autoLanguageModes, dispatch, langMode, langMs]);
 
-	// Keep the train inside the active service segment as enabled stops change.
+	// Keep linear services inside their active segment as enabled stops change.
+	// Circular services must still traverse skipped stations outside the first
+	// and last enabled stops so the trail can complete before wrapping.
 	useEffect(() => {
-		if (journey.pos < serviceStartIndex || journey.pos > serviceEndIndex)
+		if (
+			!route.circular &&
+			(journey.pos < serviceStartIndex || journey.pos > serviceEndIndex)
+		)
 			setJourney(stationedJourney(serviceStartIndex));
-	}, [journey.pos, serviceEndIndex, serviceStartIndex]);
+	}, [journey.pos, route.circular, serviceEndIndex, serviceStartIndex]);
 
 	function pickLine(id: LineId) {
 		const activePreset = presets.find(

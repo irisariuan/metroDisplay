@@ -26,6 +26,7 @@ export function NumPlate({ lineId, idx, scale = 1, active }: NumPlateProps) {
 				border: `${Math.max(2, 3 * scale)}px solid ${L.color}`,
 				background: active ? L.color : "#fff",
 				color: active ? L.textOnColor : L.color,
+				animation: "swipeIn .4s var(--ease-out) both",
 			}}
 		>
 			<span

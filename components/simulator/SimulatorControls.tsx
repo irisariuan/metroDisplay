@@ -2,10 +2,7 @@
 
 import React from "react";
 import { Button, Switch } from "@/components/ds";
-import {
-	MARQUEE_CONTENT_PRESETS,
-	SPEED_PRESETS,
-} from "@/lib/constants";
+import { MARQUEE_CONTENT_PRESETS, SPEED_PRESETS } from "@/lib/constants";
 import { LineControls } from "@/components/simulator/controls/LineControls";
 import { ServiceControls } from "@/components/simulator/controls/ServiceControls";
 import {
@@ -866,9 +863,7 @@ export function SimulatorControls({
 								type="button"
 								className="lc-btn"
 								aria-label={`Use ${preset.label} marquee preset`}
-								onClick={() =>
-									pickMarqueePreset(preset.id)
-								}
+								onClick={() => pickMarqueePreset(preset.id)}
 								style={{
 									background: "var(--violet)",
 									color: "var(--paper)",
@@ -1049,10 +1044,10 @@ export function SimulatorControls({
 										<div className="grid grid-cols-2 gap-1">
 											{(["ja", "en"] as const).map(
 												(audioLang) => {
-											const key = contentAudioKey(
-												marqueePresetId,
-												index,
-												audioLang,
+													const key = contentAudioKey(
+														marqueePresetId,
+														index,
+														audioLang,
 													);
 													return (
 														<AudioClipControl
@@ -1248,7 +1243,9 @@ export function SimulatorControls({
 							</div>
 							<div className="flex flex-wrap gap-1.5">
 								{SOUND_EFFECTS.filter((effect) =>
-									isAudioClipAvailable(soundEffectKey(effect.id)),
+									isAudioClipAvailable(
+										soundEffectKey(effect.id),
+									),
 								).map((effect) => (
 									<button
 										key={effect.id}
@@ -1341,10 +1338,9 @@ export function SimulatorControls({
 				</section>
 				{/* alert system — a high-contrast broadcast console */}
 				<section
-					className="col-span-full overflow-hidden rounded-xl border-3 border-ink bg-paper"
+					className="col-span-full overflow-hidden rounded-xl border-3 border-ink bg-paper min-w-min"
 					style={{
 						boxShadow: "6px 6px 0 var(--ink)",
-						minWidth: 310,
 					}}
 				>
 					<div

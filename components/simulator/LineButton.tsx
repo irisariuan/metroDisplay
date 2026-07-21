@@ -16,10 +16,12 @@ export function LineButton({ lineId, active, onClick }: LineButtonProps) {
 			onClick={onClick}
 			className="lc-btn inline-flex items-center gap-2"
 			style={{
-				background: "var(--paper)",
-				color: "var(--ink)",
+				background: active
+					? `rgb(from ${L.color} r g b / 0.9)`
+					: "var(--paper)",
+				color: active ? "white" : "var(--ink)",
 				boxShadow: active
-					? `inset 0 0 0 2px ${L.color}, var(--shadow-hard-s)`
+					? "var(--shadow-hard-s)"
 					: "2px 2px 0 rgba(0,0,0,.25)",
 			}}
 		>

@@ -32,8 +32,8 @@ export function LowerInfoBar({
 	const transferWidth = transferExpanded
 		? "100%"
 		: hasTransfers
-			? "280px"
-			: "180px";
+			? "20%"
+			: "10%";
 
 	return (
 		<div className="relative flex h-19 items-stretch gap-0 overflow-hidden border-t-3 border-t-ink">
@@ -54,7 +54,9 @@ export function LowerInfoBar({
 					<div
 						key={`transfers-${pos}-${lang}`}
 						className="min-w-0 flex-1"
-						style={{ animation: "swipeIn .4s var(--ease-out) both" }}
+						style={{
+							animation: "swipeIn .4s var(--ease-out) both",
+						}}
 					>
 						<TransferStrip
 							route={route}
@@ -67,7 +69,9 @@ export function LowerInfoBar({
 					<span
 						key={`no-transfer-${pos}-${lang}`}
 						className="font-mono text-sm tracking-widest text-muted whitespace-nowrap"
-						style={{ animation: "swipeIn .35s var(--ease-out) both" }}
+						style={{
+							animation: "swipeIn .35s var(--ease-out) both",
+						}}
 					>
 						{lang === "ja" ? "乗換なし" : "NO TRANSFER"}
 					</span>

@@ -100,17 +100,17 @@ export function trainStartAnnouncement(
 		return `この電車は${LINES[route.line].ja}（${serviceJa}）${circularVia}です。`;
 	}
 	const destination = route.stations[terminalIndex];
-	// The destination is named on its own as the terminus (ゆき); the 方面 list
-	// only carries the major stops ahead, so drop the terminus from it to avoid
-	// naming the same station twice.
+	// Natural Japanese names the direction first (…方面), then the terminus last
+	// (…ゆきです。). The 方面 list only carries the major stops ahead, so drop the
+	// terminus from it to avoid naming the same station twice.
 	const viaStations = majorStations.filter(
 		(station) => station.ja !== destination.ja,
 	);
 	if (lang === "ja") {
 		const viaText = viaStations.length
-			? `、${viaStations.map((station) => station.ja).join("、")}方面`
+			? `${viaStations.map((station) => station.ja).join("、")}方面、`
 			: "";
-		return `この電車は${LINES[route.line].ja}（${serviceJa}）${destination.ja}ゆき${viaText}です。`;
+		return `この電車は${LINES[route.line].ja}（${serviceJa}）、${viaText}${destination.ja}ゆきです。`;
 	}
 	const majorStopText = majorStations.length
 		? ` Calling at ${majorStations.map((station) => station.en).join(", ")}.`

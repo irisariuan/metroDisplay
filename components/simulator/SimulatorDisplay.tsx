@@ -107,6 +107,7 @@ export function SimulatorDisplay({
 					pos={pos}
 					phase={phase}
 					lang={lang}
+					direction={direction}
 					clock={clock}
 					car={6}
 					showKatakana={showKatakana}

@@ -7,6 +7,13 @@ interface MarqueeProps {
 	align?: string;
 }
 
+// Only shown while scrolling: soften both edges so text dissolves in and out of
+// the clip window instead of being sliced off mid-glyph. The fade widths are
+// animated custom properties (see maskMq) so the edge the text has scrolled up
+// against clears to 0 while the edge still hiding text keeps its fade.
+const FADE_MASK =
+	"linear-gradient(to right, transparent 0, #000 var(--fade-left), #000 calc(100% - var(--fade-right)), transparent 100%)";
+
 // marquee: scrolls text horizontally only when it overflows its cell, else stays centered
 export function Marquee({
 	text,
@@ -61,6 +68,17 @@ export function Marquee({
 				textAlign: (isOverflowing
 					? "left"
 					: align) as React.CSSProperties["textAlign"],
+				...(isOverflowing
+					? {
+							maskImage: FADE_MASK,
+							WebkitMaskImage: FADE_MASK,
+							// Same duration/delay/easing/direction as the text's
+							// `mq` animation so the fades stay in sync; `both`
+							// holds the start fades through the 2s lead-in.
+							animation:
+								"maskMq 5s ease-in-out 2s infinite alternate both",
+						}
+					: {}),
 			}}
 		>
 			<span

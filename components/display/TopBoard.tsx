@@ -7,12 +7,14 @@ import { StationReadings } from "./StationReadings";
 import { NumPlate } from "./NumPlate";
 import { HALFTONE } from "./const";
 import { AnimatedVisibility } from "@/components/animation/AnimatedVisibility";
+import { upcomingMajorStations } from "@/lib/announcement";
 
 interface TopBoardProps {
 	route: Route;
 	pos: number;
 	phase: Phase;
 	lang: Lang;
+	direction: number;
 	clock: React.ReactNode;
 	car: React.ReactNode;
 	showKatakana?: boolean;
@@ -49,6 +51,7 @@ export function TopBoard({
 	lang,
 	clock,
 	car,
+	direction,
 	doorSide,
 	serviceOrigin,
 	showKatakana = false,
@@ -75,8 +78,20 @@ export function TopBoard({
 	// omitted entirely rather than reserved empty — otherwise the empty row is
 	// swept into justify-center and the name reads optically high.
 	const hasKatakana = stationNameMode === "kanji" && showKatakana;
+	// Loop lines have no origin terminus, so the "from" label points at the last
+	// major stop the train passed — search backwards, wrapping around the loop.
+	const [lastMajorStation] = upcomingMajorStations(route, {
+		direction: -direction,
+		fromIndex: pos,
+		count: 1,
+		circular: route.circular,
+	});
+	// Falls back to the service origin if the loop has no major stop behind.
+	const originStation = route.circular
+		? (lastMajorStation ?? serviceOrigin)
+		: serviceOrigin;
 	return (
-		<div className="pt-5.5 px-8.5 bg-ink text-paper border-b-4 border-b-acid flex flex-col">
+		<div className="px-8.5 bg-ink text-paper border-b-4 border-b-acid flex flex-col">
 			<div
 				className="absolute inset-0 opacity-50 pointer-events-none"
 				style={{
@@ -86,85 +101,127 @@ export function TopBoard({
 			/>
 			<div
 				className="relative grid items-center gap-7 overflow-hidden"
-				style={{ gridTemplateColumns: "auto auto 1fr auto" }}
+				style={{ gridTemplateColumns: "auto auto 1fr" }}
 			>
-				{/* toward + service type */}
-				<div className="relative min-w-37.5">
+				{/* toward + service type — a definite width so the origin and
+				    destination lines have a fixed window to marquee within */}
+				<div className="overflow-hidden">
 					{/* service type badge: locals wear the line color, express
 					    variants flip to acid so they read at a glance */}
 					<div
 						className="inline-block font-mono font-bold text-label tracking-[0.12em] py-1 px-2.25 rounded-sm"
-						style={
-							serviceIsLocal
+						key={serviceEn}
+						style={{
+							...(serviceIsLocal
 								? { background: L.color, color: L.textOnColor }
 								: {
 										background: "var(--acid)",
 										color: "var(--ink)",
-									}
-						}
+									}),
+							transition:
+								"background 400ms, color 400ms, width 650ms var(--ease-pop) 100ms",
+						}}
 					>
-						{lang === "ja" ? serviceJa : serviceEn.toUpperCase()}
+						<span
+							key={lang + serviceEn}
+							style={{
+								animation: "swipeIn .4s var(--ease-out) both",
+							}}
+						>
+							{lang === "ja"
+								? serviceJa
+								: serviceEn.toUpperCase()}
+						</span>
 					</div>
-					{serviceOrigin ? (
-						<div className="mt-2 font-mono text-[11px] tracking-[0.1em] text-paper-2 whitespace-nowrap">
-							{`FROM ${serviceOrigin.en}`.toUpperCase()}
+					{serviceOrigin && (
+						<div
+							key={originStation.en + serviceOrigin.en}
+							className="mt-2 font-mono tracking-widest text-paper-2"
+							style={{
+								animation: "swipeIn .4s var(--ease-out) both",
+							}}
+						>
+							<div className="text-sm">
+								<Marquee
+									text={`${originStation.ja}から`}
+									align="left"
+								/>
+							</div>
+							<div className="text-[0.6rem]">
+								<Marquee
+									text={`FROM ${originStation.en}`.toUpperCase()}
+									align="left"
+								/>
+							</div>
 						</div>
-					) : null}
-					<div className="font-body font-bold text-[28px] leading-[1.18] mt-2 text-white whitespace-nowrap">
-						{route.destJa}
-					</div>
-					<div className="font-mono text-label tracking-widest text-acid mt-1">
-						{("for " + route.destEn).toUpperCase()}
+					)}
+					<div
+						key={route.destEn}
+						style={{
+							animation: "swipeIn .4s var(--ease-out) both",
+						}}
+					>
+						<div className="font-body font-bold text-[28px] leading-[1.18] mt-2 text-white">
+							<Marquee text={route.destJa} align="left" />
+						</div>
+						<div className="font-mono text-label tracking-widest text-acid mt-1">
+							<Marquee
+								text={("for " + route.destEn).toUpperCase()}
+								align="left"
+							/>
+						</div>
 					</div>
 				</div>
-				{/* number plate */}
-				<div className="relative">
+				<div className="overflow-hidden flex items-center justify-center gap-7">
+					{/* number plate */}
 					<NumPlate
 						lineId={route.line}
 						idx={pos}
 						scale={1.15}
 						active={true}
 					/>
-				</div>
-				{/* eyebrow + huge name (bilingual flip) — fixed height so the flip never shifts layout */}
-				<div className="relative overflow-hidden h-38.5 flex flex-col justify-center">
-					<div
-						key={"eb" + stationNameMode + isAt}
-						className={`font-mono text-[14px] tracking-[0.16em] ${isAt ? "text-acid" : "text-magenta-2"}`}
-						style={{
-							animation: "swipeIn .4s var(--ease-out) both",
-						}}
-					>
-						{isEnglishName ? eyebrowEn.toUpperCase() : eyebrowJa}
-					</div>
-					<div
-						key={stationNameMode + pos}
-						className="w-full mt-1"
-						style={{
-							animation: "swipeIn .45s var(--ease-out) both",
-						}}
-					>
-						<Marquee
-							text={stationName}
-							align="left"
-							textStyle={{
-								fontFamily: "var(--font-display)",
-								letterSpacing: "-.01em",
-								lineHeight: 0.9,
-								fontSize: isEnglishName
-									? "clamp(38px,5.2vw,76px)"
-									: "clamp(52px,7.4vw,100px)",
+					{/* eyebrow + huge name (bilingual flip) — fixed height so the flip never shifts layout */}
+					<div className="relative overflow-hidden h-38.5 flex flex-col justify-center">
+						<div
+							key={"eb" + stationNameMode + isAt}
+							className={`font-mono text-[14px] tracking-[0.16em] ${isAt ? "text-acid" : "text-magenta-2"}`}
+							style={{
+								animation: "swipeIn .4s var(--ease-out) both",
 							}}
-						/>
+						>
+							{isEnglishName
+								? eyebrowEn.toUpperCase()
+								: eyebrowJa}
+						</div>
+						<div
+							key={stationNameMode + pos}
+							className="w-full mt-1"
+							style={{
+								animation: "swipeIn .45s var(--ease-out) both",
+							}}
+						>
+							<Marquee
+								text={stationName}
+								align="left"
+								textStyle={{
+									fontFamily: "var(--font-display)",
+									letterSpacing: "-.01em",
+									lineHeight: 0.9,
+									fontSize: isEnglishName
+										? "clamp(38px,5.2vw,76px)"
+										: "clamp(52px,7.4vw,100px)",
+								}}
+							/>
+						</div>
+						{hasKatakana && (
+							<StationReadings
+								station={st}
+								visible={true}
+								align="left"
+								color="var(--paper-2)"
+							/>
+						)}
 					</div>
-					{hasKatakana && (
-						<StationReadings
-							station={st}
-							visible={true}
-							align="left"
-							color="var(--paper-2)"
-						/>
-					)}
 				</div>
 				{/* clock + car */}
 				<div className="relative text-right">
