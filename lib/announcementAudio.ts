@@ -317,10 +317,22 @@ export function trainStartAnnouncementAudioSequence({
 	serviceEn,
 	majorStations = [],
 }: TrainStartAnnouncementAudioSequenceOptions): string[] {
-	if (route.circular) return [];
-	const destination = route.stations[terminalIndex];
 	const serviceAudioKey =
 		SERVICE_AUDIO_KEYS[lang][lang === "ja" ? serviceJa : serviceEn];
+	if (route.circular) {
+		// Loop lines have no terminus, so they are announced purely by the major
+		// stops ahead as the direction (…方面です。). English keeps its short form.
+		if (lang !== "ja" || !majorStations.length) return [];
+		return [
+			"framework.ja.startThanks",
+			"framework.ja.start",
+			lineAudioKey(route.line, "ja"),
+			...(serviceAudioKey ? [serviceAudioKey] : []),
+			...majorStations.map((station) => stationAudioKey(station, "ja")),
+			"framework.ja.homen",
+		];
+	}
+	const destination = route.stations[terminalIndex];
 	// Mirror announcement.ts: the terminus is spoken first (…ゆき), then the
 	// major stops ahead as the direction (…方面です。). Drop the terminus from
 	// that direction list so it is never named twice.
