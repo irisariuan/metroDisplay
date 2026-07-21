@@ -6,6 +6,7 @@ import { ProgressRail } from "./ProgressRail";
 import { DirectionIndicators } from "./DirectionIndicators";
 import { TrailMarker } from "./TrailMarker";
 import { NumPlate } from "./NumPlate";
+import { TransferChips } from "./TransferChips";
 import { StationNameLabel } from "./StationNameLabel";
 
 interface RouteStripProps {
@@ -737,15 +738,14 @@ export function RouteStrip({
 							>
 								{num(route.line, stationIndex)}
 							</div>
-							{/* transfer mini-dots */}
-							<div className="flex gap-0.75 mt-1.25 min-h-3">
-								{(st.xf || []).map((lid) => (
-									<span
-										key={lid}
-										className="w-2.5 h-2.5 rounded-[3px]"
-										style={{ background: LINES[lid].color }}
-									/>
-								))}
+							{/* transfer chips: mini dots that grow into full line
+							    chips at the current station, wrapping (then
+							    marqueeing) when a station carries many lines */}
+							<div className="mt-1.25 w-full">
+								<TransferChips
+									lineIds={st.xf || []}
+									expanded={arrived}
+								/>
 							</div>
 						</div>
 					);

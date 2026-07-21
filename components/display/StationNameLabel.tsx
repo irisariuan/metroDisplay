@@ -21,13 +21,17 @@ const MARQUEE_EDGE_PADDING = 4;
 interface LabelLayout {
 	viewportWidth: number;
 	viewportShift: number;
-	marqueeDistance: number;
+	// The kanji name and its katakana reading each marquee on their own overflow,
+	// so a wide reading can scroll while a short name stays put, and vice versa.
+	nameMarqueeDistance: number;
+	readingMarqueeDistance: number;
 }
 
 const IDLE_LAYOUT: LabelLayout = {
 	viewportWidth: 0,
 	viewportShift: 0,
-	marqueeDistance: 0,
+	nameMarqueeDistance: 0,
+	readingMarqueeDistance: 0,
 };
 
 const near = (a: number, b: number) => Math.abs(a - b) < 0.5;
@@ -54,6 +58,8 @@ export function StationNameLabel({
 }: StationNameLabelProps) {
 	const viewportRef = React.useRef<HTMLDivElement>(null);
 	const contentRef = React.useRef<HTMLDivElement>(null);
+	const nameRef = React.useRef<HTMLSpanElement>(null);
+	const readingRef = React.useRef<HTMLSpanElement>(null);
 	const [layout, setLayout] = React.useState<LabelLayout>(IDLE_LAYOUT);
 	const {
 		fontFamily,
@@ -116,9 +122,14 @@ export function StationNameLabel({
 				Math.max(1, maxWidth),
 				safeWidth,
 			);
-			// Width is transform-independent, so this stays stable while the
-			// marquee or entry swipe is running.
-			const contentWidth = content.getBoundingClientRect().width;
+			// Width is transform-independent (translateX moves, never resizes),
+			// so these stay stable while a marquee or the entry swipe is running.
+			// The name and reading are measured apart so each scrolls on its own.
+			const nameWidth =
+				nameRef.current?.getBoundingClientRect().width ?? 0;
+			const readingWidth =
+				readingRef.current?.getBoundingClientRect().width ?? 0;
+			const contentWidth = Math.max(nameWidth, readingWidth);
 			const marquee = contentWidth > maximumViewportWidth + 0.5;
 			// Marquee mode never inherits a positional shift. Its centered width is
 			// reduced when necessary so the stationary clip window remains wholly
@@ -144,23 +155,39 @@ export function StationNameLabel({
 			const viewportShift = marquee
 				? 0
 				: fittingViewportCenter - cellCenter;
-			const marqueeDistance = Math.max(
+			// Each line marquees only if it alone overflows the shared clip window.
+			const nameMarqueeDistance = Math.max(
 				0,
-				(contentWidth - viewportWidth) / 2,
+				(nameWidth - viewportWidth) / 2,
+			);
+			const readingMarqueeDistance = Math.max(
+				0,
+				(readingWidth - viewportWidth) / 2,
 			);
 			const nextLayout = {
 				viewportWidth,
 				viewportShift,
-				marqueeDistance:
-					marquee && marqueeDistance > 0.5
-						? marqueeDistance
+				nameMarqueeDistance:
+					marquee && nameMarqueeDistance > 0.5
+						? nameMarqueeDistance
+						: 0,
+				readingMarqueeDistance:
+					marquee && readingMarqueeDistance > 0.5
+						? readingMarqueeDistance
 						: 0,
 			};
 
 			setLayout((current) =>
 				near(current.viewportWidth, nextLayout.viewportWidth) &&
 				near(current.viewportShift, nextLayout.viewportShift) &&
-				near(current.marqueeDistance, nextLayout.marqueeDistance)
+				near(
+					current.nameMarqueeDistance,
+					nextLayout.nameMarqueeDistance,
+				) &&
+				near(
+					current.readingMarqueeDistance,
+					nextLayout.readingMarqueeDistance,
+				)
 					? current
 					: nextLayout,
 			);
@@ -215,7 +242,9 @@ export function StationNameLabel({
 		textTransform,
 	]);
 
-	const marqueeing = layout.marqueeDistance > 0;
+	const nameMarqueeing = layout.nameMarqueeDistance > 0;
+	const readingMarqueeing = layout.readingMarqueeDistance > 0;
+	const marqueeing = nameMarqueeing || readingMarqueeing;
 	return (
 		<div className="w-full">
 			{/* Keep label height fixed so the station dot remains on the rail. */}
@@ -245,33 +274,44 @@ export function StationNameLabel({
 							ref={contentRef}
 							data-station-label-content
 							className="inline-flex flex-none flex-col items-center align-bottom"
-							style={
-								{
-									animation: marqueeing
-										? "stationLabelMarquee 9s ease-in-out 1.25s infinite"
-										: "none",
-									"--marquee-start": `${layout.marqueeDistance}px`,
-									"--marquee-end": `${-layout.marqueeDistance}px`,
-									paddingInline: marqueeing
-										? MARQUEE_EDGE_PADDING
-										: 0,
-								} as React.CSSProperties
-							}
+							style={{
+								paddingInline: marqueeing
+									? MARQUEE_EDGE_PADDING
+									: 0,
+							}}
 						>
 							<span
+								ref={nameRef}
 								className="block whitespace-nowrap"
-								style={{
-									...textStyle,
-									transition:
-										"font-size .35s var(--ease-pop), color .35s var(--ease-pop)",
-								}}
+								style={
+									{
+										...textStyle,
+										transition:
+											"font-size .35s var(--ease-pop), color .35s var(--ease-pop)",
+										animation: nameMarqueeing
+											? "stationLabelMarquee 9s ease-in-out 1.25s infinite"
+											: "none",
+										"--marquee-start": `${layout.nameMarqueeDistance}px`,
+										"--marquee-end": `${-layout.nameMarqueeDistance}px`,
+									} as React.CSSProperties
+								}
 							>
 								{text}
 							</span>
 							{showReadings ? (
 								<span
+									ref={readingRef}
 									className="mt-0.5 block h-2.75 whitespace-nowrap font-body text-[10px] font-semibold leading-none tracking-normal"
-									style={{ color: readingsColor }}
+									style={
+										{
+											color: readingsColor,
+											animation: readingMarqueeing
+												? "stationLabelMarquee 9s ease-in-out 1.25s infinite"
+												: "none",
+											"--marquee-start": `${layout.readingMarqueeDistance}px`,
+											"--marquee-end": `${-layout.readingMarqueeDistance}px`,
+										} as React.CSSProperties
+									}
 								>
 									{station.kata}
 								</span>
