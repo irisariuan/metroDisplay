@@ -17,6 +17,18 @@ export const ANNOUNCEMENT_FRAMEWORK_OPTIONS: AnnouncementFrameworkOption[] = [
 		lang: "ja",
 	},
 	{
+		key: "framework.ja.nextStation",
+		label: "JA · つぎは、",
+		text: "つぎは、",
+		lang: "ja",
+	},
+	{
+		key: "framework.en.nextStation",
+		label: "EN · The next stop is",
+		text: "The next stop is",
+		lang: "en",
+	},
+	{
 		key: "framework.ja.stationEnd",
 		label: "JA · に到着いたします。",
 		text: "に到着いたします。",
@@ -320,17 +332,35 @@ export function trainStartAnnouncementAudioSequence({
 	const serviceAudioKey =
 		SERVICE_AUDIO_KEYS[lang][lang === "ja" ? serviceJa : serviceEn];
 	if (route.circular) {
-		// Loop lines have no terminus, so they are announced purely by the major
-		// stops ahead as the direction (…方面です。). English keeps its short form.
-		if (lang !== "ja" || !majorStations.length) return [];
-		return [
-			"framework.ja.startThanks",
-			"framework.ja.start",
-			lineAudioKey(route.line, "ja"),
+		// Loop lines have no terminus, so they are announced by the major stops
+		// ahead as the direction of travel — Japanese as …方面ゆきです。, English as
+		// "…bound for A, B and C." No majors → nothing to announce.
+		if (!majorStations.length) return [];
+		if (lang === "ja") {
+			return [
+				"framework.ja.startThanks",
+				"framework.ja.start",
+				lineAudioKey(route.line, "ja"),
+				...(serviceAudioKey ? [serviceAudioKey] : []),
+				...majorStations.map((station) =>
+					stationAudioKey(station, "ja"),
+				),
+				"framework.ja.boundFor",
+			];
+		}
+		const sequence = [
+			"framework.en.startThanks",
+			"framework.en.start",
+			lineAudioKey(route.line, "en"),
 			...(serviceAudioKey ? [serviceAudioKey] : []),
-			...majorStations.map((station) => stationAudioKey(station, "ja")),
-			"framework.ja.boundFor",
+			"framework.en.boundFor",
 		];
+		majorStations.forEach((station, index) => {
+			if (index === majorStations.length - 1 && index > 0)
+				sequence.push("framework.en.majorAnd");
+			sequence.push(stationAudioKey(station, "en"));
+		});
+		return sequence;
 	}
 	const destination = route.stations[terminalIndex];
 	// Mirror announcement.ts: natural Japanese names the direction first — the
@@ -370,6 +400,23 @@ export function trainStartAnnouncementAudioSequence({
 		sequence.push(stationAudioKey(station, "en"));
 	});
 	return sequence;
+}
+
+/**
+ * "Next stop is …" — spoken on departing any station, naming the station the
+ * train is now heading to. Distinct from the arrival announcement (まもなく…).
+ */
+export function departureNextStationAudioSequence(
+	route: Route,
+	nextIndex: number,
+	lang: Lang,
+): string[] {
+	const station = route.stations[nextIndex];
+	if (!station) return [];
+	const key = stationAudioKey(station, lang);
+	return lang === "ja"
+		? ["framework.ja.nextStation", key, "framework.ja.desu"]
+		: ["framework.en.nextStation", key];
 }
 
 /** Build a clip sequence matching the text assembled in announcement.ts. */

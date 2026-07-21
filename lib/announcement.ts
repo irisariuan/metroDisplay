@@ -90,10 +90,14 @@ export function trainStartAnnouncement(
 	lang: Lang,
 ) {
 	if (route.circular) {
-		if (lang === "en")
-			return `This is a ${LINES[route.line].en} ${serviceEn} train.`;
-		// Loop lines have no terminus, so they are described purely by the
-		// major stops ahead as the direction (…方面).
+		// Loop lines have no terminus, so they are described purely by the major
+		// stops ahead as the direction of travel (…方面 / bound for …).
+		if (lang === "en") {
+			const boundFor = majorStations.length
+				? ` bound for ${majorStations.map((station) => station.en).join(", ")}`
+				: "";
+			return `This is a ${LINES[route.line].en} ${serviceEn} train${boundFor}.`;
+		}
 		const circularVia = majorStations.length
 			? `${majorStations.map((station) => station.ja).join("、")}方面`
 			: "";
@@ -116,6 +120,22 @@ export function trainStartAnnouncement(
 		? ` Calling at ${majorStations.map((station) => station.en).join(", ")}.`
 		: "";
 	return `This is a ${LINES[route.line].en} ${serviceEn} train bound for ${destination.en}.${majorStopText}`;
+}
+
+/**
+ * "Next stop is …", shown and spoken on departing any station, naming the
+ * station the train is now heading to. Mirrors departureNextStationAudioSequence.
+ */
+export function departureNextStationAnnouncement(
+	route: Route,
+	nextIndex: number,
+	lang: Lang,
+): string {
+	const station = route.stations[nextIndex];
+	if (!station) return "";
+	return lang === "ja"
+		? `つぎは、${station.ja}です。`
+		: `The next stop is ${station.en}.`;
 }
 
 export function announcement(

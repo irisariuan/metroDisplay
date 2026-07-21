@@ -342,9 +342,41 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	function navigate(dir: number) {
 		setAuto(false);
 		setTravelDirection(dir);
-		const next = navigateJourney(journey, dir, stateRef.current);
+		// Manual stepping walks a leg through three held phases, one per press:
+		// depart → almost-arrive → arrived. Nothing auto-animates in between.
+		setManualTravel(false);
+		// The almost-arrive point aligns with the "next station" threshold so its
+		// announcement fires; clamped off 0/1 so it stays distinct from the ends.
+		const almostFrac = Math.min(
+			0.99,
+			Math.max(0.02, nextMarqueeThreshold / 100),
+		);
+		if (journey.phase === "at") {
+			// 1) Waiting at a station → depart: begin the leg, held at its start.
+			setJourney(navigateJourney(journey, dir, stateRef.current));
+			return;
+		}
+		// Resolve the clicked direction first — pressing the opposite way flips
+		// the leg — then advance one phase.
+		const leg = navigateJourney(journey, dir, stateRef.current);
+		if (leg.phase !== "approach") {
+			setJourney(leg);
+			return;
+		}
+		if (leg.progress < almostFrac) {
+			// 2) Departed → almost-arrive: hold just short of the station.
+			setJourney({ ...leg, progress: almostFrac });
+			return;
+		}
+		// 3) Almost-arrive → arrived: complete the leg, looping so express-skipped
+		// stops are stepped over just as an animated arrival would continue past.
+		let next: Journey = leg;
+		for (let guard = 0; next.phase === "approach" && guard < N; guard += 1) {
+			const arrived = completeJourneyLeg(next, dir, stateRef.current);
+			if (arrived === next) break;
+			next = arrived;
+		}
 		setJourney(next);
-		setManualTravel(next.phase === "approach");
 	}
 
 	// Auto travel advances real progress rather than a CSS-only transition, so pause freezes in place.
@@ -907,7 +939,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 				alertLeaving={alertLeaving}
 				tickerItems={announcementContents.tickerItems}
 				tickerColor={
-					nextMarqueeMessageVisible && !announcementContents.departureAnnouncementPlaying ? annColor : "var(--paper)"
+					nextMarqueeMessageVisible && announcementContents.currentAudioType !== "departure" ? annColor : "var(--paper)"
 				}
 				hasTransfers={hasCurrentTransfers}
 				transferExpanded={transferExpanded}

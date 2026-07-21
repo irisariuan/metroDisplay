@@ -3,11 +3,13 @@
 import React from "react";
 import {
 	announcement,
+	departureNextStationAnnouncement,
 	trainStartAnnouncement,
 	upcomingMajorStations,
 } from "@/lib/announcement";
 import {
 	announcementAudioSequence,
+	departureNextStationAudioSequence,
 	departureToneKey,
 	trainStartAnnouncementAudioSequence,
 } from "@/lib/announcementAudio";
@@ -18,7 +20,24 @@ import type {
 	AutoAudioSequence,
 } from "./AnnouncementAudio";
 import { journeyEventFor, type Journey } from "./simulatorJourney";
+import { resolveLowerMarquee } from "./lowerMarquee";
+import { useMarqueeQueue, type MarqueeStep } from "./useMarqueeQueue";
 import type { LanguageMode, StationNameMode } from "./simulatorControlState";
+
+// How long the departure intro and the "next stop is …" each hold in the lower
+// marquee when auto playback is off (audio would otherwise pace them). After the
+// next-stop hold the queue finishes, so ads and notices take the marquee back.
+const DEPARTURE_INTRO_HOLD_MS = 5000;
+const NEXT_STATION_HOLD_MS = 5000;
+
+/**
+ * Which kind of announcement is audible right now, or null when silent:
+ * - `tone` — the departure chime
+ * - `departure` — the train-start route intro (この電車は…)
+ * - `next` — the "next stop is …" spoken on leaving a station
+ * - `station` — the arrival / almost-arrive announcement (まもなく…)
+ */
+export type AnnouncementAudioType = "tone" | "departure" | "next" | "station";
 
 interface UseSimulatorAnnouncementsOptions {
 	route: Route;
@@ -68,8 +87,30 @@ export function useSimulatorAnnouncements({
 	announcementAudioOverrides,
 }: UseSimulatorAnnouncementsOptions) {
 	const audioRef = React.useRef<AnnouncementAudioHandle>(null);
-	const [departureAnnouncementPlaying, setDepartureAnnouncementPlaying] =
-		React.useState(false);
+	let langs: Lang[];
+
+	if (langMode === "auto") {
+		langs =
+			autoLanguageModes.length >= 2 && autoLanguageModes.includes("en")
+				? ["ja", "en"]
+				: autoLanguageModes.includes("en")
+					? ["en"]
+					: ["ja"];
+	} else {
+		langs = [langMode === "en" ? "en" : "ja"];
+	}
+	const [currentAudioType, setCurrentAudioType] =
+		React.useState<AnnouncementAudioType | null>(null);
+	// Reports a sequence starting/ending as the active audio type. The clear only
+	// fires when this type is still current, so a later sequence that already
+	// took over is never wiped by a trailing "finished" from an earlier one.
+	const trackAudioType = React.useCallback(
+		(type: AnnouncementAudioType) => (playing: boolean) =>
+			setCurrentAudioType((prev) =>
+				playing ? type : prev === type ? null : prev,
+			),
+		[],
+	);
 	const departurePlaybackIdRef = React.useRef(0);
 	const serviceDestinationIndex =
 		travelDirection > 0 ? serviceEndIndex : serviceStartIndex;
@@ -81,8 +122,8 @@ export function useSimulatorAnnouncements({
 	);
 	// Before the first leg the train is simply placed at a station (from === null).
 	// This suppresses announcement *audio* (see autoSequences) so choosing a line
-	// is silent — but the visual train-start announcement still shows while the
-	// train waits at the first station (see isAtDepartureStartStation).
+	// is silent. Linear routes show their visual train-start message; circular
+	// routes show the current-station arrival message because they have no origin.
 	const isInitialEntry = journey.from === null;
 	// Straight lines show the train-start announcement while waiting at their first
 	// station — including at initial placement, with audio still held by
@@ -130,27 +171,50 @@ export function useSimulatorAnnouncements({
 				: [],
 		[journeyEvent, route],
 	);
+	// "Next stop is …", spoken when departing any station (not just start/major
+	// ones). Suppressed when the next station is passed without stopping, since
+	// the approach then announces that it does not stop there.
+	const nextStationDepartureSequence = React.useMemo(
+		() =>
+			journeyEvent?.type === "departed" && !passingNext
+				? langs.flatMap((announcementLang) =>
+						departureNextStationAudioSequence(
+							route,
+							journeyEvent.targetIndex,
+							announcementLang,
+						),
+					)
+				: [],
+		[journeyEvent, langs, passingNext, route],
+	);
+	// Ticker copy for the "next stop is …" departure announcement. journey.pos is
+	// the station being approached while this plays, so it names the next stop.
+	const nextStationDepartureItems = React.useMemo(
+		() =>
+			langs.map((announcementLang) =>
+				departureNextStationAnnouncement(
+					route,
+					journey.pos,
+					announcementLang,
+				),
+			),
+		[journey.pos, langs, route],
+	);
+	// Audio-on visibility: the departure intro rides its audio window, plus the
+	// at-rest dwell at the start station (audio-independent).
 	const showDepartureMessages =
-		isAtDepartureStartStation || departureAnnouncementPlaying;
+		isAtDepartureStartStation || currentAudioType === "departure";
+	// The intro's copy is also built for the audio-off departure queue, which
+	// plays it at every start/major departure whether or not audio is on-screen.
+	const departureIntroVisible =
+		showDepartureMessages ||
+		(!announcementAudioEnabled && isDepartureAnnouncementStage);
 	const departureService = React.useMemo(
 		() => ({ serviceJa, serviceEn }),
 		[serviceEn, serviceJa],
 	);
 	const departureAnnouncementItems = React.useMemo(() => {
-		if (!showDepartureMessages) return [];
-		let langs: Lang[];
-
-		if (langMode === "auto") {
-			langs =
-				autoLanguageModes.length >= 2 &&
-				autoLanguageModes.includes("en")
-					? ["ja", "en"]
-					: autoLanguageModes.includes("en")
-						? ["en"]
-						: ["ja"];
-		} else {
-			langs = [langMode === "en" ? "en" : "ja"];
-		}
+		if (!departureIntroVisible) return [];
 
 		return langs.map((announcementLang) =>
 			trainStartAnnouncement(
@@ -168,9 +232,8 @@ export function useSimulatorAnnouncements({
 		departureService,
 		route,
 		serviceDestinationIndex,
-		showDepartureMessages,
-		langMode,
-		autoLanguageModes,
+		departureIntroVisible,
+		langs,
 	]);
 	const serviceInfo = React.useMemo(
 		() => ({
@@ -183,35 +246,20 @@ export function useSimulatorAnnouncements({
 	);
 	const stationAnnouncementItems = React.useMemo(
 		() =>
-			langMode === "auto"
-				? (["ja", "en"] as const).map((announcementLang) =>
-						announcement(
-							route,
-							journey.pos,
-							journey.phase,
-							announcementLang,
-							serviceInfo,
-						),
-					)
-				: [
-						announcement(
-							route,
-							journey.pos,
-							journey.phase,
-							lang,
-							serviceInfo,
-						),
-					],
-		[lang, langMode, journey.phase, journey.pos, route, serviceInfo],
-	);
-	// Auto mode announces in both languages back to back, mirroring the ticker.
-	const announcementLangs = React.useMemo<readonly Lang[]>(
-		() => (langMode === "auto" ? (["ja", "en"] as const) : [lang]),
-		[lang, langMode],
+			langs.map((announcementLang) =>
+				announcement(
+					route,
+					journey.pos,
+					journey.phase,
+					announcementLang,
+					serviceInfo,
+				),
+			),
+		[langs, journey.phase, journey.pos, route, serviceInfo],
 	);
 	const stationSequence = React.useMemo(
 		() =>
-			announcementLangs.flatMap((announcementLang, index) =>
+			langs.flatMap((announcementLang, index) =>
 				announcementAudioSequence({
 					route,
 					pos: journey.pos,
@@ -224,7 +272,7 @@ export function useSimulatorAnnouncements({
 				}),
 			),
 		[
-			announcementLangs,
+			langs,
 			journey.phase,
 			journey.pos,
 			passingNext,
@@ -234,7 +282,7 @@ export function useSimulatorAnnouncements({
 	);
 	const departureSequence = React.useMemo(
 		() =>
-			announcementLangs.flatMap((announcementLang) =>
+			langs.flatMap((announcementLang) =>
 				trainStartAnnouncementAudioSequence({
 					route,
 					lang: announcementLang,
@@ -244,7 +292,7 @@ export function useSimulatorAnnouncements({
 				}),
 			),
 		[
-			announcementLangs,
+			langs,
 			departureMajorStations,
 			departureService,
 			route,
@@ -252,7 +300,7 @@ export function useSimulatorAnnouncements({
 		],
 	);
 	const stationAnnouncementVisible =
-		!isInitialEntry &&
+		(!isInitialEntry || route.circular) &&
 		(nextMarqueeMessageVisible || !remainingMarqueeItems.length);
 	const autoSequences = React.useMemo<AutoAudioSequence[]>(() => {
 		if (!announcementAudioEnabled || !journeyEvent || isInitialEntry)
@@ -267,6 +315,7 @@ export function useSimulatorAnnouncements({
 							{
 								id: `announcement:${eventId}`,
 								keys: stationSequence,
+								onPlaybackChange: trackAudioType("station"),
 							},
 						];
 			case "departed":
@@ -275,6 +324,7 @@ export function useSimulatorAnnouncements({
 						id: `tone:${eventId}`,
 						keys: departureToneSequence,
 						priority: true,
+						onPlaybackChange: trackAudioType("tone"),
 					},
 					...(isDepartureAnnouncementStage
 						? [
@@ -282,7 +332,16 @@ export function useSimulatorAnnouncements({
 									id: `departure:${eventId}`,
 									keys: departureSequence,
 									onPlaybackChange:
-										setDepartureAnnouncementPlaying,
+										trackAudioType("departure"),
+								},
+							]
+						: []),
+					...(nextStationDepartureSequence.length
+						? [
+								{
+									id: `next:${eventId}`,
+									keys: nextStationDepartureSequence,
+									onPlaybackChange: trackAudioType("next"),
 								},
 							]
 						: []),
@@ -293,6 +352,7 @@ export function useSimulatorAnnouncements({
 							{
 								id: `announcement:${eventId}`,
 								keys: stationSequence,
+								onPlaybackChange: trackAudioType("station"),
 							},
 						]
 					: [];
@@ -306,16 +366,75 @@ export function useSimulatorAnnouncements({
 		isInitialEntry,
 		journeyEvent,
 		lineId,
+		nextStationDepartureSequence,
 		serviceId,
 		stationAnnouncementVisible,
 		stationSequence,
+		trackAudioType,
 		travelDirection,
 	]);
-	const tickerItems = showDepartureMessages
-		? departureAnnouncementItems
-		: stationAnnouncementVisible
-			? stationAnnouncementItems
-			: remainingMarqueeItems;
+	// With auto playback off there is no audio queue to pace the departure window,
+	// so a marquee queue plays the same messages in sequence: the intro (at a
+	// start/major departure) held briefly, then the "next stop is …". The key is
+	// the departure event, so each new departure restarts the sequence.
+	const departureQueueKey =
+		!announcementAudioEnabled &&
+		journeyEvent?.type === "departed" &&
+		!passingNext
+			? journeyEvent.id
+			: null;
+	const departureQueueSteps = React.useMemo<MarqueeStep[]>(() => {
+		const steps: MarqueeStep[] = [];
+		if (isDepartureAnnouncementStage)
+			steps.push({
+				items: departureAnnouncementItems,
+				holdMs: DEPARTURE_INTRO_HOLD_MS,
+			});
+		steps.push({
+			items: nextStationDepartureItems,
+			holdMs: NEXT_STATION_HOLD_MS,
+		});
+		return steps;
+	}, [
+		departureAnnouncementItems,
+		isDepartureAnnouncementStage,
+		nextStationDepartureItems,
+	]);
+	const departureQueueItems = useMarqueeQueue(
+		departureQueueKey,
+		departureQueueSteps,
+	);
+	// Lower-marquee contents, highest priority first. When auto playback is on the
+	// departure intro and next-stop ride their audio windows; when off, the timed
+	// departure queue plays them in sequence. Arrival and custom content are
+	// audio-agnostic and unchanged.
+	const tickerItems = resolveLowerMarquee([
+		{
+			id: "departure",
+			active: showDepartureMessages,
+			items: departureAnnouncementItems,
+		},
+		{
+			id: "next",
+			active: currentAudioType === "next",
+			items: nextStationDepartureItems,
+		},
+		{
+			id: "departure-queue",
+			active: departureQueueKey != null,
+			items: departureQueueItems,
+		},
+		{
+			id: "station",
+			active: stationAnnouncementVisible,
+			items: stationAnnouncementItems,
+		},
+		{
+			id: "content",
+			active: true,
+			items: remainingMarqueeItems,
+		},
+	]);
 
 	const departureSequenceFor = React.useCallback(
 		(announcementLang: Lang) =>
@@ -336,12 +455,14 @@ export function useSimulatorAnnouncements({
 	const playDepartureAnnouncement = React.useCallback(
 		async (announcementLang: Lang) => {
 			const playbackId = ++departurePlaybackIdRef.current;
-			setDepartureAnnouncementPlaying(true);
+			setCurrentAudioType("departure");
 			await audioRef.current?.playKeys(
 				departureSequenceFor(announcementLang),
 			);
 			if (departurePlaybackIdRef.current === playbackId)
-				setDepartureAnnouncementPlaying(false);
+				setCurrentAudioType((prev) =>
+					prev === "departure" ? null : prev,
+				);
 		},
 		[departureSequenceFor],
 	);
@@ -365,7 +486,7 @@ export function useSimulatorAnnouncements({
 	});
 	const stopAnnouncementAudio = React.useCallback(() => {
 		departurePlaybackIdRef.current += 1;
-		setDepartureAnnouncementPlaying(false);
+		setCurrentAudioType(null);
 		audioRef.current?.stop();
 	}, []);
 	const playCurrentAnnouncement = React.useCallback(
@@ -413,6 +534,6 @@ export function useSimulatorAnnouncements({
 		playCurrentAnnouncement,
 		playDepartureAnnouncement,
 		stopAnnouncementAudio,
-		departureAnnouncementPlaying,
+		currentAudioType,
 	};
 }

@@ -416,7 +416,17 @@ export function RouteStrip({
 		localFrac = stationFraction(pagePos);
 	}
 	localFrac = Math.max(0, Math.min(1, localFrac));
-	const moveDur = followsTravelProgress ? 70 : Math.max(500, dwellMs - 150);
+	// While stopped the fill has no leg to travel along, so any frac change is a
+	// discontinuous placement — a line being chosen, circular toggled, or a page
+	// reset. Snap it into place. (A genuine arrival doesn't change frac: the
+	// approach already tracked the fill up to the node.) Animating these over a
+	// leg-length duration made a freshly chosen circular line's trail ooze up to
+	// the current station, since a loop's dwellMs is a full leg even at a stop.
+	const moveDur = followsTravelProgress
+		? 70
+		: phase === "at"
+			? 0
+			: Math.max(500, dwellMs - 150);
 	// During a page handoff the triangle follows the completing/clearing trail
 	// to the rail edge. Reverse travel exits a circular page at the far side.
 	const exitEdgeFrac = isReverse ? 0 : 1;

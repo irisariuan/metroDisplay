@@ -11,6 +11,9 @@ interface TransferStripProps {
 	expanded?: boolean;
 }
 
+const FADE_MASK =
+	"linear-gradient(to right, transparent 0, #000 var(--fade-left), #000 calc(100% - var(--fade-right)), transparent 100%)";
+
 // ——— transfer strip: connecting lines at the current station
 export function TransferStrip({
 	route,
@@ -97,12 +100,25 @@ export function TransferStrip({
 				ref={viewportRef}
 				className="min-w-0 overflow-hidden"
 				style={
-					expanded
-						? {
-								flex: "0 1 auto",
-								maxWidth: "calc(100% - 100px)",
-							}
-						: { flex: "1 1 0%" }
+					{
+						...(expanded
+							? {
+									flex: "0 1 auto",
+									maxWidth: "calc(100% - 100px)",
+								}
+							: { flex: "1 1 0%" }),
+						// The chips scroll continuously in one direction, so both
+						// edges always have content passing through — a static
+						// symmetric fade, unlike the animated back-and-forth masks.
+						...(shouldMarquee
+							? {
+									maskImage: FADE_MASK,
+									WebkitMaskImage: FADE_MASK,
+									"--fade-left": "28px",
+									"--fade-right": "28px",
+								}
+							: {}),
+					} as React.CSSProperties
 				}
 			>
 				{shouldMarquee ? (
@@ -110,7 +126,9 @@ export function TransferStrip({
 						<div className="flex-none pr-8">
 							{content("first", true)}
 						</div>
-						<div className="flex-none pr-8">{content("repeat")}</div>
+						<div className="flex-none pr-8">
+							{content("repeat")}
+						</div>
 					</div>
 				) : (
 					content("static", true)
