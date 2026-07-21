@@ -122,8 +122,8 @@ export const ANNOUNCEMENT_FRAMEWORK_OPTIONS: AnnouncementFrameworkOption[] = [
 	},
 	{
 		key: "framework.ja.boundFor",
-		label: "JA · 方面",
-		text: "方面行きです。",
+		label: "JA · 方面ゆき",
+		text: "方面ゆきです。",
 		lang: "ja",
 	},
 	{
@@ -225,7 +225,7 @@ export const ANNOUNCEMENT_FRAMEWORK_OPTIONS: AnnouncementFrameworkOption[] = [
 	{
 		key: "framework.ja.startThanks",
 		label: "JA · ご乗車ありがとうございます",
-		text: "本日も、ご乗車ありがとうございます。",
+		text: "本日も、ごじょうしゃくださいまして、まことにありがとうございます。",
 		lang: "ja",
 	},
 	{

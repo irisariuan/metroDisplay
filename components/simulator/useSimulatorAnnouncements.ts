@@ -18,7 +18,7 @@ import type {
 	AutoAudioSequence,
 } from "./AnnouncementAudio";
 import { journeyEventFor, type Journey } from "./simulatorJourney";
-import type { LanguageMode } from "./simulatorControlState";
+import type { LanguageMode, StationNameMode } from "./simulatorControlState";
 
 interface UseSimulatorAnnouncementsOptions {
 	route: Route;
@@ -34,6 +34,7 @@ interface UseSimulatorAnnouncementsOptions {
 	passingNext: boolean;
 	lang: Lang;
 	langMode: LanguageMode;
+	autoLanguageModes: StationNameMode[];
 	nextMarqueeMessageVisible: boolean;
 	nextMarqueeThreshold: number;
 	remainingMarqueeItems: string[];
@@ -57,6 +58,7 @@ export function useSimulatorAnnouncements({
 	passingNext,
 	lang,
 	langMode,
+	autoLanguageModes,
 	nextMarqueeMessageVisible,
 	nextMarqueeThreshold,
 	remainingMarqueeItems,
@@ -73,25 +75,29 @@ export function useSimulatorAnnouncements({
 		travelDirection > 0 ? serviceEndIndex : serviceStartIndex;
 	const departureStartIndex =
 		travelDirection > 0 ? serviceStartIndex : serviceEndIndex;
-	const suppressCircularStartDeparture =
-		Boolean(route.circular) && !route.stations[departureStartIndex]?.major;
 	const journeyEvent = React.useMemo(
 		() => journeyEventFor(journey, nextMarqueeThreshold / 100),
 		[journey, nextMarqueeThreshold],
 	);
-	const isInitialEntry = journey.from === null && journeyEvent === null;
+	// Before the first leg the train is simply placed at a station (from === null).
+	// This suppresses announcement *audio* (see autoSequences) so choosing a line
+	// is silent — but the visual train-start announcement still shows while the
+	// train waits at the first station (see isAtDepartureStartStation).
+	const isInitialEntry = journey.from === null;
+	// Straight lines show the train-start announcement while waiting at their first
+	// station — including at initial placement, with audio still held by
+	// isInitialEntry. Loop lines have no origin terminus (you enter mid-loop), so
+	// they get none here; their direction rides the major-stop departures below.
 	const isAtDepartureStartStation =
 		!route.circular &&
-		!suppressCircularStartDeparture &&
 		journeyEvent?.type === "arrived" &&
 		journeyEvent.stationIndex === departureStartIndex;
 	const isDepartingStartStation =
 		!route.circular &&
-		!suppressCircularStartDeparture &&
 		journeyEvent?.type === "departed" &&
 		journeyEvent.stationIndex === departureStartIndex;
+	// Major stops trigger a departure announcement on every line, circular too.
 	const isDepartingMajorStation =
-		!route.circular &&
 		journeyEvent?.type === "departed" &&
 		Boolean(route.stations[journeyEvent.stationIndex]?.major);
 	const departureOriginIndex =
@@ -130,29 +136,42 @@ export function useSimulatorAnnouncements({
 		() => ({ serviceJa, serviceEn }),
 		[serviceEn, serviceJa],
 	);
-	const departureAnnouncementItems = React.useMemo(
-		() =>
-			showDepartureMessages
-				? (["ja", "en"] as const).map((announcementLang) =>
-						trainStartAnnouncement(
-							route,
-							{
-								terminalIndex: serviceDestinationIndex,
-								...departureService,
-								majorStations: departureMajorStations,
-							},
-							announcementLang,
-						),
-					)
-				: [],
-		[
-			departureMajorStations,
-			departureService,
-			route,
-			serviceDestinationIndex,
-			showDepartureMessages,
-		],
-	);
+	const departureAnnouncementItems = React.useMemo(() => {
+		if (!showDepartureMessages) return [];
+		let langs: Lang[];
+
+		if (langMode === "auto") {
+			langs =
+				autoLanguageModes.length >= 2 &&
+				autoLanguageModes.includes("en")
+					? ["ja", "en"]
+					: autoLanguageModes.includes("en")
+						? ["en"]
+						: ["ja"];
+		} else {
+			langs = [langMode === "en" ? "en" : "ja"];
+		}
+
+		return langs.map((announcementLang) =>
+			trainStartAnnouncement(
+				route,
+				{
+					terminalIndex: serviceDestinationIndex,
+					...departureService,
+					majorStations: departureMajorStations,
+				},
+				announcementLang,
+			),
+		);
+	}, [
+		departureMajorStations,
+		departureService,
+		route,
+		serviceDestinationIndex,
+		showDepartureMessages,
+		langMode,
+		autoLanguageModes,
+	]);
 	const serviceInfo = React.useMemo(
 		() => ({
 			ja: serviceJa,
@@ -233,7 +252,8 @@ export function useSimulatorAnnouncements({
 		],
 	);
 	const stationAnnouncementVisible =
-		nextMarqueeMessageVisible || !remainingMarqueeItems.length;
+		!isInitialEntry &&
+		(nextMarqueeMessageVisible || !remainingMarqueeItems.length);
 	const autoSequences = React.useMemo<AutoAudioSequence[]>(() => {
 		if (!announcementAudioEnabled || !journeyEvent || isInitialEntry)
 			return [];
@@ -335,7 +355,8 @@ export function useSimulatorAnnouncements({
 	/** A clip is playable once the manifest lists it or an upload overrides it. */
 	const isAudioClipAvailable = React.useCallback(
 		(key: string) =>
-			Boolean(announcementAudioOverrides[key]) || manifestClipKeys.has(key),
+			Boolean(announcementAudioOverrides[key]) ||
+			manifestClipKeys.has(key),
 		[announcementAudioOverrides, manifestClipKeys],
 	);
 	const [audioQueue, setAudioQueue] = React.useState<AnnouncementQueue>({

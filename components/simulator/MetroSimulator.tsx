@@ -17,6 +17,7 @@ import {
 	beginJourneyLeg,
 	completeJourneyLeg,
 	navigateJourney,
+	stationedJourney,
 	type Journey,
 	type JourneyBounds,
 } from "@/components/simulator/simulatorJourney";
@@ -113,12 +114,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		updateControl("alertLeaving", value);
 	const setShowEditor = (value: React.SetStateAction<boolean>) =>
 		updateControl("showEditor", value);
-	const [journey, setJourney] = useState<Journey>({
-		pos: 0,
-		phase: "approach",
-		progress: 0,
-		from: null,
-	});
+	const [journey, setJourney] = useState<Journey>(stationedJourney(0));
 	const [manualTravel, setManualTravel] = useState(false);
 	const [presets, setPresets] = useState<SimulatorPreset[]>(() =>
 		SIMULATOR_PRESETS.map((preset) => ({
@@ -271,10 +267,18 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 								labelAnnouncementContent(item, "en"),
 							].filter(Boolean);
 						}
-						return [labelAnnouncementContent(item, lang)];
+						// Derive the language from langMode rather than `lang`
+						// so an auto-mode ja↔en toggle doesn't re-shuffle the
+						// items and restart the lower marquee mid-scroll.
+						return [
+							labelAnnouncementContent(
+								item,
+								langMode === "en" ? "en" : "ja",
+							),
+						];
 					}),
 			).flat(),
-		[announcements, lang, langMode],
+		[announcements, langMode],
 	);
 	const announcementContents = useSimulatorAnnouncements({
 		route,
@@ -297,6 +301,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		announcementAudioEnabled,
 		announcementVolume,
 		announcementAudioOverrides,
+		autoLanguageModes
 	});
 	const stateRef = useRef<JourneyBounds>({
 		stationCount: N,
@@ -457,12 +462,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 	// Keep the train inside the active service segment as enabled stops change.
 	useEffect(() => {
 		if (journey.pos < serviceStartIndex || journey.pos > serviceEndIndex)
-			setJourney({
-				pos: serviceStartIndex,
-				phase: "approach",
-				progress: 0,
-				from: null,
-			});
+			setJourney(stationedJourney(serviceStartIndex));
 	}, [journey.pos, serviceEndIndex, serviceStartIndex]);
 
 	function pickLine(id: LineId) {
@@ -476,7 +476,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		setLineId(id);
 		updateControl("serviceId", "local");
 		setTravelDirection(1);
-		setJourney({ pos: 0, phase: "approach", progress: 0, from: null });
+		setJourney(stationedJourney(0));
 	}
 
 	function pickPreset(id: SimulatorPresetId) {
@@ -511,7 +511,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		setLineId(preset.lineId);
 		updateControl("serviceId", "local");
 		setTravelDirection(1);
-		setJourney({ pos: 0, phase: "approach", progress: 0, from: null });
+		setJourney(stationedJourney(0));
 	}
 
 	function addPreset() {
@@ -587,12 +587,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 				setLineId(nextLineId);
 				updateControl("serviceId", "local");
 				setTravelDirection(1);
-				setJourney({
-					pos: 0,
-					phase: "approach",
-					progress: 0,
-					from: null,
-				});
+				setJourney(stationedJourney(0));
 			}
 		}
 	}
@@ -780,7 +775,7 @@ export function MetroSimulator({ children }: MetroSimulatorProps) {
 		setLineId(id as LineId);
 		updateControl("presetId", "custom");
 		setTravelDirection(1);
-		setJourney({ pos: 0, phase: "approach", progress: 0, from: null });
+		setJourney(stationedJourney(0));
 		setShowEditor(true);
 	};
 	const setStationField = (i: number, f: string, v) =>

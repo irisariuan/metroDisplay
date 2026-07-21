@@ -7,6 +7,15 @@ export interface Journey {
 	from: number | null;
 }
 
+/**
+ * A train placed at a station, stopped, before it has begun any leg. `from` is
+ * null, which marks the placement as an initial entry so no arrival/departure
+ * events fire — choosing a line drops the train here silently.
+ */
+export function stationedJourney(pos: number): Journey {
+	return { pos, phase: "at", progress: 1, from: null };
+}
+
 export type JourneyEventType = "arrived" | "departed" | "almost-arrive";
 
 export interface JourneyEvent {
