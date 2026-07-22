@@ -107,6 +107,7 @@ function collectClips(): Clip[] {
 interface GenerateSettings {
 	speed: number;
 	volume: number;
+	model: string;
 }
 
 async function requestAudio(
@@ -134,7 +135,7 @@ async function requestAudio(
 				},
 				body: JSON.stringify({
 					text: clip.speechText,
-					model_id: "eleven_multilingual_v2",
+					model_id: setting.model ?? "eleven_multilingual_v2",
 					language_code: clip.lang,
 					voice_settings: {
 						speed: setting.speed ?? 0.9,
@@ -157,7 +158,7 @@ async function requestAudio(
 			"REPLICATE_API_TOKEN and JA_VOICE_ID / EN_VOICE_ID are required",
 		);
 	const response = await fetch(
-		"https://api.replicate.com/v1/models/minimax/speech-2.8-turbo/predictions",
+		`https://api.replicate.com/v1/models/minimax/${setting.model ?? "speech-2.8-turbo"}/predictions`,
 		{
 			method: "POST",
 			headers: {
@@ -221,110 +222,125 @@ async function main() {
 				value: clip.key,
 				checked: true,
 			}));
-	const { provider, selectedStationJa, selectedStationEn, selectedFrameworkJa, selectedFrameworkEn, selectedLinesJa, selectedLinesEn, selectedContentJa, selectedContentEn, onlyMissing, speed: speedInput } =
-		await inquirer.prompt<{
-			provider: Provider;
-			selectedStationJa: string[];
-			selectedStationEn: string[];
-			selectedFrameworkJa: string[];
-			selectedFrameworkEn: string[];
-			selectedLinesJa: string[];
-			selectedLinesEn: string[];
-			selectedContentJa: string[];
-			selectedContentEn: string[];
-			onlyMissing: boolean;
-			speed: string;
-		}>([
-			{
-				type: "select",
-				name: "provider",
-				message:
-					"Which provider should generate missing announcement clips?",
-				choices: [
-					{ name: "ElevenLabs", value: "elevenlabs" },
-					{ name: "Replicate · MiniMax Speech", value: "replicate" },
-				],
+	const {
+		selectedStationJa,
+		selectedStationEn,
+		selectedFrameworkJa,
+		selectedFrameworkEn,
+		selectedLinesJa,
+		selectedLinesEn,
+		selectedContentJa,
+		selectedContentEn,
+		onlyMissing,
+		speed: speedInput,
+		model,
+	} = await inquirer.prompt<{
+		selectedStationJa: string[];
+		selectedStationEn: string[];
+		selectedFrameworkJa: string[];
+		selectedFrameworkEn: string[];
+		selectedLinesJa: string[];
+		selectedLinesEn: string[];
+		selectedContentJa: string[];
+		selectedContentEn: string[];
+		onlyMissing: boolean;
+		speed: string;
+		model: string;
+	}>([
+		{
+			type: "checkbox",
+			name: "selectedStationJa",
+			message: "Choose Japanese station-name clips:",
+			choices: stationChoices("ja"),
+			pageSize: 16,
+		},
+		{
+			type: "checkbox",
+			name: "selectedStationEn",
+			message: "Choose English station-name clips:",
+			choices: stationChoices("en"),
+			pageSize: 16,
+		},
+		{
+			type: "checkbox",
+			name: "selectedFrameworkJa",
+			message: "Choose Japanese framework phrases:",
+			choices: clipChoices("framework", "ja"),
+			pageSize: 16,
+		},
+		{
+			type: "checkbox",
+			name: "selectedFrameworkEn",
+			message: "Choose English framework phrases:",
+			choices: clipChoices("framework", "en"),
+			pageSize: 16,
+		},
+		{
+			type: "checkbox",
+			name: "selectedLinesJa",
+			message: "Choose Japanese line-name clips:",
+			choices: clipChoices("line", "ja"),
+			pageSize: 16,
+		},
+		{
+			type: "checkbox",
+			name: "selectedLinesEn",
+			message: "Choose English line-name clips:",
+			choices: clipChoices("line", "en"),
+			pageSize: 16,
+		},
+		{
+			type: "checkbox",
+			name: "selectedContentJa",
+			message: "Choose Japanese lower-marquee clips:",
+			choices: clipChoices("content", "ja"),
+			pageSize: 16,
+		},
+		{
+			type: "checkbox",
+			name: "selectedContentEn",
+			message: "Choose English lower-marquee clips:",
+			choices: clipChoices("content", "en"),
+			pageSize: 16,
+		},
+		{
+			type: "confirm",
+			name: "onlyMissing",
+			message: "Generate only missing clips with the selected provider?",
+			default: true,
+		},
+		{
+			type: "input",
+			name: "speed",
+			message: "Enter the speed for audio generation (default is 0.9):",
+			default: "0.9",
+			validate: (input) => {
+				const value = parseFloat(input);
+				if (isNaN(value) || value <= 0) {
+					return "Please enter a valid positive number.";
+				}
+				return true;
 			},
-			{
-				type: "checkbox",
-				name: "selectedStationJa",
-				message: "Choose Japanese station-name clips:",
-				choices: stationChoices("ja"),
-				pageSize: 16,
-			},
-			{
-				type: "checkbox",
-				name: "selectedStationEn",
-				message: "Choose English station-name clips:",
-				choices: stationChoices("en"),
-				pageSize: 16,
-			},
-			{
-				type: "checkbox",
-				name: "selectedFrameworkJa",
-				message: "Choose Japanese framework phrases:",
-				choices: clipChoices("framework", "ja"),
-				pageSize: 16,
-			},
-			{
-				type: "checkbox",
-				name: "selectedFrameworkEn",
-				message: "Choose English framework phrases:",
-				choices: clipChoices("framework", "en"),
-				pageSize: 16,
-			},
-			{
-				type: "checkbox",
-				name: "selectedLinesJa",
-				message: "Choose Japanese line-name clips:",
-				choices: clipChoices("line", "ja"),
-				pageSize: 16,
-			},
-			{
-				type: "checkbox",
-				name: "selectedLinesEn",
-				message: "Choose English line-name clips:",
-				choices: clipChoices("line", "en"),
-				pageSize: 16,
-			},
-			{
-				type: "checkbox",
-				name: "selectedContentJa",
-				message: "Choose Japanese lower-marquee clips:",
-				choices: clipChoices("content", "ja"),
-				pageSize: 16,
-			},
-			{
-				type: "checkbox",
-				name: "selectedContentEn",
-				message: "Choose English lower-marquee clips:",
-				choices: clipChoices("content", "en"),
-				pageSize: 16,
-			},
-			{
-				type: "confirm",
-				name: "onlyMissing",
-				message:
-					"Generate only missing clips with the selected provider?",
-				default: true,
-			},
-			{
-				type: "input",
-				name: "speed",
-				message:
-					"Enter the speed for audio generation (default is 0.9):",
-				default: "0.9",
-				validate: (input) => {
-					const value = parseFloat(input);
-					if (isNaN(value) || value <= 0) {
-						return "Please enter a valid positive number.";
-					}
-					return true;
+			transformer: (input) => parseFloat(input),
+		},
+		{
+			type: "select",
+			name: "model",
+			message: "Select the model for audio generation:",
+			default: "speech-2.8-turbo",
+			choices: [
+				{ name: "MiniMax Speech 2.8 Turbo", value: "speech-2.8-turbo" },
+				{ name: "MiniMax Speech 2.8 HD", value: "speech-2.8-hd" },
+				{
+					name: "ElevenLabs Multilingual V2",
+					value: "eleven_multilingual_v2",
 				},
-				transformer: (input) => parseFloat(input),
-			},
-		]);
+				{ name: "ElevenLabs V3", value: "eleven_v3" },
+			],
+		},
+	]);
 	const speed = Number(speedInput);
+	const provider = model.startsWith("eleven") ? "elevenlabs" : "replicate";
 
 	await mkdir(clipsRoot, { recursive: true });
 	let manifest: Manifest = {
@@ -369,15 +385,15 @@ async function main() {
 			console.log(`cached ${clip.key}`);
 			continue;
 		}
-		console.log(`generating ${clip.key} with ${provider}`);
 		const hash = createHash("sha256")
 			.update(`${provider}\0${clip.key}\0${clip.speechText}`)
 			.digest("hex")
 			.slice(0, 16);
 		const filename = `${hash}.mp3`;
+		console.log(`generating ${clip.key} (${filename}) with ${provider}`);
 		await writeFile(
 			join(clipsRoot, filename),
-			await requestAudio(clip, provider, { speed }),
+			await requestAudio(clip, provider, { speed, model }),
 		);
 		manifest.clips[clip.key] = {
 			...clip,
