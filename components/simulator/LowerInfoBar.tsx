@@ -40,7 +40,7 @@ export function LowerInfoBar({
 			<div
 				data-transfer-expanded={transferExpanded}
 				data-has-transfers={hasTransfers}
-				className="relative flex min-w-0 flex-none items-center overflow-hidden bg-paper-2 px-4.5 py-2"
+				className={`relative flex ${hasTransfers ? "min-w-0" : "min-w-min"} flex-none items-center overflow-hidden bg-paper-2 px-4.5 py-2`}
 				style={{
 					width: transferWidth,
 					borderRight: transferExpanded
