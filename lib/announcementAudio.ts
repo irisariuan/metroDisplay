@@ -9,6 +9,148 @@ export interface AnnouncementFrameworkOption {
 	lang: Lang;
 }
 
+export interface StationNumberAudioPart {
+	key: string;
+	label: string;
+	text: string;
+	speechText: string;
+	lang: Lang;
+}
+
+const EN_NUMBER_WORDS: Record<number, string> = {
+	0: "zero",
+	1: "one",
+	2: "two",
+	3: "three",
+	4: "four",
+	5: "five",
+	6: "six",
+	7: "seven",
+	8: "eight",
+	9: "nine",
+	10: "ten",
+	11: "eleven",
+	12: "twelve",
+	13: "thirteen",
+	14: "fourteen",
+	15: "fifteen",
+	16: "sixteen",
+	17: "seventeen",
+	18: "eighteen",
+	19: "nineteen",
+	20: "twenty",
+	30: "thirty",
+	40: "forty",
+	50: "fifty",
+	60: "sixty",
+	70: "seventy",
+	80: "eighty",
+	90: "ninety",
+};
+
+const JA_NUMBER_WORDS: Record<number, string> = {
+	0: "ゼロ",
+	1: "いち",
+	2: "に",
+	3: "さん",
+	4: "よん",
+	5: "ご",
+	6: "ろく",
+	7: "なな",
+	8: "はち",
+	9: "きゅう",
+	10: "じゅう",
+	11: "じゅういち",
+	12: "じゅうに",
+	13: "じゅうさん",
+	14: "じゅうよん",
+	15: "じゅうご",
+	16: "じゅうろく",
+	17: "じゅうなな",
+	18: "じゅうはち",
+	19: "じゅうきゅう",
+	20: "にじゅう",
+	30: "さんじゅう",
+	40: "よんじゅう",
+	50: "ごじゅう",
+	60: "ろくじゅう",
+	70: "ななじゅう",
+	80: "はちじゅう",
+	90: "きゅうじゅう",
+};
+
+const JA_ROUTE_LETTER_WORDS: Record<string, string> = {
+	A: "エー",
+	B: "ビー",
+	C: "シー",
+	D: "ディー",
+	E: "イー",
+	F: "エフ",
+	G: "ジー",
+	H: "エイチ",
+	I: "アイ",
+	J: "ジェー",
+	K: "ケー",
+	L: "エル",
+	M: "エム",
+	N: "エヌ",
+	O: "オー",
+	P: "ピー",
+	Q: "キュー",
+	R: "アール",
+	S: "エス",
+	T: "ティー",
+	U: "ユー",
+	V: "ブイ",
+	W: "ダブリュー",
+	X: "エックス",
+	Y: "ワイ",
+	Z: "ゼット",
+};
+
+const NUMBER_PART_VALUES = Object.keys(EN_NUMBER_WORDS).map(Number);
+
+/**
+ * Reusable numeric recordings. A station code such as CS21 is assembled from
+ * one route recording (CS) + twenty + one instead of requiring a bespoke CS21
+ * recording or separate recordings for C and S.
+ */
+export const STATION_NUMBER_AUDIO_PARTS: StationNumberAudioPart[] = (
+	["ja", "en"] as const
+).flatMap((lang) => [
+	...NUMBER_PART_VALUES.map((value) => ({
+		key: `station-number.${lang}.number.${value}`,
+		label: `${lang.toUpperCase()} · NUMBER ${value}`,
+		text: String(value),
+		speechText:
+			lang === "ja" ? JA_NUMBER_WORDS[value] : EN_NUMBER_WORDS[value],
+		lang,
+	})),
+]);
+
+/** One generated route-code reading replaces separate per-letter recordings. */
+export function stationRouteAudioPart(
+	lineId: LineId,
+	lang: Lang,
+): StationNumberAudioPart {
+	const characters = lineId.toUpperCase().split("");
+	return {
+		key: `station-number.${lang}.route.${lineId}`,
+		label: `${lang.toUpperCase()} · ROUTE ${lineId}`,
+		text: lineId,
+		speechText:
+			lang === "ja"
+				? characters
+						.map(
+							(character) =>
+								JA_ROUTE_LETTER_WORDS[character] ?? character,
+						)
+						.join(" ")
+				: characters.join(" "),
+		lang,
+	};
+}
+
 export const ANNOUNCEMENT_FRAMEWORK_OPTIONS: AnnouncementFrameworkOption[] = [
 	{
 		key: "framework.ja.approach",
@@ -257,6 +399,37 @@ export const lineAudioKey = (lineId: LineId, lang: Lang) =>
 export const contentAudioKey = (presetId: string, index: number, lang: Lang) =>
 	`content.${presetId}.${lang}.${index}`;
 
+export const stationNumberLabel = (route: Route, stationIndex: number) =>
+	`${route.line}${String(stationIndex + 1).padStart(2, "0")}`;
+
+function stationNumberValues(stationIndex: number): number[] {
+	const value = stationIndex + 1;
+	// if (value < 10) return [0, value];
+	if (value <= 19) return [value];
+	if (value < 100) {
+		const tens = Math.floor(value / 10) * 10;
+		const ones = value % 10;
+		return ones ? [tens, ones] : [tens];
+	}
+	// Unusually long custom routes remain pronounceable without adding a
+	// recording for every possible number.
+	return String(value).split("").map(Number);
+}
+
+/** Build the reusable clips that pronounce a station code such as CS01. */
+export function stationNumberAudioSequence(
+	route: Route,
+	stationIndex: number,
+	lang: Lang,
+): string[] {
+	return [
+		stationRouteAudioPart(route.line, lang).key,
+		...stationNumberValues(stationIndex).map(
+			(value) => `station-number.${lang}.number.${value}`,
+		),
+	];
+}
+
 /** Queue key and URL for an optional per-station departure melody. */
 export const departureToneKey = (station: Station) =>
 	`tone.departure.${station.ja}`;
@@ -279,6 +452,10 @@ export function audioKeyLabel(key: string): string {
 		const [language = "", index = ""] = rest;
 		return `${qualifier.toUpperCase()} · ${language.toUpperCase()} · MSG ${Number(index) + 1}`;
 	}
+	if (kind === "station-number") {
+		const [partKind = "", part = ""] = rest;
+		return `${qualifier.toUpperCase()} · ${partKind.toUpperCase()} ${part}`;
+	}
 	if (value) return `${qualifier.toUpperCase()} · ${value}`;
 	return key;
 }
@@ -292,6 +469,8 @@ interface AnnouncementAudioSequenceOptions {
 	terminalIndex: number;
 	/** Append the door-open chime after the spoken door side, on arrival only. */
 	doorEffect?: boolean;
+	/** Speak the line code and ordinal after the station name. */
+	includeStationNumber?: boolean;
 }
 
 interface TrainStartAnnouncementAudioSequenceOptions {
@@ -410,13 +589,17 @@ export function departureNextStationAudioSequence(
 	route: Route,
 	nextIndex: number,
 	lang: Lang,
+	includeStationNumber = false,
 ): string[] {
 	const station = route.stations[nextIndex];
 	if (!station) return [];
 	const key = stationAudioKey(station, lang);
+	const numberSequence = includeStationNumber
+		? stationNumberAudioSequence(route, nextIndex, lang)
+		: [];
 	return lang === "ja"
-		? ["framework.ja.nextStation", key, "framework.ja.desu"]
-		: ["framework.en.nextStation", key];
+		? ["framework.ja.nextStation", key, ...numberSequence, "framework.ja.desu"]
+		: ["framework.en.nextStation", key, ...numberSequence];
 }
 
 /** Build a clip sequence matching the text assembled in announcement.ts. */
@@ -428,9 +611,13 @@ export function announcementAudioSequence({
 	passing,
 	terminalIndex,
 	doorEffect = false,
+	includeStationNumber = false,
 }: AnnouncementAudioSequenceOptions): string[] {
 	const station = route.stations[pos];
 	const stationKey = stationAudioKey(station, lang);
+	const stationNumberSequence = includeStationNumber
+		? stationNumberAudioSequence(route, pos, lang)
+		: [];
 	const sequence: string[] = [];
 	// The doors are physically opening, so the chime follows the spoken side
 	// once per arrival — the caller suppresses it on the second language.
@@ -446,6 +633,7 @@ export function announcementAudioSequence({
 		sequence.push(
 			stationKey,
 			stationKey,
+			...stationNumberSequence,
 			phase === "approach"
 				? "framework.ja.stationEnd"
 				: "framework.ja.desu",
@@ -474,6 +662,7 @@ export function announcementAudioSequence({
 	sequence.push(
 		phase === "approach" ? "framework.en.approach" : "framework.en.thisIs",
 		stationKey,
+		...stationNumberSequence,
 	);
 	// if (phase === "approach")
 	sequence.push(

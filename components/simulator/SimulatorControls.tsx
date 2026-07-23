@@ -163,6 +163,8 @@ export function SimulatorControls({
 		alertScope,
 		alertLeaving,
 		announcementAudioEnabled,
+		announceStationNumberJa,
+		announceStationNumberEn,
 		announcementVolume,
 		departureMajorStationCount,
 		marqueePresetId,
@@ -270,6 +272,12 @@ export function SimulatorControls({
 	) => set("announcementAudioEnabled", value);
 	const setAnnouncementVolume = (value: React.SetStateAction<number>) =>
 		set("announcementVolume", value);
+	const setAnnounceStationNumberJa = (
+		value: React.SetStateAction<boolean>,
+	) => set("announceStationNumberJa", value);
+	const setAnnounceStationNumberEn = (
+		value: React.SetStateAction<boolean>,
+	) => set("announceStationNumberEn", value);
 	const setDepartureMajorStationCount = (
 		value: React.SetStateAction<number>,
 	) => set("departureMajorStationCount", value);
@@ -1176,6 +1184,24 @@ export function SimulatorControls({
 								/>
 							</div>
 						</div>
+					</div>
+					<div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-md border-2 border-ink bg-paper-2 p-2">
+						<span className="font-mono text-[10px] font-bold tracking-widest">
+							STATION NUMBER
+						</span>
+						<Switch
+							checked={announceStationNumberJa}
+							onChange={setAnnounceStationNumberJa}
+							label="JA"
+						/>
+						<Switch
+							checked={announceStationNumberEn}
+							onChange={setAnnounceStationNumberEn}
+							label="EN"
+						/>
+						<span className="font-mono text-[10px] font-bold tracking-widest text-muted">
+							COMPOSED FROM ROUTE + NUMBER PARTS
+						</span>
 					</div>
 					<div className="mt-2 flex flex-wrap items-center gap-2">
 						<button

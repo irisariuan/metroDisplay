@@ -8,7 +8,11 @@ import "dotenv/config";
 import inquirer from "inquirer";
 import { MARQUEE_CONTENT_PRESETS } from "../lib/constants";
 import { LINES, ROUTES } from "../lib/metro-data";
-import { ANNOUNCEMENT_FRAMEWORK_OPTIONS } from "../lib/announcementAudio";
+import {
+	ANNOUNCEMENT_FRAMEWORK_OPTIONS,
+	STATION_NUMBER_AUDIO_PARTS,
+	stationRouteAudioPart,
+} from "../lib/announcementAudio";
 import type { Station } from "../types/metro";
 
 type Lang = "ja" | "en";
@@ -42,6 +46,27 @@ function collectClips(): Clip[] {
 		lang: clip.lang,
 		category: "framework",
 	}));
+	clips.push(
+		...STATION_NUMBER_AUDIO_PARTS.map((clip) => ({
+			key: clip.key,
+			text: clip.label,
+			speechText: clip.speechText,
+			lang: clip.lang,
+			category: "station-number",
+		})),
+	);
+	for (const lineId of Object.keys(ROUTES)) {
+		for (const lang of ["ja", "en"] as const) {
+			const clip = stationRouteAudioPart(lineId, lang);
+			clips.push({
+				key: clip.key,
+				text: clip.label,
+				speechText: clip.speechText,
+				lang: clip.lang,
+				category: "station-number",
+			});
+		}
+	}
 	const stations = new Map<string, Station>();
 	for (const route of Object.values(ROUTES))
 		for (const station of route.stations) stations.set(station.ja, station);
@@ -229,6 +254,8 @@ async function main() {
 		selectedFrameworkEn,
 		selectedLinesJa,
 		selectedLinesEn,
+		selectedStationNumbersJa,
+		selectedStationNumbersEn,
 		selectedContentJa,
 		selectedContentEn,
 		onlyMissing,
@@ -241,6 +268,8 @@ async function main() {
 		selectedFrameworkEn: string[];
 		selectedLinesJa: string[];
 		selectedLinesEn: string[];
+		selectedStationNumbersJa: string[];
+		selectedStationNumbersEn: string[];
 		selectedContentJa: string[];
 		selectedContentEn: string[];
 		onlyMissing: boolean;
@@ -287,6 +316,20 @@ async function main() {
 			name: "selectedLinesEn",
 			message: "Choose English line-name clips:",
 			choices: clipChoices("line", "en"),
+			pageSize: 16,
+		},
+		{
+			type: "checkbox",
+			name: "selectedStationNumbersJa",
+			message: "Choose Japanese station-number parts:",
+			choices: clipChoices("station-number", "ja"),
+			pageSize: 16,
+		},
+		{
+			type: "checkbox",
+			name: "selectedStationNumbersEn",
+			message: "Choose English station-number parts:",
+			choices: clipChoices("station-number", "en"),
 			pageSize: 16,
 		},
 		{
@@ -366,6 +409,8 @@ async function main() {
 		...selectedFrameworkEn,
 		...selectedLinesJa,
 		...selectedLinesEn,
+		...selectedStationNumbersJa,
+		...selectedStationNumbersEn,
 		...selectedContentJa,
 		...selectedContentEn,
 	]);

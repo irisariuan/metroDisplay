@@ -59,6 +59,8 @@ interface UseSimulatorAnnouncementsOptions {
 	remainingMarqueeItems: string[];
 	departureMajorStationCount: number;
 	announcementAudioEnabled: boolean;
+	announceStationNumberJa: boolean;
+	announceStationNumberEn: boolean;
 	announcementVolume: number;
 	announcementAudioOverrides: Record<string, string>;
 }
@@ -83,6 +85,8 @@ export function useSimulatorAnnouncements({
 	remainingMarqueeItems,
 	departureMajorStationCount,
 	announcementAudioEnabled,
+	announceStationNumberJa,
+	announceStationNumberEn,
 	announcementVolume,
 	announcementAudioOverrides,
 }: UseSimulatorAnnouncementsOptions) {
@@ -101,6 +105,13 @@ export function useSimulatorAnnouncements({
 	}
 	const [currentAudioType, setCurrentAudioType] =
 		React.useState<AnnouncementAudioType | null>(null);
+	const includesStationNumber = React.useCallback(
+		(announcementLang: Lang) =>
+			announcementLang === "ja"
+				? announceStationNumberJa
+				: announceStationNumberEn,
+		[announceStationNumberEn, announceStationNumberJa],
+	);
 	// Reports a sequence starting/ending as the active audio type. The clear only
 	// fires when this type is still current, so a later sequence that already
 	// took over is never wiped by a trailing "finished" from an earlier one.
@@ -182,10 +193,11 @@ export function useSimulatorAnnouncements({
 							route,
 							journeyEvent.targetIndex,
 							announcementLang,
+							includesStationNumber(announcementLang),
 						),
 					)
 				: [],
-		[journeyEvent, langs, passingNext, route],
+		[journeyEvent, langs, passingNext, route, includesStationNumber],
 	);
 	// Ticker copy for the "next stop is …" departure announcement. journey.pos is
 	// the station being approached while this plays, so it names the next stop.
@@ -267,6 +279,8 @@ export function useSimulatorAnnouncements({
 					lang: announcementLang,
 					passing: passingNext,
 					terminalIndex: serviceDestinationIndex,
+					includeStationNumber:
+						includesStationNumber(announcementLang),
 					// The doors open once, so only the leading language chimes.
 					doorEffect: index === 0,
 				}),
@@ -278,6 +292,7 @@ export function useSimulatorAnnouncements({
 			passingNext,
 			route,
 			serviceDestinationIndex,
+			includesStationNumber,
 		],
 	);
 	const departureSequence = React.useMemo(
@@ -502,6 +517,8 @@ export function useSimulatorAnnouncements({
 				lang: announcementLang,
 				passing: passingNext,
 				terminalIndex: serviceDestinationIndex,
+				includeStationNumber:
+					includesStationNumber(announcementLang),
 				doorEffect: true,
 			});
 			void audioRef.current?.playKeys(sequence);
@@ -514,6 +531,7 @@ export function useSimulatorAnnouncements({
 			playDepartureAnnouncement,
 			route,
 			serviceDestinationIndex,
+			includesStationNumber,
 		],
 	);
 

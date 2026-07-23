@@ -28,7 +28,17 @@ export function DirectionIndicators({
 	filledRanges,
 	loopConnectorSides = [],
 }: DirectionIndicatorsProps) {
-	if (count < 2) return null;
+	// A remainder page can contain one station but still have a rail stub that
+	// continues to the previous/next page. Keep that connector's chevron; only
+	// suppress the component when there is no station or no directional segment.
+	if (
+		count < 1 ||
+		(count === 1 &&
+			!continueForward &&
+			!continueBackward &&
+			loopConnectorSides.length === 0)
+	)
+		return null;
 	const nodePosition = (index: number) =>
 		layout === "full"
 			? index / (count - 1)

@@ -86,6 +86,8 @@ export function useSimulatorEngine() {
 		followDirectionView,
 		transferDisplayMode,
 		announcementAudioEnabled,
+		announceStationNumberJa,
+		announceStationNumberEn,
 		announcementVolume,
 		departureMajorStationCount,
 	} = controls;
@@ -313,6 +315,8 @@ export function useSimulatorEngine() {
 		remainingMarqueeItems,
 		departureMajorStationCount,
 		announcementAudioEnabled,
+		announceStationNumberJa,
+		announceStationNumberEn,
 		announcementVolume,
 		announcementAudioOverrides,
 		autoLanguageModes,

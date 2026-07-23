@@ -10,6 +10,7 @@ const COLUMN_GAP = 3;
 const ROW_GAP = 2;
 const CYCLE_MS = 2600;
 const MOVE_MS = 400;
+const BOUNDARY_INSET = 8;
 // Reserve the tallest possible state — two rows led by a full-size chip — so the
 // strip keeps a constant height whatever a station shows. Growing, shrinking and
 // the row cycle all happen inside this fixed box, so nothing around it shifts.
@@ -54,7 +55,89 @@ function pingPong(step: number, max: number): number {
 export function TransferChips({ lineIds, expanded }: TransferChipsProps) {
 	const viewportRef = React.useRef<HTMLDivElement>(null);
 	const [containerWidth, setContainerWidth] = React.useState(0);
+	const [viewportShift, setViewportShift] = React.useState(0);
 	const [step, setStep] = React.useState(0);
+
+	// Edge station cells can extend beyond the route strip so their node can sit
+	// at the end of the rail. Keep the transfer strip at its natural cell width;
+	// only shift it when the chips themselves cross the larger route boundary.
+	React.useLayoutEffect(() => {
+		const viewport = viewportRef.current;
+		const cell = viewport?.closest<HTMLElement>("[data-station-cell]");
+		const boundary = viewport?.closest<HTMLElement>(
+			"[data-route-label-boundary]",
+		);
+		if (!viewport || !cell || !boundary) return undefined;
+		let cancelled = false;
+		let animationFrame = 0;
+
+		const measure = () => {
+			if (cancelled) return;
+			const boundaryRect = boundary.getBoundingClientRect();
+			const chips = Array.from(
+				viewport.querySelectorAll<HTMLElement>(
+					'[data-transfer-chip-row][data-visible="true"] > *',
+				),
+			);
+			if (!chips.length) {
+				setViewportShift(0);
+				return;
+			}
+			const chipRects = chips.map((chip) => chip.getBoundingClientRect());
+			const contentWidth =
+				Math.max(...chipRects.map((rect) => rect.right)) -
+				Math.min(...chipRects.map((rect) => rect.left));
+			const cellRect = cell.getBoundingClientRect();
+			const cellCenter = (cellRect.left + cellRect.right) / 2;
+			const safeLeft = boundaryRect.left + BOUNDARY_INSET;
+			const safeRight = boundaryRect.right - BOUNDARY_INSET;
+			const safeWidth = Math.max(1, safeRight - safeLeft);
+			const targetCenter =
+				contentWidth >= safeWidth
+					? (safeLeft + safeRight) / 2
+					: Math.min(
+							safeRight - contentWidth / 2,
+							Math.max(
+								safeLeft + contentWidth / 2,
+								cellCenter,
+							),
+						);
+			const shift = targetCenter - cellCenter;
+			setViewportShift((current) =>
+				Math.abs(current - shift) < 0.5 ? current : shift,
+			);
+		};
+		const scheduleMeasure = () => {
+			if (cancelled || animationFrame) return;
+			animationFrame = requestAnimationFrame(() => {
+				animationFrame = 0;
+				measure();
+			});
+		};
+
+		measure();
+		const settleId = setTimeout(measure, 450);
+		if (typeof ResizeObserver === "undefined") {
+			window.addEventListener("resize", scheduleMeasure);
+			return () => {
+				cancelled = true;
+				clearTimeout(settleId);
+				if (animationFrame) cancelAnimationFrame(animationFrame);
+				window.removeEventListener("resize", scheduleMeasure);
+			};
+		}
+		const observer = new ResizeObserver(scheduleMeasure);
+		observer.observe(cell);
+		observer.observe(boundary);
+		window.addEventListener("resize", scheduleMeasure);
+		return () => {
+			cancelled = true;
+			clearTimeout(settleId);
+			if (animationFrame) cancelAnimationFrame(animationFrame);
+			observer.disconnect();
+			window.removeEventListener("resize", scheduleMeasure);
+		};
+	}, [expanded, lineIds, step]);
 
 	React.useLayoutEffect(() => {
 		const viewport = viewportRef.current;
@@ -147,8 +230,13 @@ export function TransferChips({ lineIds, expanded }: TransferChipsProps) {
 	return (
 		<div
 			ref={viewportRef}
+			data-transfer-chips
 			className="relative w-full"
-			style={{ height: RESERVED_HEIGHT }}
+			style={{
+				height: RESERVED_HEIGHT,
+				transform: `translateX(${viewportShift}px)`,
+				transition: "transform .35s var(--ease-pop)",
+			}}
 		>
 			{multiRow ? (
 				groups.map((group, groupIndex) => {
@@ -159,6 +247,8 @@ export function TransferChips({ lineIds, expanded }: TransferChipsProps) {
 					return (
 						<div
 							key={groupIndex}
+							data-transfer-chip-row
+							data-visible={visible}
 							className="pointer-events-none absolute inset-x-0 flex justify-center"
 							style={{
 								columnGap: COLUMN_GAP,
@@ -177,6 +267,8 @@ export function TransferChips({ lineIds, expanded }: TransferChipsProps) {
 				})
 			) : (
 				<div
+					data-transfer-chip-row
+					data-visible="true"
 					className="absolute inset-0 flex items-center justify-center"
 					style={{ columnGap: COLUMN_GAP }}
 				>

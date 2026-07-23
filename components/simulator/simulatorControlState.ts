@@ -62,6 +62,8 @@ export interface SimulatorControlState {
 	showEditor: boolean;
 	transferDisplayMode: TransferDisplayMode;
 	announcementAudioEnabled: boolean;
+	announceStationNumberJa: boolean;
+	announceStationNumberEn: boolean;
 	announcementVolume: number;
 	departureMajorStationCount: number;
 }
@@ -132,6 +134,8 @@ export const initialSimulatorControlState: SimulatorControlState = {
 	showEditor: false,
 	transferDisplayMode: "auto",
 	announcementAudioEnabled: true,
+	announceStationNumberJa: false,
+	announceStationNumberEn: false,
 	announcementVolume: 0.8,
 	departureMajorStationCount: 1,
 };
