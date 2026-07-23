@@ -594,7 +594,7 @@ export function useSimulatorEngine() {
 	}
 
 	function setPresetLabel(label: string) {
-		if (!["shuika", "yamanote"].includes(controls.presetId))
+		if (!["shuika", "yamanote", "hongkong"].includes(controls.presetId))
 			setPresets((current) => {
 				const nextLabel = label || "UNTITLED PRESET";
 				const edited = current.find(
@@ -617,7 +617,7 @@ export function useSimulatorEngine() {
 	}
 
 	function togglePresetLine(id: LineId) {
-		if (["shuika", "yamanote"].includes(controls.presetId)) return;
+		if (["shuika", "yamanote", "hongkong"].includes(controls.presetId)) return;
 		setPresets((current) =>
 			current.map((preset) => {
 				if (preset.id !== controls.presetId) return preset;

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Kiwi+Maru:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Kiwi+Maru:wght@400;500&family=Chiron+GoRound+TC:wght@200..900&display=swap");
 @import "tailwindcss";
 
 /*
@@ -120,9 +120,9 @@
 	--border-ink: var(--ink);
 	--border-soft: #00000024;
 
-	--font-display: "Anton", "Kiwi Maru", Impact, sans-serif;
+	--font-display: "Anton", "Kiwi Maru", 'Chiron GoRound TC', Impact, sans-serif;
 	--font-body: "Space Grotesk", "Kiwi Maru", system-ui, sans-serif;
-	--font-mono: "Space Mono", "Kiwi Maru", monospace;
+	--font-mono: "Space Mono", "Kiwi Maru", 'Chiron GoRound TC', monospace;
 	--size-display-xl: clamp(64px, 12vw, 168px);
 	--size-display-l: clamp(48px, 8vw, 96px);
 	--size-display-m: clamp(32px, 5vw, 56px);

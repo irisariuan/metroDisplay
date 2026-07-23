@@ -1,0 +1,50 @@
+{
+	"ISL": {
+		"id": "ISL",
+		"code": "ISL",
+		"ja": "港島綫",
+		"en": "Island Line",
+		"color": "#0075C9",
+		"textOnColor": "#fff"
+	},
+	"TWL": {
+		"id": "TWL",
+		"code": "TWL",
+		"ja": "荃灣綫",
+		"en": "Tsuen Wan Line",
+		"color": "#E2231A",
+		"textOnColor": "#fff"
+	},
+	"KTL": {
+		"id": "KTL",
+		"code": "KTL",
+		"ja": "觀塘綫",
+		"en": "Kwun Tong Line",
+		"color": "#009A44",
+		"textOnColor": "#fff"
+	},
+	"TKL": {
+		"id": "TKL",
+		"code": "TKL",
+		"ja": "將軍澳綫",
+		"en": "Tseung Kwan O Line",
+		"color": "#8B2E9E",
+		"textOnColor": "#fff"
+	},
+	"EAL": {
+		"id": "EAL",
+		"code": "EAL",
+		"ja": "東鐵綫",
+		"en": "East Rail Line",
+		"color": "#53B7E8",
+		"textOnColor": "#111"
+	},
+	"TCL": {
+		"id": "TCL",
+		"code": "TCL",
+		"ja": "東涌綫",
+		"en": "Tung Chung Line",
+		"color": "#F7943E",
+		"textOnColor": "#111"
+	}
+}

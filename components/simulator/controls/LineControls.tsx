@@ -74,7 +74,7 @@ export function LineControls({
 	const visibleLineIds = activePreset
 		? activePreset.lineIds
 		: (Object.keys(LINES) as LineId[]);
-	const customPreset = Boolean(activePreset && !["shuika", "yamanote"].includes(activePreset.id));
+	const customPreset = Boolean(activePreset && !["shuika", "yamanote", "hongkong"].includes(activePreset.id));
 
 	return (
 		<>

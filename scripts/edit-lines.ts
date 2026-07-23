@@ -7,7 +7,7 @@
  *                                 (incl. whether the line is circular)
  *   2. Edit station distances     tweak the gap recorded before each stop
  *   3. Edit a line               rename / recolour / fix reading / toggle circular
- *   4. Edit a station            rename / fix a stop's English or reading
+ *   4. Edit a station            rename / fix a stop's English, reading or door side
  *   5. Clean up unused entries   drop lines with no route and orphan readings
  *
  * Lines and stations come from TWO sources, UNIONED into one pool — nothing is
@@ -19,7 +19,7 @@
  *                         that widens the choices when building. Either source
  *                         may contribute a line/station; lib/data wins overlaps.
  *
- * Run with no flags for the menu. Build mode is also scriptable:
+ * Run with no flags to choose a preset and open the menu. Build mode is also scriptable:
  *     bun scripts/edit-lines.ts --id NR --name 新線 --color '#ff8800' \
  *        --stations '荒川,森原,中心原'
  *     bun scripts/edit-lines.ts --from-line CS            # rebuild from data
@@ -30,7 +30,7 @@
  *                        build a line non-interactively (see build mode above)
  *   --circular           (build) make the line loop back to its first stop
  *   --clean              run the unused-entry cleanup and exit
- *   --preset <id>        preset to read/write (default: shuika)
+ *   --preset <id>        preset to read/write (otherwise chosen in the menu)
  *   --source <path>      catalog file (default: scripts/data/<preset>.json)
  *   --out <dir>          dir to read/write (default: lib/data/<preset>)
  *   --dry-run            (build) print the generated entries, write nothing
@@ -38,7 +38,7 @@
  */
 
 import { existsSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
@@ -53,6 +53,7 @@ import {
 	useState,
 } from "@inquirer/core";
 import inquirer from "inquirer";
+import { searchableCheckbox } from "./lib/searchable-checkbox";
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const TAB = "\t";
@@ -174,6 +175,33 @@ async function readJson<T>(path: string): Promise<T> {
 }
 async function writeJson(path: string, obj: unknown): Promise<void> {
 	await writeFile(path, `${JSON.stringify(obj, null, TAB)}\n`);
+}
+
+/** Choose from the live data presets instead of hard-coding the menu. */
+async function pickPreset(): Promise<string> {
+	const dataRoot = join(projectRoot, "lib/data");
+	const entries = await readdir(dataRoot, { withFileTypes: true });
+	const presets = entries
+		.filter((entry) => entry.isDirectory())
+		.map((entry) => entry.name)
+		.filter(
+			(id) =>
+				existsSync(join(dataRoot, id, "lines.json")) &&
+				existsSync(join(dataRoot, id, "routes.json")),
+		)
+		.sort();
+	if (!presets.length) throw new Error(`No editable presets in ${dataRoot}.`);
+	if (presets.length === 1) return presets[0];
+	const { preset } = await inquirer.prompt<{ preset: string }>([
+		{
+			type: "select",
+			name: "preset",
+			message: "Choose a preset to edit:",
+			choices: presets.map((id) => ({ name: id, value: id })),
+			default: presets.includes("shuika") ? "shuika" : presets[0],
+		},
+	]);
+	return preset;
 }
 
 /** Load the live preset files verbatim for in-place editing. */
@@ -579,24 +607,32 @@ async function chooseStations(
 
 	for (;;) {
 		const order = [...fresh, ...net.stations.filter((ja) => !fresh.includes(ja))];
-		const { chosen } = await inquirer.prompt<{ chosen: string[] }>([
-			{
-				type: "checkbox",
-				name: "chosen",
-				message: "Pick the stations (↑/↓ · space; ＋ to input a new one):",
-				loop: false,
-				choices: [
-					{ name: "＋ input new station…", value: ADD },
-					...order.map((ja) => ({
-						name: label(ja),
-						value: ja,
-						checked: selected.has(ja),
-					})),
-				],
-				validate: (a: readonly unknown[]) =>
-					a.includes(ADD) || a.length >= 2 ? true : "pick at least 2 stations",
-			},
-		]);
+		const chosen = await searchableCheckbox({
+			message: "Pick the stations (search by name or reading):",
+			choices: [
+				{ name: "＋ input new station…", value: ADD },
+				...order.map((ja) => ({
+					name: label(ja),
+					value: ja,
+					searchTerms: [
+						ja,
+						net.stationsEn[ja] ?? "",
+						net.stationReadings[ja]?.hira ?? "",
+						net.stationReadings[ja]?.kata ?? "",
+						net.preset,
+						...Object.entries(net.lineStations)
+							.filter(([, stations]) => stations.includes(ja))
+							.map(([lineId]) => lineId),
+					],
+					checked: selected.has(ja),
+				})),
+			],
+			pageSize: 16,
+		});
+		if (!chosen.includes(ADD) && chosen.length < 2) {
+			console.log("Pick at least 2 stations.");
+			continue;
+		}
 
 		selected.clear();
 		for (const v of chosen) if (v !== ADD) selected.add(v);
@@ -790,7 +826,7 @@ async function editLineMeta(raw: RawFiles, yes: boolean) {
 	console.log(`Saved ${id}.`);
 }
 
-// ── Mode 4: edit a station (name / reading / English) ─────────────────────────
+// ── Mode 4: edit a station (name / reading / English / door side) ────────────
 
 async function editStation(raw: RawFiles, yes: boolean) {
 	const names = new Set<string>(Object.keys(raw.readings));
@@ -832,6 +868,49 @@ async function editStation(raw: RawFiles, yes: boolean) {
 	const renamed = newJa !== ja;
 	const en = ans.en.trim();
 	const newReading = { hira: ans.hira.trim(), kata: ans.kata.trim() };
+	const routeStops = Object.entries(raw.routes).flatMap(([lineId, route]) =>
+		route.stations.flatMap((station, index) =>
+			station.ja === ja ? [{ lineId, index, station }] : [],
+		),
+	);
+	let doorSideChange = "";
+	if (routeStops.length) {
+		const NO_CHANGE = "__no_door_side_change__";
+		const { stopKey } = await inquirer.prompt<{ stopKey: string }>([
+			{
+				type: "select",
+				name: "stopKey",
+				message: "Change door side for which route stop?",
+				choices: [
+					{ name: "No door-side change", value: NO_CHANGE },
+					...routeStops.map(({ lineId, index, station }) => ({
+						name: `${lineId} · stop ${String(index + 1).padStart(2, "0")} · ${station.ja} · doors ${station.side === "L" ? "left" : "right"}`,
+						value: `${lineId}:${index}`,
+					})),
+				],
+			},
+		]);
+		if (stopKey !== NO_CHANGE) {
+			const [lineId, indexText] = stopKey.split(":");
+			const station = raw.routes[lineId]?.stations[Number(indexText)];
+			if (station) {
+				const { side } = await inquirer.prompt<{ side: "L" | "R" }>([
+					{
+						type: "select",
+						name: "side",
+						message: `Doors open on which side at ${lineId} · ${station.ja}?`,
+						choices: [
+							{ name: "Left", value: "L" },
+							{ name: "Right", value: "R" },
+						],
+						default: station.side ?? "R",
+					},
+				]);
+				station.side = side;
+				doorSideChange = `  ·  ${lineId} stop ${Number(indexText) + 1} doors ${side === "L" ? "left" : "right"}`;
+			}
+		}
+	}
 
 	// Propagate a rename + English change through every route that stops here.
 	let routeHits = 0;
@@ -848,7 +927,7 @@ async function editStation(raw: RawFiles, yes: boolean) {
 	if (newReading.hira || newReading.kata) raw.readings[newJa] = newReading;
 
 	console.log(
-		`\n${ja}${renamed ? ` → ${newJa}` : ""}${en ? ` (${en})` : ""}${newReading.hira ? `  ${newReading.hira}` : ""}  ·  ${routeHits} route stop(s)`,
+		`\n${ja}${renamed ? ` → ${newJa}` : ""}${en ? ` (${en})` : ""}${newReading.hira ? `  ${newReading.hira}` : ""}  ·  ${routeHits} route stop(s)${doorSideChange}`,
 	);
 	if (!(await confirmWrite(`Write ${raw.routesPath} and ${raw.readingsPath}?`, yes)))
 		return;
@@ -918,7 +997,10 @@ async function runMenu(
 				{ name: "Build / rebuild a line", value: "build" },
 				{ name: "Edit station distances", value: "distances" },
 				{ name: "Edit a line (name / reading / colour)", value: "line" },
-				{ name: "Edit a station (name / reading / English)", value: "station" },
+				{
+					name: "Edit a station (name / reading / English / door side)",
+					value: "station",
+				},
 				{ name: "Clean up unused lines & stations", value: "clean" },
 			],
 		},
@@ -959,7 +1041,15 @@ async function main() {
 		},
 	});
 
-	const preset = values.preset ?? "shuika";
+	const fromLine = values["from-line"];
+	const hasBuildInput = fromLine || values.id || values.stations;
+	// Keep command-line builds predictable; interactive editing starts by asking
+	// which installed preset the user wants to change.
+	const preset =
+		values.preset ??
+		(!hasBuildInput && !values.clean && !values.out
+			? await pickPreset()
+			: "shuika");
 	const sourcePath = resolve(
 		projectRoot,
 		values.source ?? `scripts/data/${preset}.json`,
@@ -972,8 +1062,6 @@ async function main() {
 		return;
 	}
 
-	const fromLine = values["from-line"];
-	const hasBuildInput = fromLine || values.id || values.stations;
 	if (!hasBuildInput) {
 		await runMenu(preset, sourcePath, out, yes);
 		return;

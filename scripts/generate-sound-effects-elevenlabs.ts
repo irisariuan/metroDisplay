@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import "dotenv/config";
 import inquirer from "inquirer";
 import { SOUND_EFFECTS, soundEffectKey } from "../lib/soundEffects";
+import { searchableCheckbox } from "./lib/searchable-checkbox";
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const effectsRoot = join(projectRoot, "public/audio/effects");
@@ -62,21 +63,24 @@ async function main() {
 		await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 	}
 
-	const { selectedEffects, onlyMissing } = await inquirer.prompt<{
-		selectedEffects: string[];
-		onlyMissing: boolean;
-	}>([
-		{
-			type: "checkbox",
-			name: "selectedEffects",
-			message: "Choose sound effects to generate:",
-			choices: SOUND_EFFECTS.map((effect) => ({
-				name: `${effect.label} · ${effect.description}`,
-				value: effect.id,
-				checked: true,
-			})),
-			pageSize: 16,
-		},
+	const selectedEffects = await searchableCheckbox({
+		message: "Choose sound effects to generate:",
+		choices: SOUND_EFFECTS.map((effect) => ({
+			name: `${effect.label} · ${effect.description}`,
+			value: effect.id,
+			searchTerms: [
+				effect.id,
+				soundEffectKey(effect.id),
+				effect.label,
+				effect.description,
+				effect.prompt,
+				"sound effect",
+			],
+			checked: true,
+		})),
+		pageSize: 16,
+	});
+	const { onlyMissing } = await inquirer.prompt<{ onlyMissing: boolean }>([
 		{
 			type: "confirm",
 			name: "onlyMissing",
