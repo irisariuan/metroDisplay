@@ -40,6 +40,22 @@ export interface AnnouncementQueue {
 /** How many past auto sequences stay deduplicated before the oldest is dropped. */
 const PLAYED_HISTORY_LIMIT = 64;
 
+/** Preload resilience: a transient failure to fetch the manifest or decode a
+ * clip shouldn't silently disable audio for the rest of the session. */
+const MANIFEST_MAX_ATTEMPTS = 5;
+const PRELOAD_MAX_ATTEMPTS = 3;
+const PRELOAD_RETRY_MS = 1500;
+/** Lead time before the first clip of a sequence sounds, so every clip's start
+ * is scheduled on the audio clock before playback begins (keeps it gapless). */
+const SCHEDULE_LEAD_S = 0.06;
+
+interface DecodeEntry {
+	buffer: AudioBuffer | null;
+	attempts: number;
+	/** In-flight decode, shared by concurrent callers; null once settled. */
+	promise: Promise<AudioBuffer | null> | null;
+}
+
 interface PendingSequence {
 	keys: string[];
 	onPlaybackChange?: (playing: boolean) => void;
@@ -72,11 +88,11 @@ export const AnnouncementAudio = React.forwardRef<
 	},
 	ref,
 ) {
-	const audioRef = React.useRef<HTMLAudioElement>(null);
 	const [manifest, setManifest] = React.useState<AnnouncementManifest | null>(null);
 	const pendingSequences = React.useRef<PendingSequence[]>([]);
 	const queueGeneration = React.useRef(0);
 	const activeGeneration = React.useRef<number | null>(null);
+	// Interrupts whatever is sounding now (used by stop() and playKeys()).
 	const finishCurrentClip = React.useRef<(() => void) | null>(null);
 	// Insertion-ordered history of auto sequences already played. Kept as a
 	// bounded backlog rather than pruned to the currently active ids, so an id
@@ -84,31 +100,97 @@ export const AnnouncementAudio = React.forwardRef<
 	const playedAutoSequenceIds = React.useRef(new Set<string>());
 	// Remaining keys of the sequence being drained; index 0 is the audible clip.
 	const activeClipKeys = React.useRef<string[]>([]);
-	// Warmed clips, keyed by URL, so a clip about to play is already in the
-	// browser cache and starts without a network round-trip. Kept in a ref so
-	// the elements survive re-renders and are not garbage collected.
-	const preloadedClips = React.useRef(new Map<string, HTMLAudioElement>());
+	// Web Audio graph: one shared context + a gain node carrying volume. Created
+	// lazily on the client at first use, so there is nothing to build during SSR.
+	const audioCtxRef = React.useRef<AudioContext | null>(null);
+	const gainRef = React.useRef<GainNode | null>(null);
+	const volumeRef = React.useRef(volume);
+	// Decoded PCM buffers keyed by URL, so a clip about to play is already in
+	// memory and starts sample-accurately — no fetch, no decode. Kept in a ref so
+	// the buffers survive re-renders and are not garbage collected.
+	const buffersRef = React.useRef(new Map<string, DecodeEntry>());
 	// Held in refs so publishing the queue never re-creates the drain loop.
 	const queueListener = React.useRef(onQueueChange);
 	const clipResolver = React.useRef({ manifest, overrides });
 	queueListener.current = onQueueChange;
 	clipResolver.current = { manifest, overrides };
 
-	// Warm the browser cache for the given keys so playback is instant. Each
-	// unique URL is fetched once via a detached <audio preload="auto">.
-	const preloadKeys = React.useCallback((keys: string[]) => {
-		if (typeof Audio === "undefined") return;
-		const { manifest: current, overrides: currentOverrides } =
-			clipResolver.current;
-		for (const key of keys) {
-			const url = currentOverrides[key] ?? current?.clips[key]?.url;
-			if (!url || preloadedClips.current.has(url)) continue;
-			const clip = new Audio();
-			clip.preload = "auto";
-			clip.src = url;
-			preloadedClips.current.set(url, clip);
+	const ensureContext = React.useCallback((): AudioContext | null => {
+		if (typeof window === "undefined") return null;
+		if (!audioCtxRef.current) {
+			const Ctor =
+				window.AudioContext ??
+				(window as unknown as { webkitAudioContext?: typeof AudioContext })
+					.webkitAudioContext;
+			if (!Ctor) return null;
+			const ctx = new Ctor();
+			const gain = ctx.createGain();
+			gain.gain.value = Math.min(1, Math.max(0, volumeRef.current));
+			gain.connect(ctx.destination);
+			audioCtxRef.current = ctx;
+			gainRef.current = gain;
 		}
+		return audioCtxRef.current;
 	}, []);
+
+	// Fetch + decode one clip URL into an in-memory AudioBuffer. Concurrent
+	// callers share the in-flight decode; a failure retries in the background
+	// (up to PRELOAD_MAX_ATTEMPTS) so a transient blip self-heals instead of
+	// disabling that clip for the session. A caller awaiting a failed decode
+	// gets null and simply skips the clip for now.
+	const decodeUrl = React.useCallback(
+		function decode(url: string): Promise<AudioBuffer | null> {
+			const ctx = ensureContext();
+			if (!ctx) return Promise.resolve(null);
+			let entry = buffersRef.current.get(url);
+			if (entry?.buffer) return Promise.resolve(entry.buffer);
+			if (entry?.promise) return entry.promise;
+			if (!entry) {
+				entry = { buffer: null, attempts: 0, promise: null };
+				buffersRef.current.set(url, entry);
+			}
+			if (entry.attempts >= PRELOAD_MAX_ATTEMPTS) return Promise.resolve(null);
+			entry.attempts += 1;
+			const attemptNo = entry.attempts;
+			const settled = entry;
+			const promise = fetch(url)
+				.then((response) => {
+					if (!response.ok) throw new Error("clip fetch failed");
+					return response.arrayBuffer();
+				})
+				.then((raw) => ctx.decodeAudioData(raw))
+				.then((decoded) => {
+					settled.buffer = decoded;
+					settled.promise = null;
+					return decoded;
+				})
+				.catch(() => {
+					settled.promise = null;
+					if (attemptNo < PRELOAD_MAX_ATTEMPTS)
+						setTimeout(() => {
+							const current = buffersRef.current.get(url);
+							if (current && !current.buffer) void decode(url);
+						}, PRELOAD_RETRY_MS);
+					return null;
+				});
+			entry.promise = promise;
+			return promise;
+		},
+		[ensureContext],
+	);
+
+	// Decode every resolvable key into memory ahead of playback.
+	const preloadKeys = React.useCallback(
+		(keys: string[]) => {
+			const { manifest: current, overrides: currentOverrides } =
+				clipResolver.current;
+			for (const key of keys) {
+				const url = currentOverrides[key] ?? current?.clips[key]?.url;
+				if (url) void decodeUrl(url);
+			}
+		},
+		[decodeUrl],
+	);
 
 	const publishQueue = React.useCallback(() => {
 		const listener = queueListener.current;
@@ -128,27 +210,118 @@ export const AnnouncementAudio = React.forwardRef<
 
 	React.useEffect(() => {
 		let active = true;
-		void fetch("/audio/manifest.json")
-			.then((response) => {
-				if (!response.ok) throw new Error("Announcement manifest unavailable");
-				return response.json() as Promise<AnnouncementManifest>;
-			})
-			.then((nextManifest) => {
-				if (active) setManifest(nextManifest);
-			})
-			.catch(() => {
-				if (active) setManifest({ clips: {} });
-			});
+		let attempt = 0;
+		let retryTimer: ReturnType<typeof setTimeout> | null = null;
+		const load = () => {
+			void fetch("/audio/manifest.json")
+				.then((response) => {
+					if (!response.ok)
+						throw new Error("Announcement manifest unavailable");
+					return response.json() as Promise<AnnouncementManifest>;
+				})
+				.then((nextManifest) => {
+					if (active) setManifest(nextManifest);
+				})
+				.catch(() => {
+					if (!active) return;
+					attempt += 1;
+					// Retry with backoff — a single failed fetch would otherwise
+					// leave an empty manifest and disable audio for the whole
+					// session. Give up gracefully only after several attempts.
+					if (attempt < MANIFEST_MAX_ATTEMPTS)
+						retryTimer = setTimeout(load, Math.min(8000, 500 * 2 ** attempt));
+					else setManifest({ clips: {} });
+				});
+		};
+		load();
 		return () => {
 			active = false;
+			if (retryTimer) clearTimeout(retryTimer);
 		};
 	}, []);
 
+	// Play one sequence's clips back-to-back on the audio clock so a multi-part
+	// announcement (station name + number parts) has no seam between clips. All
+	// buffers are decoded first, then every clip is scheduled ahead of time; the
+	// returned promise resolves when the last clip ends or the sequence is
+	// interrupted (stop()/playKeys() call finishCurrentClip).
+	const playSequence = React.useCallback(
+		async (
+			clips: { key: string; url: string }[],
+			generation: number,
+		): Promise<void> => {
+			const ctx = ensureContext();
+			const gain = gainRef.current;
+			if (!ctx || !gain) return;
+			// A suspended context (no user gesture yet) can't play; try to resume
+			// and, if it stays suspended, skip rather than hang forever.
+			if (ctx.state === "suspended") {
+				try {
+					await ctx.resume();
+				} catch {
+					/* needs a user gesture; skip */
+				}
+			}
+			if (ctx.state !== "running" || generation !== queueGeneration.current)
+				return;
+			const buffers = await Promise.all(
+				clips.map((clip) => decodeUrl(clip.url)),
+			);
+			if (generation !== queueGeneration.current) return;
+			const ready = clips
+				.map((clip, index) => ({ key: clip.key, buffer: buffers[index] }))
+				.filter(
+					(clip): clip is { key: string; buffer: AudioBuffer } =>
+						clip.buffer !== null,
+				);
+			if (!ready.length) return;
+			activeClipKeys.current = ready.map((clip) => clip.key);
+			publishQueue();
+			const sources: AudioBufferSourceNode[] = [];
+			await new Promise<void>((resolve) => {
+				let done = false;
+				const finish = () => {
+					if (done) return;
+					done = true;
+					for (const source of sources) {
+						source.onended = null;
+						try {
+							source.stop();
+						} catch {
+							/* already stopped */
+						}
+						source.disconnect();
+					}
+					if (finishCurrentClip.current === finish)
+						finishCurrentClip.current = null;
+					resolve();
+				};
+				finishCurrentClip.current = finish;
+				let when = ctx.currentTime + SCHEDULE_LEAD_S;
+				ready.forEach((clip, index) => {
+					const source = ctx.createBufferSource();
+					source.buffer = clip.buffer;
+					source.connect(gain);
+					source.onended = () => {
+						if (done) return;
+						// This clip left the "now playing" slot; the next is
+						// already sounding thanks to the ahead-of-time schedule.
+						activeClipKeys.current = activeClipKeys.current.slice(1);
+						publishQueue();
+						if (index === ready.length - 1) finish();
+					};
+					source.start(when);
+					when += clip.buffer.duration;
+					sources.push(source);
+				});
+			});
+		},
+		[decodeUrl, ensureContext, publishQueue],
+	);
+
 	const drainQueue = React.useCallback(
 		async (generation: number) => {
-			const audio = audioRef.current;
-			if (!audio || !manifest || activeGeneration.current === generation)
-				return;
+			if (!manifest || activeGeneration.current === generation) return;
 			activeGeneration.current = generation;
 
 			while (
@@ -160,30 +333,7 @@ export const AnnouncementAudio = React.forwardRef<
 				const { keys, onPlaybackChange } = pending;
 				const clips = playableKeys(keys, overrides, manifest);
 				if (clips.length) onPlaybackChange?.(true);
-				activeClipKeys.current = clips.map((clip) => clip.key);
-				for (const { url } of clips) {
-					if (generation !== queueGeneration.current) break;
-					publishQueue();
-					audio.src = url;
-					audio.currentTime = 0;
-					await new Promise<void>((resolve) => {
-						let finished = false;
-						const finish = () => {
-							if (finished) return;
-							finished = true;
-							audio.removeEventListener("ended", finish);
-							audio.removeEventListener("error", finish);
-							if (finishCurrentClip.current === finish)
-								finishCurrentClip.current = null;
-							resolve();
-						};
-						finishCurrentClip.current = finish;
-						audio.addEventListener("ended", finish, { once: true });
-						audio.addEventListener("error", finish, { once: true });
-						void audio.play().catch(finish);
-					});
-					activeClipKeys.current = activeClipKeys.current.slice(1);
-				}
+				await playSequence(clips, generation);
 				activeClipKeys.current = [];
 				onPlaybackChange?.(false);
 				publishQueue();
@@ -191,7 +341,7 @@ export const AnnouncementAudio = React.forwardRef<
 			if (activeGeneration.current === generation)
 				activeGeneration.current = null;
 		},
-		[manifest, overrides, publishQueue],
+		[manifest, overrides, playSequence, publishQueue],
 	);
 
 	const enqueueKeys = React.useCallback(
@@ -214,7 +364,6 @@ export const AnnouncementAudio = React.forwardRef<
 			pendingSequences.current = [{ keys }];
 			activeClipKeys.current = [];
 			publishQueue();
-			audioRef.current?.pause();
 			finishCurrentClip.current?.();
 			await drainQueue(generation);
 		},
@@ -225,7 +374,6 @@ export const AnnouncementAudio = React.forwardRef<
 		queueGeneration.current += 1;
 		pendingSequences.current = [];
 		activeClipKeys.current = [];
-		audioRef.current?.pause();
 		finishCurrentClip.current?.();
 		publishQueue();
 	}, [publishQueue]);
@@ -276,9 +424,40 @@ export const AnnouncementAudio = React.forwardRef<
 	}, [autoSequences, manifest, preloadKeys]);
 
 	React.useEffect(() => {
-		if (audioRef.current)
-			audioRef.current.volume = Math.min(1, Math.max(0, volume));
+		volumeRef.current = volume;
+		if (gainRef.current)
+			gainRef.current.gain.value = Math.min(1, Math.max(0, volume));
 	}, [volume]);
 
-	return <audio ref={audioRef} preload="auto" />;
+	// Browsers start an AudioContext suspended until a user gesture. Resume on
+	// the first interaction (and any later one, in case the OS re-suspends it)
+	// so announcements can sound.
+	React.useEffect(() => {
+		const unlock = () => {
+			const ctx = audioCtxRef.current;
+			if (ctx && ctx.state === "suspended") void ctx.resume();
+		};
+		const options: AddEventListenerOptions = { passive: true };
+		window.addEventListener("pointerdown", unlock, options);
+		window.addEventListener("keydown", unlock, options);
+		window.addEventListener("touchstart", unlock, options);
+		return () => {
+			window.removeEventListener("pointerdown", unlock);
+			window.removeEventListener("keydown", unlock);
+			window.removeEventListener("touchstart", unlock);
+		};
+	}, []);
+
+	// Release the audio context when this surface unmounts.
+	React.useEffect(
+		() => () => {
+			void audioCtxRef.current?.close();
+			audioCtxRef.current = null;
+			gainRef.current = null;
+		},
+		[],
+	);
+
+	// Nothing to render: playback is driven entirely through the Web Audio graph.
+	return null;
 });

@@ -24,7 +24,6 @@ type Send = (message: ControlToDisplay) => void;
 export function buildRemoteContext(
 	snapshot: RemoteSnapshot,
 	send: Send,
-	stopAnnouncementAudio: () => void,
 ): SimulatorControlsContext {
 	const availableClipKeys = new Set(snapshot.availableClipKeys);
 	// The control device never holds the uploaded blob URLs; it only needs to
@@ -60,7 +59,8 @@ export function buildRemoteContext(
 				}),
 			);
 		},
-		stopAnnouncementAudio,
+		// Fire-and-forget like every other remote command: one message, no ack.
+		stopAnnouncementAudio: () => send({ k: "stop-audio" }),
 		isAudioClipAvailable: (key: string) => availableClipKeys.has(key),
 		audioQueue: snapshot.audioQueue,
 	} as SimulatorControlsContext;

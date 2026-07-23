@@ -32,7 +32,6 @@ export default function DisplayPage() {
 	// ref asynchronously (on inbound WS messages), so keeping it in sync via an
 	// effect — never writing it during render — is both correct and sufficient.
 	const engineRef = useRef(engine);
-	const processedStopIdsRef = useRef(new Set<string>());
 	useEffect(() => {
 		engineRef.current = engine;
 	});
@@ -53,21 +52,11 @@ export default function DisplayPage() {
 					} satisfies DisplayToControl);
 					return;
 				}
-				if (message.k === "stop-audio") {
-					if (!processedStopIdsRef.current.has(message.commandId)) {
-						processedStopIdsRef.current.add(message.commandId);
-						applyToEngine(engineRef.current, message);
-					}
-					send({
-						k: "ack",
-						commandId: message.commandId,
-					} satisfies DisplayToControl);
-					return;
-				}
 				if (
 					message.k === "action" ||
 					message.k === "cmd" ||
-					message.k === "upload"
+					message.k === "upload" ||
+					message.k === "stop-audio"
 				)
 					applyToEngine(engineRef.current, message);
 			}),
@@ -79,14 +68,21 @@ export default function DisplayPage() {
 	// `snapshot`) is a fresh object every render, so it can't be a dependency
 	// without defeating the dedupe — reparsing `json` inside the effect gives
 	// an equivalent value without that churn.
-	const json = JSON.stringify(buildSnapshot(engine));
+	// Only serialise while a control device is actually attached — the engine
+	// re-renders on every journey tick (~20×/s while travelling), and building
+	// + stringifying the whole snapshot each time is pure waste when nobody is
+	// paired to receive it.
+	const json =
+		conn.status === "connected"
+			? JSON.stringify(buildSnapshot(engine))
+			: null;
 	useEffect(() => {
-		if (conn.status !== "connected") return;
+		if (json === null) return;
 		send({
 			k: "snapshot",
 			snapshot: JSON.parse(json),
 		} satisfies DisplayToControl);
-	}, [json, conn.status, send]);
+	}, [json, send]);
 
 	return (
 		<main className="relative z-1 mx-auto max-w-screen px-5.5 pt-6.5 pb-10">

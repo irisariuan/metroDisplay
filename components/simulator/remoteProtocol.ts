@@ -5,7 +5,7 @@
  * turns every interaction into a message the display applies to the real state.
  *
  *   control -> display : action | cmd | stop-audio | upload | hello
- *   display -> control : snapshot | ack
+ *   display -> control : snapshot
  *
  * Reducer `set`/`updateAnnouncement` actions may carry functional updaters
  * (React.SetStateAction). Those can't cross the wire, so the control side
@@ -21,7 +21,7 @@ import type { EditableRoute, Station } from "@/types/metro";
 
 /** Context command callbacks that take only JSON-serialisable arguments and so
  * can be invoked remotely by name. Uploads have their own binary-safe message;
- * stop audio has its own acknowledged, retryable message. */
+ * stop audio has its own message (it takes no arguments). */
 export const REMOTE_COMMANDS = [
 	"addService",
 	"removeService",
@@ -73,12 +73,10 @@ export type ControlToDisplay =
 	| { k: "hello" }
 	| { k: "action"; action: SimulatorControlAction }
 	| { k: "cmd"; name: RemoteCommandName; args: unknown[] }
-	| { k: "stop-audio"; commandId: string }
+	| { k: "stop-audio" }
 	| { k: "upload"; key: string; filename: string; mime: string; dataB64: string };
 
-export type DisplayToControl =
-	| { k: "snapshot"; snapshot: RemoteSnapshot }
-	| { k: "ack"; commandId: string };
+export type DisplayToControl = { k: "snapshot"; snapshot: RemoteSnapshot };
 
 export type RemoteMessage = ControlToDisplay | DisplayToControl;
 

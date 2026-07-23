@@ -17,19 +17,7 @@ import type {
 	RemoteSnapshot,
 } from "@/components/simulator/remoteProtocol";
 
-const { useCallback, useEffect, useMemo, useRef, useState } = React;
-
-const STOP_RETRY_MS = 400;
-let stopCommandSequence = 0;
-
-function createStopCommandId(): string {
-	stopCommandSequence += 1;
-	const randomPart =
-		typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-			? crypto.randomUUID()
-			: Math.random().toString(36).slice(2);
-	return `${Date.now().toString(36)}-${stopCommandSequence.toString(36)}-${randomPart}`;
-}
+const { useEffect, useMemo, useRef, useState } = React;
 
 function RoomEntry() {
 	const [code, setCode] = useState("");
@@ -75,55 +63,18 @@ export default function ControlPage() {
 	const { snapshot: conn, send, onMessage } = useRoomTransport(room, "guest");
 	const [snap, setSnap] = useState<RemoteSnapshot | null>(null);
 	const snapRef = useRef<RemoteSnapshot | null>(null);
-	const pendingStopsRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 	useEffect(() => {
 		snapRef.current = snap;
 	});
-
-	const clearPendingStop = useCallback((commandId: string) => {
-		const timer = pendingStopsRef.current.get(commandId);
-		if (timer !== undefined) clearTimeout(timer);
-		pendingStopsRef.current.delete(commandId);
-	}, []);
-
-	const transmitStop = useCallback(
-		function retry(commandId: string) {
-			send({ k: "stop-audio", commandId });
-			const timer = setTimeout(() => retry(commandId), STOP_RETRY_MS);
-			pendingStopsRef.current.set(commandId, timer);
-		},
-		[send],
-	);
-
-	const stopAnnouncementAudio = useCallback(() => {
-		const commandId = createStopCommandId();
-		transmitStop(commandId);
-	}, [transmitStop]);
-
-	useEffect(
-		() => () => {
-			for (const timer of pendingStopsRef.current.values()) clearTimeout(timer);
-			pendingStopsRef.current.clear();
-		},
-		[],
-	);
 
 	useEffect(
 		() =>
 			onMessage((raw) => {
 				const message = raw as DisplayToControl;
 				if (!message || typeof message !== "object") return;
-				if (message.k === "ack") {
-					clearPendingStop(message.commandId);
-					return;
-				}
-				if (
-					message &&
-					message.k === "snapshot"
-				)
-					setSnap(message.snapshot);
+				if (message.k === "snapshot") setSnap(message.snapshot);
 			}),
-		[clearPendingStop, onMessage],
+		[onMessage],
 	);
 
 	// Announce ourselves each time the link comes up so the display replies with
@@ -141,11 +92,8 @@ export default function ControlPage() {
 		[send],
 	);
 	const context = useMemo(
-		() =>
-			snap
-				? buildRemoteContext(snap, send, stopAnnouncementAudio)
-				: null,
-		[snap, send, stopAnnouncementAudio],
+		() => (snap ? buildRemoteContext(snap, send) : null),
+		[snap, send],
 	);
 
 	if (!room) return <RoomEntry />;

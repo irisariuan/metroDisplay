@@ -15,19 +15,21 @@
  */
 import { createServer } from "node:http";
 import next from "next";
-import { WebSocketServer, type WebSocket } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 
 const dev = process.env.NODE_ENV !== "production";
 const pI = process.argv.findIndex((v) => v === "--port");
+// `Number(undefined)` is NaN, and `NaN ?? 3000` is still NaN (?? only catches
+// null/undefined) — so the intended 3000 default needs `||`, which does fall
+// through on NaN.
 const port =
-	Number(pI !== -1 ? process.argv[pI + 1] : process.env.PORT) ?? 3000;
+	Number(pI !== -1 ? process.argv[pI + 1] : process.env.PORT) || 3000;
 
 const app = next({ dev, turbopack: dev });
 const handle = app.getRequestHandler();
 
 // ——— room relay ————————————————————————————————————————————————
 const rooms = new Map<string, Set<WebSocket>>();
-const roomOf = new Map<WebSocket, string>();
 
 function roomMembers(room: string): Set<WebSocket> {
 	let set = rooms.get(room);
@@ -42,7 +44,8 @@ function broadcastPeerCount(room: string): void {
 	const members = rooms.get(room);
 	if (!members) return;
 	const message = JSON.stringify({ t: "peers", count: members.size });
-	for (const socket of members) socket.send(message);
+	for (const socket of members)
+		if (socket.readyState === WebSocket.OPEN) socket.send(message);
 }
 
 const wss = new WebSocketServer({ noServer: true });
@@ -51,17 +54,22 @@ wss.on("connection", (ws: WebSocket, room: string) => {
 	roomMembers(room).add(ws);
 	broadcastPeerCount(room);
 
+	// Without an 'error' listener a socket-level error (e.g. an abrupt reset)
+	// surfaces as an unhandled 'error' event and takes down the whole server —
+	// including the Next app this process hosts. Drop the peer instead.
+	ws.on("error", () => ws.close());
+
 	ws.on("message", (data, isBinary) => {
 		const members = rooms.get(room);
 		if (!members) return;
 		for (const socket of members) {
-			if (socket !== ws) socket.send(data, { binary: isBinary });
+			if (socket !== ws && socket.readyState === WebSocket.OPEN)
+				socket.send(data, { binary: isBinary });
 		}
 	});
 
 	ws.on("close", () => {
 		const members = rooms.get(room);
-		roomOf.delete(ws);
 		if (!members) return;
 		members.delete(ws);
 		if (members.size === 0) rooms.delete(room);
@@ -91,7 +99,6 @@ app.prepare().then(() => {
 				return;
 			}
 			wss.handleUpgrade(req, socket, head, (ws) => {
-				roomOf.set(ws, room);
 				wss.emit("connection", ws, room);
 			});
 			return;
