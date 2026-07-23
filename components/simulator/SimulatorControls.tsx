@@ -77,56 +77,54 @@ function AudioClipControl({
 	);
 }
 
+export interface SimulatorControlsContext {
+	route: EditableRoute;
+	hasCurrentTransfers: boolean;
+	transferExpanded: boolean;
+	currentStation: Station;
+	announcementAudioOverrides: Record<string, string>;
+	addService: () => void;
+	removeService: (id: string) => void;
+	setServiceField: (id: string, field: "ja" | "en", value: string) => void;
+	toggleServiceStop: (index: number) => void;
+	addLine: () => void;
+	presets: SimulatorPreset[];
+	marqueePresets: CustomMarqueePreset[];
+	pickPreset: (presetId: SimulatorPresetId) => void;
+	addPreset: () => void;
+	setPresetLabel: (label: string) => void;
+	togglePresetLine: (lineId: LineId) => void;
+	pickMarqueePreset: (presetId: string) => void;
+	pickLine: (lineId: LineId) => void;
+	setLineField: (field: LineEditorField, value: string) => void;
+	setStationField: (
+		index: number,
+		field: EditableStationField,
+		value: string | number,
+	) => void;
+	toggleSide: (index: number) => void;
+	toggleMajorStation: (index: number) => void;
+	toggleXfer: (index: number, lineId: LineId) => void;
+	addStation: () => void;
+	removeStation: (index: number) => void;
+	moveStation: (index: number, direction: number) => void;
+	setDest: (field: RouteDestinationField, value: string) => void;
+	toggleCircular: () => void;
+	advance: (direction: number) => void;
+	clearAlert: () => void;
+	uploadAnnouncementAudio: (key: string, file: File) => void;
+	playAnnouncementKeys: (keys: string[]) => void;
+	playCurrentAnnouncement: (language: "ja" | "en") => void;
+	playDepartureAnnouncement: (language: "ja" | "en") => void;
+	stopAnnouncementAudio: () => void;
+	isAudioClipAvailable: (key: string) => boolean;
+	audioQueue: { current: string | null; pending: string[] };
+}
+
 interface SimulatorControlsProps {
 	state: SimulatorControlState;
 	dispatch: React.Dispatch<SimulatorControlAction>;
-	context: {
-		route: EditableRoute;
-		hasCurrentTransfers: boolean;
-		transferExpanded: boolean;
-		currentStation: Station;
-		announcementAudioOverrides: Record<string, string>;
-		addService: () => void;
-		removeService: (id: string) => void;
-		setServiceField: (
-			id: string,
-			field: "ja" | "en",
-			value: string,
-		) => void;
-		toggleServiceStop: (index: number) => void;
-		addLine: () => void;
-		presets: SimulatorPreset[];
-		marqueePresets: CustomMarqueePreset[];
-		pickPreset: (presetId: SimulatorPresetId) => void;
-		addPreset: () => void;
-		setPresetLabel: (label: string) => void;
-		togglePresetLine: (lineId: LineId) => void;
-		pickMarqueePreset: (presetId: string) => void;
-		pickLine: (lineId: LineId) => void;
-		setLineField: (field: LineEditorField, value: string) => void;
-		setStationField: (
-			index: number,
-			field: EditableStationField,
-			value: string | number,
-		) => void;
-		toggleSide: (index: number) => void;
-		toggleMajorStation: (index: number) => void;
-		toggleXfer: (index: number, lineId: LineId) => void;
-		addStation: () => void;
-		removeStation: (index: number) => void;
-		moveStation: (index: number, direction: number) => void;
-		setDest: (field: RouteDestinationField, value: string) => void;
-		toggleCircular: () => void;
-		advance: (direction: number) => void;
-		clearAlert: () => void;
-		uploadAnnouncementAudio: (key: string, file: File) => void;
-		playAnnouncementKeys: (keys: string[]) => void;
-		playCurrentAnnouncement: (language: "ja" | "en") => void;
-		playDepartureAnnouncement: (language: "ja" | "en") => void;
-		stopAnnouncementAudio: () => void;
-		isAudioClipAvailable: (key: string) => boolean;
-		audioQueue: { current: string | null; pending: string[] };
-	};
+	context: SimulatorControlsContext;
 }
 
 // The simulator engine owns state; this component owns its complete control surface.

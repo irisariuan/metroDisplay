@@ -527,6 +527,13 @@ export function useSimulatorAnnouncements({
 			onQueueChange: setAudioQueue,
 		},
 		isAudioClipAvailable,
+		// The static set of clips the manifest exposes (upload overrides aside).
+		// Surfaced so the split-mode control device can mirror clip availability
+		// without mounting the audio element itself.
+		manifestClipKeys: React.useMemo(
+			() => Array.from(manifestClipKeys),
+			[manifestClipKeys],
+		),
 		audioQueue,
 		tickerItems,
 		playAnnouncementKeys: (keys: string[]) =>

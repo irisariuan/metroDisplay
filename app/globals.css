@@ -72,18 +72,20 @@
 	--animate-next-station-ring: nextStationRing 1.4s ease-in-out infinite;
 	--animate-bob: bob 2.4s ease-in-out infinite;
 	--animate-chev: chev 1.4s ease-in-out infinite;
-	--animate-door-notice-left-loop: doorNoticeLeftLoop 2.4s ease-in-out infinite;
-	--animate-door-notice-right-loop: doorNoticeRightLoop 2.4s ease-in-out infinite;
+	--animate-door-notice-left-loop: doorNoticeLeftLoop 2.4s ease-in-out
+		infinite;
+	--animate-door-notice-right-loop: doorNoticeRightLoop 2.4s ease-in-out
+		infinite;
 
 	/* additional fixed-duration animations used by components/display/*.tsx —
 	   distinct names from the ones above because those already carry a
 	   different fixed duration used elsewhere. */
-	--animate-chev-fast: chev .9s ease-in-out infinite;
-	--animate-bob-fast: bob .8s ease-in-out infinite;
-	--animate-door-notice-left-in: doorNoticeLeftIn .32s ease-out both;
-	--animate-door-notice-left-out: doorNoticeLeftOut .32s ease-out both;
-	--animate-door-notice-right-in: doorNoticeRightIn .32s ease-out both;
-	--animate-door-notice-right-out: doorNoticeRightOut .32s ease-out both;
+	--animate-chev-fast: chev 0.9s ease-in-out infinite;
+	--animate-bob-fast: bob 0.8s ease-in-out infinite;
+	--animate-door-notice-left-in: doorNoticeLeftIn 0.32s ease-out both;
+	--animate-door-notice-left-out: doorNoticeLeftOut 0.32s ease-out both;
+	--animate-door-notice-right-in: doorNoticeRightIn 0.32s ease-out both;
+	--animate-door-notice-right-out: doorNoticeRightOut 0.32s ease-out both;
 	--animate-xfmove: xfmove 12s linear infinite;
 }
 
@@ -184,8 +186,8 @@ a:hover {
 	position: fixed;
 	inset: 0;
 	background:
-		radial-gradient(rgba(255, 255, 255, 0.05) 1.4px, transparent 1.5px) 0 0 /
-			16px 16px,
+		radial-gradient(rgba(255, 255, 255, 0.05) 1.4px, transparent 1.5px) 0
+			0 / 16px 16px,
 		linear-gradient(135deg, #141420, #0b0b12);
 	z-index: 0;
 }
@@ -501,7 +503,6 @@ a:hover {
 }
 .switch-range {
 	appearance: none;
-	width: 220px;
 	height: 26px;
 	margin: 0;
 	cursor: pointer;
