@@ -506,6 +506,7 @@ a:hover {
 .switch-range {
 	appearance: none;
 	height: 26px;
+	min-width: 280;
 	margin: 0;
 	cursor: pointer;
 	background: transparent;

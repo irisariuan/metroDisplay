@@ -1474,7 +1474,7 @@ export function SimulatorControls({
 							</button>
 							<button
 								className="lc-btn"
-								onClick={clearAlert}
+								onClick={() => clearAlert()}
 								disabled={!alertActive || alertLeaving}
 								style={{
 									padding: "9px 12px",

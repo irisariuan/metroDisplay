@@ -33,7 +33,7 @@ export function LowerInfoBar({
 		? "100%"
 		: hasTransfers
 			? "20%"
-			: "10%";
+			: "15%";
 
 	return (
 		<div className="relative flex h-19 items-stretch gap-0 overflow-hidden border-t-3 border-t-ink">
