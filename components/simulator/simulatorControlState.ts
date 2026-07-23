@@ -62,6 +62,9 @@ export interface SimulatorControlState {
 	showEditor: boolean;
 	transferDisplayMode: TransferDisplayMode;
 	announcementAudioEnabled: boolean;
+	/** When on, automatic announcements interrupt user-triggered audio; when off
+	 * they wait behind it in the queue. */
+	autoAnnouncementsInterrupt: boolean;
 	announceStationNumberJa: boolean;
 	announceStationNumberEn: boolean;
 	announcementVolume: number;
@@ -139,6 +142,7 @@ export const initialSimulatorControlState: SimulatorControlState = {
 	showEditor: false,
 	transferDisplayMode: "auto",
 	announcementAudioEnabled: true,
+	autoAnnouncementsInterrupt: true,
 	announceStationNumberJa: false,
 	announceStationNumberEn: false,
 	announcementVolume: 0.8,
@@ -198,7 +202,6 @@ export function simulatorControlReducer(
 				en: "New metro notice",
 				ja: "",
 				enabled: true,
-				displayable: true,
 			},
 		],
 	};

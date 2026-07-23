@@ -15,6 +15,7 @@ import type {
 	SimulatorControlState,
 } from "@/components/simulator/simulatorControlState";
 import type { SimulatorEngine } from "@/components/simulator/useSimulatorEngine";
+import type { AnnouncementQueue } from "@/components/simulator/AnnouncementAudio";
 import type { CustomMarqueePreset } from "@/components/simulator/simulatorControlState";
 import type { SimulatorPreset } from "@/lib/metro-data";
 import type { EditableRoute, Station } from "@/types/metro";
@@ -47,6 +48,7 @@ export const REMOTE_COMMANDS = [
 	"advance",
 	"clearAlert",
 	"playAnnouncementKeys",
+	"reorderAnnouncementQueue",
 	"playCurrentAnnouncement",
 	"playDepartureAnnouncement",
 ] as const;
@@ -65,7 +67,7 @@ export interface RemoteSnapshot {
 	overrideKeys: string[];
 	/** clip keys that are playable (manifest ∪ overrides) */
 	availableClipKeys: string[];
-	audioQueue: { current: string | null; pending: string[] };
+	audioQueue: AnnouncementQueue;
 	status: { phase: string; auto: boolean };
 }
 

@@ -86,6 +86,7 @@ export function useSimulatorEngine() {
 		followDirectionView,
 		transferDisplayMode,
 		announcementAudioEnabled,
+		autoAnnouncementsInterrupt,
 		announceStationNumberJa,
 		announceStationNumberEn,
 		announcementVolume,
@@ -257,8 +258,6 @@ export function useSimulatorEngine() {
 		item: AnnouncementContent,
 		itemLang: Lang,
 	) => {
-		if (!item.displayable)
-			throw new Error("Cannot label a non-displayable announcement");
 		const label =
 			item.type === "ad"
 				? itemLang === "ja"
@@ -275,7 +274,9 @@ export function useSimulatorEngine() {
 				announcements
 					.filter(
 						(item) =>
-							item.enabled && item.en.trim() && item.displayable,
+							item.enabled &&
+							item.en.trim() &&
+							item.type !== "sound",
 					)
 					.map((item) => {
 						if (langMode === "auto") {
@@ -318,6 +319,7 @@ export function useSimulatorEngine() {
 		remainingMarqueeItems,
 		departureMajorStationCount,
 		announcementAudioEnabled,
+		autoAnnouncementsInterrupt,
 		announceStationNumberJa,
 		announceStationNumberEn,
 		announcementVolume,
@@ -971,6 +973,8 @@ export function useSimulatorEngine() {
 		clearAlert,
 		uploadAnnouncementAudio,
 		playAnnouncementKeys: announcementContents.playAnnouncementKeys,
+		reorderAnnouncementQueue:
+			announcementContents.reorderAnnouncementQueue,
 		playCurrentAnnouncement: announcementContents.playCurrentAnnouncement,
 		playDepartureAnnouncement:
 			announcementContents.playDepartureAnnouncement,

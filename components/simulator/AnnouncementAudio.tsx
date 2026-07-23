@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { announcementQueueLabel } from "@/lib/announcementAudio";
 
 interface ManifestClip {
 	url: string;
@@ -10,8 +11,20 @@ interface AnnouncementManifest {
 	clips: Record<string, ManifestClip>;
 }
 
+/** Where a queued sequence came from: a manual control press or the journey. */
+export type AnnouncementSource = "user" | "auto";
+
+export interface PlayKeysOptions {
+	/** Human-readable name shown for this announcement in the queue. */
+	label?: string;
+	/** Notified as this sequence starts (true) and finishes/aborts (false). */
+	onPlaybackChange?: (playing: boolean) => void;
+}
+
 export interface AnnouncementAudioHandle {
-	playKeys: (keys: string[]) => Promise<void>;
+	playKeys: (keys: string[], opts?: PlayKeysOptions) => Promise<void>;
+	/** Move a pending sequence to a new slot in the queue (drag reorder). */
+	moveSequence: (id: string, toIndex: number) => void;
 	stop: () => void;
 }
 
@@ -19,6 +32,7 @@ export interface AutoAudioSequence {
 	id: string;
 	keys: string[];
 	priority?: boolean;
+	label?: string;
 	onPlaybackChange?: (playing: boolean) => void;
 }
 
@@ -26,15 +40,27 @@ interface AnnouncementAudioProps {
 	autoSequences: AutoAudioSequence[];
 	overrides: Record<string, string>;
 	volume: number;
+	/** When false, automatic announcements never cut off user-triggered audio;
+	 * they wait behind it in the queue instead. */
+	autoInterrupts: boolean;
 	/** Reports which clip keys the manifest resolved, once it loads. */
 	onClipKeysChange?: (keys: string[]) => void;
-	/** Reports the clip playing now and everything still waiting behind it. */
+	/** Reports the announcement playing now and everything still queued behind it. */
 	onQueueChange?: (queue: AnnouncementQueue) => void;
 }
 
+/** One whole announcement in the queue — the reorderable unit shown in the UI. */
+export interface AnnouncementQueueItem {
+	id: string;
+	label: string;
+	source: AnnouncementSource;
+	/** How many of its clips actually resolved to a playable URL. */
+	clipCount: number;
+}
+
 export interface AnnouncementQueue {
-	current: string | null;
-	pending: string[];
+	current: AnnouncementQueueItem | null;
+	pending: AnnouncementQueueItem[];
 }
 
 /** How many past auto sequences stay deduplicated before the oldest is dropped. */
@@ -56,8 +82,11 @@ interface DecodeEntry {
 	promise: Promise<AudioBuffer | null> | null;
 }
 
-interface PendingSequence {
+interface QueuedSequence {
+	id: string;
 	keys: string[];
+	source: AnnouncementSource;
+	label: string;
 	onPlaybackChange?: (playing: boolean) => void;
 }
 
@@ -83,23 +112,28 @@ export const AnnouncementAudio = React.forwardRef<
 		autoSequences,
 		overrides,
 		volume,
+		autoInterrupts,
 		onClipKeysChange,
 		onQueueChange,
 	},
 	ref,
 ) {
 	const [manifest, setManifest] = React.useState<AnnouncementManifest | null>(null);
-	const pendingSequences = React.useRef<PendingSequence[]>([]);
+	const pendingSequences = React.useRef<QueuedSequence[]>([]);
 	const queueGeneration = React.useRef(0);
 	const activeGeneration = React.useRef<number | null>(null);
-	// Interrupts whatever is sounding now (used by stop() and playKeys()).
+	// Interrupts whatever is sounding now (used by stop() and interruptWith()).
 	const finishCurrentClip = React.useRef<(() => void) | null>(null);
+	// The sequence draining right now, or null while the queue is idle. Held in a
+	// ref so publishing the queue and computing "is user audio active" never
+	// depends on a re-render.
+	const activeSequence = React.useRef<QueuedSequence | null>(null);
+	// Monotonic id source for queued sequences (stable across reorders).
+	const sequenceCounter = React.useRef(0);
 	// Insertion-ordered history of auto sequences already played. Kept as a
 	// bounded backlog rather than pruned to the currently active ids, so an id
 	// that briefly leaves `autoSequences` and returns is never played twice.
 	const playedAutoSequenceIds = React.useRef(new Set<string>());
-	// Remaining keys of the sequence being drained; index 0 is the audible clip.
-	const activeClipKeys = React.useRef<string[]>([]);
 	// Web Audio graph: one shared context + a gain node carrying volume. Created
 	// lazily on the client at first use, so there is nothing to build during SSR.
 	const audioCtxRef = React.useRef<AudioContext | null>(null);
@@ -112,8 +146,11 @@ export const AnnouncementAudio = React.forwardRef<
 	// Held in refs so publishing the queue never re-creates the drain loop.
 	const queueListener = React.useRef(onQueueChange);
 	const clipResolver = React.useRef({ manifest, overrides });
+	// Read at fire time so flipping the switch doesn't re-run the auto effect.
+	const autoInterruptsRef = React.useRef(autoInterrupts);
 	queueListener.current = onQueueChange;
 	clipResolver.current = { manifest, overrides };
+	autoInterruptsRef.current = autoInterrupts;
 
 	const ensureContext = React.useCallback((): AudioContext | null => {
 		if (typeof window === "undefined") return null;
@@ -197,15 +234,19 @@ export const AnnouncementAudio = React.forwardRef<
 		if (!listener) return;
 		const { manifest: current, overrides: currentOverrides } =
 			clipResolver.current;
-		const [playing = null, ...rest] = activeClipKeys.current;
-		const queued = current
-			? pendingSequences.current.flatMap((sequence) =>
-					playableKeys(sequence.keys, currentOverrides, current).map(
-						(clip) => clip.key,
-					),
-				)
-			: pendingSequences.current.flatMap((sequence) => sequence.keys);
-		listener({ current: playing, pending: [...rest, ...queued] });
+		const toItem = (sequence: QueuedSequence): AnnouncementQueueItem => ({
+			id: sequence.id,
+			label: sequence.label,
+			source: sequence.source,
+			clipCount: current
+				? playableKeys(sequence.keys, currentOverrides, current).length
+				: sequence.keys.length,
+		});
+		const active = activeSequence.current;
+		listener({
+			current: active ? toItem(active) : null,
+			pending: pendingSequences.current.map(toItem),
+		});
 	}, []);
 
 	React.useEffect(() => {
@@ -244,7 +285,7 @@ export const AnnouncementAudio = React.forwardRef<
 	// announcement (station name + number parts) has no seam between clips. All
 	// buffers are decoded first, then every clip is scheduled ahead of time; the
 	// returned promise resolves when the last clip ends or the sequence is
-	// interrupted (stop()/playKeys() call finishCurrentClip).
+	// interrupted (stop()/interruptWith() call finishCurrentClip).
 	const playSequence = React.useCallback(
 		async (
 			clips: { key: string; url: string }[],
@@ -275,8 +316,6 @@ export const AnnouncementAudio = React.forwardRef<
 						clip.buffer !== null,
 				);
 			if (!ready.length) return;
-			activeClipKeys.current = ready.map((clip) => clip.key);
-			publishQueue();
 			const sources: AudioBufferSourceNode[] = [];
 			await new Promise<void>((resolve) => {
 				let done = false;
@@ -304,10 +343,6 @@ export const AnnouncementAudio = React.forwardRef<
 					source.connect(gain);
 					source.onended = () => {
 						if (done) return;
-						// This clip left the "now playing" slot; the next is
-						// already sounding thanks to the ahead-of-time schedule.
-						activeClipKeys.current = activeClipKeys.current.slice(1);
-						publishQueue();
 						if (index === ready.length - 1) finish();
 					};
 					source.start(when);
@@ -316,7 +351,7 @@ export const AnnouncementAudio = React.forwardRef<
 				});
 			});
 		},
-		[decodeUrl, ensureContext, publishQueue],
+		[decodeUrl, ensureContext],
 	);
 
 	const drainQueue = React.useCallback(
@@ -330,13 +365,18 @@ export const AnnouncementAudio = React.forwardRef<
 			) {
 				const pending = pendingSequences.current.shift();
 				if (!pending) continue;
-				const { keys, onPlaybackChange } = pending;
-				const clips = playableKeys(keys, overrides, manifest);
-				if (clips.length) onPlaybackChange?.(true);
-				await playSequence(clips, generation);
-				activeClipKeys.current = [];
-				onPlaybackChange?.(false);
+				activeSequence.current = pending;
 				publishQueue();
+				const clips = playableKeys(pending.keys, overrides, manifest);
+				if (clips.length) pending.onPlaybackChange?.(true);
+				await playSequence(clips, generation);
+				pending.onPlaybackChange?.(false);
+				// Only clear if a newer interrupt hasn't already taken the slot,
+				// so a stale drain can't blank out the sequence now playing.
+				if (activeSequence.current === pending) {
+					activeSequence.current = null;
+					publishQueue();
+				}
 			}
 			if (activeGeneration.current === generation)
 				activeGeneration.current = null;
@@ -344,25 +384,41 @@ export const AnnouncementAudio = React.forwardRef<
 		[manifest, overrides, playSequence, publishQueue],
 	);
 
-	const enqueueKeys = React.useCallback(
-		(keys: string[], onPlaybackChange?: (playing: boolean) => void) => {
-			if (!manifest || !keys.length) return;
-			preloadKeys(keys);
-			pendingSequences.current.push({ keys, onPlaybackChange });
+	const makeSequence = React.useCallback(
+		(
+			keys: string[],
+			source: AnnouncementSource,
+			opts?: PlayKeysOptions,
+		): QueuedSequence => ({
+			id: `seq-${(sequenceCounter.current += 1)}`,
+			keys,
+			source,
+			label: opts?.label ?? announcementQueueLabel(keys),
+			onPlaybackChange: opts?.onPlaybackChange,
+		}),
+		[],
+	);
+
+	// Append a sequence to the back of the queue; play it after whatever is ahead.
+	const appendSequence = React.useCallback(
+		(sequence: QueuedSequence) => {
+			if (!manifest) return;
+			preloadKeys(sequence.keys);
+			pendingSequences.current.push(sequence);
 			publishQueue();
 			void drainQueue(queueGeneration.current);
 		},
 		[drainQueue, manifest, preloadKeys, publishQueue],
 	);
 
-	// User-triggered playback always takes control immediately.
-	const playKeys = React.useCallback(
-		async (keys: string[]) => {
-			if (!manifest || !keys.length) return;
-			preloadKeys(keys);
+	// Take over immediately: drop the queue, cut the current clip, play this now.
+	const interruptWith = React.useCallback(
+		async (sequence: QueuedSequence) => {
+			if (!manifest) return;
+			preloadKeys(sequence.keys);
 			const generation = ++queueGeneration.current;
-			pendingSequences.current = [{ keys }];
-			activeClipKeys.current = [];
+			pendingSequences.current = [sequence];
+			activeSequence.current = null;
 			publishQueue();
 			finishCurrentClip.current?.();
 			await drainQueue(generation);
@@ -370,15 +426,54 @@ export const AnnouncementAudio = React.forwardRef<
 		[drainQueue, manifest, preloadKeys, publishQueue],
 	);
 
+	// True when a user-triggered announcement is playing or still waiting. New
+	// user triggers then queue behind it; without this they would cut it off.
+	const userAudioActive = React.useCallback(
+		() =>
+			activeSequence.current?.source === "user" ||
+			pendingSequences.current.some((sequence) => sequence.source === "user"),
+		[],
+	);
+
+	// User-triggered playback. It only takes over when nothing user-triggered is
+	// already active; otherwise it joins the queue after the user's other items.
+	const playKeys = React.useCallback(
+		async (keys: string[], opts?: PlayKeysOptions) => {
+			if (!manifest || !keys.length) return;
+			const sequence = makeSequence(keys, "user", opts);
+			if (userAudioActive()) appendSequence(sequence);
+			else await interruptWith(sequence);
+		},
+		[appendSequence, interruptWith, makeSequence, manifest, userAudioActive],
+	);
+
+	const moveSequence = React.useCallback(
+		(id: string, toIndex: number) => {
+			const queue = pendingSequences.current;
+			const from = queue.findIndex((sequence) => sequence.id === id);
+			if (from === -1) return;
+			const clamped = Math.max(0, Math.min(queue.length - 1, toIndex));
+			if (clamped === from) return;
+			const [moved] = queue.splice(from, 1);
+			queue.splice(clamped, 0, moved);
+			publishQueue();
+		},
+		[publishQueue],
+	);
+
 	const stop = React.useCallback(() => {
 		queueGeneration.current += 1;
 		pendingSequences.current = [];
-		activeClipKeys.current = [];
+		activeSequence.current = null;
 		finishCurrentClip.current?.();
 		publishQueue();
 	}, [publishQueue]);
 
-	React.useImperativeHandle(ref, () => ({ playKeys, stop }), [playKeys, stop]);
+	React.useImperativeHandle(ref, () => ({ playKeys, moveSequence, stop }), [
+		playKeys,
+		moveSequence,
+		stop,
+	]);
 
 	React.useEffect(() => {
 		if (!manifest) return;
@@ -392,14 +487,28 @@ export const AnnouncementAudio = React.forwardRef<
 				if (oldest === undefined) break;
 				playedAutoSequenceIds.current.delete(oldest);
 			}
-			if (entry.priority) {
-				entry.onPlaybackChange?.(true);
-				void playKeys(entry.keys).finally(() =>
-					entry.onPlaybackChange?.(false),
-				);
-			} else enqueueKeys(entry.keys, entry.onPlaybackChange);
+			const sequence = makeSequence(entry.keys, "auto", {
+				label: entry.label,
+				onPlaybackChange: entry.onPlaybackChange,
+			});
+			// When user audio is active, the switch decides who yields: on, auto
+			// takes over; off, auto waits behind the manual queue. With no user
+			// audio in play, auto keeps its own pacing — the priority chime leads,
+			// everything else queues in order.
+			const shouldInterrupt = userAudioActive()
+				? autoInterruptsRef.current
+				: Boolean(entry.priority);
+			if (shouldInterrupt) void interruptWith(sequence);
+			else appendSequence(sequence);
 		}
-	}, [autoSequences, enqueueKeys, manifest, playKeys]);
+	}, [
+		autoSequences,
+		appendSequence,
+		interruptWith,
+		makeSequence,
+		manifest,
+		userAudioActive,
+	]);
 
 	React.useEffect(() => {
 		if (manifest) onClipKeysChange?.(Object.keys(manifest.clips));

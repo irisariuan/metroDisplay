@@ -460,6 +460,19 @@ export function audioKeyLabel(key: string): string {
 	return key;
 }
 
+/** A concise name for a whole clip sequence, shown as one queue entry. Prefers a
+ * station name when the sequence names one, else summarises by its first clip. */
+export function announcementQueueLabel(keys: string[]): string {
+	if (!keys.length) return "—";
+	if (keys.length === 1) return audioKeyLabel(keys[0]);
+	const stationKey = keys.find((key) => key.startsWith("station."));
+	if (stationKey) {
+		const [, lang = "", ...rest] = stationKey.split(".");
+		return `${lang.toUpperCase()} · ${rest.join(".")}`;
+	}
+	return `${audioKeyLabel(keys[0])} +${keys.length - 1}`;
+}
+
 interface AnnouncementAudioSequenceOptions {
 	route: Route;
 	pos: number;
