@@ -1,0 +1,651 @@
+{
+	"ISL": {
+		"line": "ISL",
+		"destJa": "柴灣",
+		"destEn": "Chai Wan",
+		"towardJa": "往柴灣",
+		"towardEn": "for Chai Wan",
+		"stations": [
+			{
+				"ja": "堅尼地城",
+				"en": "Kennedy Town",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "香港大學",
+				"en": "HKU",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "西營盤",
+				"en": "Sai Ying Pun",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "上環",
+				"en": "Sheung Wan",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "中環",
+				"en": "Central",
+				"side": "R",
+				"distance": 1,
+				"xf": [
+					"TWL"
+				]
+			},
+			{
+				"ja": "金鐘",
+				"en": "Admiralty",
+				"side": "L",
+				"distance": 1,
+				"xf": [
+					"EAL",
+					"TWL"
+				]
+			},
+			{
+				"ja": "灣仔",
+				"en": "Wan Chai",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "銅鑼灣",
+				"en": "Causeway Bay",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "天后",
+				"en": "Tin Hau",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "炮台山",
+				"en": "Fortress Hill",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "北角",
+				"en": "North Point",
+				"side": "R",
+				"distance": 1,
+				"xf": [
+					"TKL"
+				]
+			},
+			{
+				"ja": "鰂魚涌",
+				"en": "Quarry Bay",
+				"side": "L",
+				"distance": 1,
+				"xf": [
+					"TKL"
+				]
+			},
+			{
+				"ja": "太古",
+				"en": "Tai Koo",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "西灣河",
+				"en": "Sai Wan Ho",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "筲箕灣",
+				"en": "Shau Kei Wan",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "杏花邨",
+				"en": "Heng Fa Chuen",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "柴灣",
+				"en": "Chai Wan",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			}
+		]
+	},
+	"TWL": {
+		"line": "TWL",
+		"destJa": "中環",
+		"destEn": "Central",
+		"towardJa": "往中環",
+		"towardEn": "for Central",
+		"stations": [
+			{
+				"ja": "荃灣",
+				"en": "Tsuen Wan",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "大窩口",
+				"en": "Tai Wo Hau",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "葵興",
+				"en": "Kwai Hing",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "葵芳",
+				"en": "Kwai Fong",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "荔景",
+				"en": "Lai King",
+				"side": "R",
+				"distance": 1,
+				"xf": [
+					"TCL"
+				]
+			},
+			{
+				"ja": "美孚",
+				"en": "Mei Foo",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "荔枝角",
+				"en": "Lai Chi Kok",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "長沙灣",
+				"en": "Cheung Sha Wan",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "深水埗",
+				"en": "Sham Shui Po",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "太子",
+				"en": "Prince Edward",
+				"side": "L",
+				"distance": 1,
+				"xf": [
+					"KTL"
+				]
+			},
+			{
+				"ja": "旺角",
+				"en": "Mong Kok",
+				"side": "R",
+				"distance": 1,
+				"xf": [
+					"KTL"
+				]
+			},
+			{
+				"ja": "油麻地",
+				"en": "Yau Ma Tei",
+				"side": "L",
+				"distance": 1,
+				"xf": [
+					"KTL"
+				]
+			},
+			{
+				"ja": "佐敦",
+				"en": "Jordan",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "尖沙咀",
+				"en": "Tsim Sha Tsui",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "金鐘",
+				"en": "Admiralty",
+				"side": "R",
+				"distance": 1,
+				"xf": [
+					"EAL",
+					"ISL"
+				]
+			},
+			{
+				"ja": "中環",
+				"en": "Central",
+				"side": "L",
+				"distance": 1,
+				"xf": [
+					"ISL"
+				]
+			}
+		]
+	},
+	"KTL": {
+		"line": "KTL",
+		"destJa": "調景嶺",
+		"destEn": "Tiu Keng Leng",
+		"towardJa": "往調景嶺",
+		"towardEn": "for Tiu Keng Leng",
+		"stations": [
+			{
+				"ja": "黃埔",
+				"en": "Whampoa",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "何文田",
+				"en": "Ho Man Tin",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "油麻地",
+				"en": "Yau Ma Tei",
+				"side": "R",
+				"distance": 1,
+				"xf": [
+					"TWL"
+				]
+			},
+			{
+				"ja": "旺角",
+				"en": "Mong Kok",
+				"side": "L",
+				"distance": 1,
+				"xf": [
+					"TWL"
+				]
+			},
+			{
+				"ja": "太子",
+				"en": "Prince Edward",
+				"side": "R",
+				"distance": 1,
+				"xf": [
+					"TWL"
+				]
+			},
+			{
+				"ja": "石硤尾",
+				"en": "Shek Kip Mei",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "九龍塘",
+				"en": "Kowloon Tong",
+				"side": "R",
+				"distance": 1,
+				"xf": [
+					"EAL"
+				]
+			},
+			{
+				"ja": "樂富",
+				"en": "Lok Fu",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "黃大仙",
+				"en": "Wong Tai Sin",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "鑽石山",
+				"en": "Diamond Hill",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "彩虹",
+				"en": "Choi Hung",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "九龍灣",
+				"en": "Kowloon Bay",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "牛頭角",
+				"en": "Ngau Tau Kok",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "觀塘",
+				"en": "Kwun Tong",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "藍田",
+				"en": "Lam Tin",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "油塘",
+				"en": "Yau Tong",
+				"side": "L",
+				"distance": 1,
+				"xf": [
+					"TKL"
+				]
+			},
+			{
+				"ja": "調景嶺",
+				"en": "Tiu Keng Leng",
+				"side": "R",
+				"distance": 1,
+				"xf": [
+					"TKL"
+				]
+			}
+		]
+	},
+	"TKL": {
+		"line": "TKL",
+		"destJa": "寶琳",
+		"destEn": "Po Lam",
+		"towardJa": "往寶琳",
+		"towardEn": "for Po Lam",
+		"stations": [
+			{
+				"ja": "北角",
+				"en": "North Point",
+				"side": "R",
+				"distance": 1,
+				"xf": [
+					"ISL"
+				]
+			},
+			{
+				"ja": "鰂魚涌",
+				"en": "Quarry Bay",
+				"side": "L",
+				"distance": 1,
+				"xf": [
+					"ISL"
+				]
+			},
+			{
+				"ja": "油塘",
+				"en": "Yau Tong",
+				"side": "R",
+				"distance": 1,
+				"xf": [
+					"KTL"
+				]
+			},
+			{
+				"ja": "調景嶺",
+				"en": "Tiu Keng Leng",
+				"side": "L",
+				"distance": 1,
+				"xf": [
+					"KTL"
+				]
+			},
+			{
+				"ja": "將軍澳",
+				"en": "Tseung Kwan O",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "坑口",
+				"en": "Hang Hau",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "寶琳",
+				"en": "Po Lam",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			}
+		]
+	},
+	"EAL": {
+		"line": "EAL",
+		"destJa": "羅湖",
+		"destEn": "Lo Wu",
+		"towardJa": "往羅湖",
+		"towardEn": "for Lo Wu",
+		"stations": [
+			{
+				"ja": "金鐘",
+				"en": "Admiralty",
+				"side": "R",
+				"distance": 1,
+				"xf": [
+					"ISL",
+					"TWL"
+				]
+			},
+			{
+				"ja": "會展",
+				"en": "Exhibition Centre",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "紅磡",
+				"en": "Hung Hom",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "旺角東",
+				"en": "Mong Kok East",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "九龍塘",
+				"en": "Kowloon Tong",
+				"side": "R",
+				"distance": 1,
+				"xf": [
+					"KTL"
+				]
+			},
+			{
+				"ja": "大圍",
+				"en": "Tai Wai",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "沙田",
+				"en": "Sha Tin",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "火炭",
+				"en": "Fo Tan",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "大埔墟",
+				"en": "Tai Po Market",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "太和",
+				"en": "Tai Wo",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "粉嶺",
+				"en": "Fanling",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "上水",
+				"en": "Sheung Shui",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "羅湖",
+				"en": "Lo Wu",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			}
+		]
+	},
+	"TCL": {
+		"line": "TCL",
+		"destJa": "香港",
+		"destEn": "Hong Kong",
+		"towardJa": "往香港",
+		"towardEn": "for Hong Kong",
+		"stations": [
+			{
+				"ja": "東涌",
+				"en": "Tung Chung",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "欣澳",
+				"en": "Sunny Bay",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "青衣",
+				"en": "Tsing Yi",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "荔景",
+				"en": "Lai King",
+				"side": "L",
+				"distance": 1,
+				"xf": [
+					"TWL"
+				]
+			},
+			{
+				"ja": "南昌",
+				"en": "Nam Cheong",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "奧運",
+				"en": "Olympic",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "九龍",
+				"en": "Kowloon",
+				"side": "R",
+				"distance": 1,
+				"xf": []
+			},
+			{
+				"ja": "香港",
+				"en": "Hong Kong",
+				"side": "L",
+				"distance": 1,
+				"xf": []
+			}
+		]
+	}
+}

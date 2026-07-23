@@ -77,7 +77,8 @@ export function TopBoard({
 	// (English/hiragana mode, or katakana toggled off), the readings row is
 	// omitted entirely rather than reserved empty — otherwise the empty row is
 	// swept into justify-center and the name reads optically high.
-	const hasKatakana = stationNameMode === "kanji" && showKatakana;
+	const hasKatakana =
+		stationNameMode === "kanji" && showKatakana && Boolean(st.kata.trim());
 	// Loop lines have no origin terminus, so the "from" label points at the last
 	// major stop the train passed — search backwards, wrapping around the loop.
 	const [lastMajorStation] = upcomingMajorStations(route, {

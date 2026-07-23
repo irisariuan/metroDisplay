@@ -8,152 +8,129 @@
 				{
 					"type": "ad",
 					"en": "Discover the Shuika Metro Museum at Arakawa Park.",
-					"ja": "荒川公園の水下メトロ博物館へぜひお越しください。",
-					"displayable": true
+					"ja": "荒川公園の水下メトロ博物館へぜひお越しください。"
 				},
 				{
 					"type": "ad",
 					"en": "Plan your trip and save favourites in the Shuika Metro app.",
-					"ja": "水下メトロアプリで経路検索とよく使う駅の登録ができます。",
-					"displayable": true
+					"ja": "水下メトロアプリで経路検索とよく使う駅の登録ができます。"
 				},
 				{
 					"type": "notice",
 					"en": "Please keep backpacks in front of you when the train is crowded.",
-					"ja": "車内混雑時は、リュックを前にお持ちください。",
-					"displayable": true
+					"ja": "車内混雑時は、リュックを前にお持ちください。"
 				},
 				{
 					"type": "notice",
 					"en": "Priority seats are available for passengers who need them.",
-					"ja": "優先席を必要とされるお客さまにお譲りください。",
-					"displayable": true
+					"ja": "優先席を必要とされるお客さまにお譲りください。"
 				},
 				{
 					"type": "notice",
 					"en": "For service updates, please check the Shuika Metro website or app.",
-					"ja": "運行情報は水下メトロのウェブサイトまたはアプリでご確認ください。",
-					"displayable": true
+					"ja": "運行情報は水下メトロのウェブサイトまたはアプリでご確認ください。"
 				},
 				{
 					"type": "notice",
 					"en": "Please refrain from rushing onto the train as the doors are closing.",
-					"ja": "駆け込み乗車は大変危険ですのでおやめください。",
-					"displayable": true
+					"ja": "駆け込み乗車は大変危険ですのでおやめください。"
 				},
 				{
 					"type": "notice",
 					"en": "Set your mobile phones to silent mode and refrain from talking on the phone.",
-					"ja": "車内ではマナーモードに設定の上、通話はご遠慮ください。",
-					"displayable": true
+					"ja": "車内ではマナーモードに設定の上、通話はご遠慮ください。"
 				},
 				{
 					"type": "notice",
 					"en": "Please use headphones when listening to music or watching videos.",
-					"ja": "音楽や動画をご視聴の際は、イヤホンのご使用をお願いいたします。",
-					"displayable": true
+					"ja": "音楽や動画をご視聴の際は、イヤホンのご使用をお願いいたします。"
 				},
 				{
 					"type": "notice",
 					"en": "Watch your step when boarding or exiting the train, especially near the platform gap.",
-					"ja": "電車とホームの間が空いている箇所がありますので、足元にご注意ください。",
-					"displayable": true
+					"ja": "電車とホームの間が空いている箇所がありますので、足元にご注意ください。"
 				},
 				{
 					"type": "notice",
 					"en": "If you feel unwell, please speak to a station staff member or use the emergency intercom.",
-					"ja": "体調がすぐれない場合は、駅係員にお申し出いただくか、非常通報ボタンを押してください。",
-					"displayable": true
+					"ja": "体調がすぐれない場合は、駅係員にお申し出いただくか、非常通報ボタンを押してください。"
 				},
 				{
 					"type": "notice",
 					"en": "Please stand behind the yellow warning blocks while waiting on the platform.",
-					"ja": "ホーム上では、黄色い点字ブロックの内側でお待ちください。",
-					"displayable": true
+					"ja": "ホーム上では、黄色い点字ブロックの内側でお待ちください。"
 				},
 				{
 					"type": "notice",
 					"en": "Smoking is strictly prohibited inside all station premises and trains.",
-					"ja": "駅構内および車内はすべて禁煙となっております。",
-					"displayable": true
+					"ja": "駅構内および車内はすべて禁煙となっております。"
 				},
 				{
 					"type": "notice",
 					"en": "Please form two lines while waiting for the train and let passengers exit first.",
-					"ja": "乗車口では2列に並び、降りるお客さまを先にお通しください。",
-					"displayable": true
+					"ja": "乗車口では2列に並び、降りるお客さまを先にお通しください。"
 				},
 				{
 					"type": "notice",
 					"en": "Be careful not to leave any personal belongings behind when you leave the train.",
-					"ja": "お降りの際は、お忘れ物のないようご注意ください。",
-					"displayable": true
+					"ja": "お降りの際は、お忘れ物のないようご注意ください。"
 				},
 				{
 					"type": "notice",
 					"en": "If you notice any suspicious items or behavior, please notify station staff immediately.",
-					"ja": "不審なものや行為を見かけましたら、すぐに駅係員または警察へお知らせください。",
-					"displayable": true
+					"ja": "不審なものや行為を見かけましたら、すぐに駅係員または警察へお知らせください。"
 				},
 				{
 					"type": "ad",
 					"en": "Get unlimited rides for 24 hours with the Shuika Metro Day Ticket.",
-					"ja": "24時間乗り放題の水下メトロ一日乗車券をぜひご利用ください。",
-					"displayable": true
+					"ja": "24時間乗り放題の水下メトロ一日乗車券をぜひご利用ください。"
 				},
 				{
 					"type": "ad",
 					"en": "Enjoy shopping and dining at the Shuika Station Underground Mall.",
-					"ja": "お買い物やお食事は、水下駅地下街へお越しください。",
-					"displayable": true
+					"ja": "お買い物やお食事は、水下駅地下街へお越しください。"
 				},
 				{
 					"type": "ad",
 					"en": "Tap and go easily by linking your credit card to the Shuika Metro app.",
-					"ja": "水下メトロアプリにクレジットカードを登録して、タッチ決済でスマートに乗車。",
-					"displayable": true
+					"ja": "水下メトロアプリにクレジットカードを登録して、タッチ決済でスマートに乗車。"
 				},
 				{
 					"type": "ad",
 					"en": "Check out the seasonal illuminations near Chidori Gardens, just a short walk from Exit 3.",
-					"ja": "3番出口からすぐの千鳥庭園にて、季節限定のイルミネーションを開催中です。",
-					"displayable": true
+					"ja": "3番出口からすぐの千鳥庭園にて、季節限定のイルミネーションを開催中です。"
 				},
 				{
 					"type": "ad",
 					"en": "Collect digital stamps at 5 major stations to win exclusive Shuika Metro merchandise.",
-					"ja": "主要5駅をめぐるデジタルスタンプラリーを開催中！限定グッズをゲットしよう。",
-					"displayable": true
+					"ja": "主要5駅をめぐるデジタルスタンプラリーを開催中！限定グッズをゲットしよう。"
 				},
 				{
 					"type": "notice",
 					"en": "Please hold on to the handrails or straps while the train is in motion.",
-					"ja": "走行中、揺れることがありますので、吊り手や手すりにおつかまりください。",
-					"displayable": true
+					"ja": "走行中、揺れることがありますので、吊り手や手すりにおつかまりください。"
 				},
 				{
 					"type": "notice",
 					"en": "Be mindful of your umbrella when boarding so it does not wet other passengers.",
-					"ja": "雨の日は、傘が周りのお客さまに触れないようご配慮をお願いいたします。",
-					"displayable": true
+					"ja": "雨の日は、傘が周りのお客さまに触れないようご配慮をお願いいたします。"
 				},
 				{
 					"type": "notice",
 					"en": "Stroller users are welcome; please ensure the brakes are locked while on board.",
-					"ja": "ベビーカーをご利用の際は、車内ではキャスターのロックをお願いいたします。",
-					"displayable": true
+					"ja": "ベビーカーをご利用の際は、車内ではキャスターのロックをお願いいたします。"
 				},
 				{
 					"type": "ad",
 					"en": "Travel from the city to Shinkitanogawa International Airport in just 35 minutes via the Rapid Line.",
-					"ja": "快速線なら、都心から新北野川国際空港まで最速35分で結びます。",
-					"displayable": true
+					"ja": "快速線なら、都心から新北野川国際空港まで最速35分で結びます。"
 				},
 				{
 					"type": "notice",
 					"en": "Please do not lean against the train doors while traveling.",
-					"ja": "ドアに寄りかかると危険ですので、ドア付近ではご注意ください。",
-					"displayable": true
+					"ja": "ドアに寄りかかると危険ですので、ドア付近ではご注意ください。"
+				},
+				{ "type": "notice", "en": "", "ja": "" 
 				}
 			]
 		},
@@ -164,32 +141,27 @@
 				{
 					"type": "notice",
 					"en": "Please set mobile phones to silent mode and refrain from talking on the phone.",
-					"ja": "車内ではマナーモードに設定の上、通話はご遠慮ください。",
-					"displayable": true
+					"ja": "車内ではマナーモードに設定の上、通話はご遠慮ください。"
 				},
 				{
 					"type": "notice",
 					"en": "Please give up your seat to passengers who need it.",
-					"ja": "優先席を必要とされるお客さまにお譲りください。",
-					"displayable": true
+					"ja": "優先席を必要とされるお客さまにお譲りください。"
 				},
 				{
 					"type": "notice",
 					"en": "Please do not rush onto the train as the doors are closing.",
-					"ja": "駆け込み乗車は大変危険ですのでおやめください。",
-					"displayable": true
+					"ja": "駆け込み乗車は大変危険ですのでおやめください。"
 				},
 				{
 					"type": "notice",
 					"en": "Please keep your backpack in front of you when the train is crowded.",
-					"ja": "車内混雑時は、リュックを前にお持ちください。",
-					"displayable": true
+					"ja": "車内混雑時は、リュックを前にお持ちください。"
 				},
 				{
 					"type": "notice",
 					"en": "Please take all your belongings with you when leaving the train.",
-					"ja": "お降りの際は、お忘れ物のないようご注意ください。",
-					"displayable": true
+					"ja": "お降りの際は、お忘れ物のないようご注意ください。"
 				}
 			]
 		},

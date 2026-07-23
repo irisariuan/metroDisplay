@@ -94,9 +94,13 @@ export function Ticker({
 		return () => observer.disconnect();
 	}, [contentKey]);
 
-	// Every ticker loops a whole group. Repeating it through the visible width
-	// avoids exposing empty space when a short message starts to move.
-	const shouldScroll = groupWidth > 0;
+	// Regular ticker programming always moves. A full-width lower alert stays
+	// still when its message fits; its measured group includes the 90px loop gap,
+	// so remove that gap before deciding whether the copy itself overflows.
+	const alertContentWidth = Math.max(0, groupWidth - 90);
+	const shouldScroll =
+		groupWidth > 0 &&
+		(!splitAlert || alertContentWidth > viewportWidth + 1);
 	const repeatCount = shouldScroll
 		? Math.max(2, Math.ceil(viewportWidth / groupWidth) + 1)
 		: 1;

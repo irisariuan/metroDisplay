@@ -59,6 +59,9 @@ interface UseSimulatorAnnouncementsOptions {
 	remainingMarqueeItems: string[];
 	departureMajorStationCount: number;
 	announcementAudioEnabled: boolean;
+	autoAnnouncementsInterrupt: boolean;
+	announceStationNumberJa: boolean;
+	announceStationNumberEn: boolean;
 	announcementVolume: number;
 	announcementAudioOverrides: Record<string, string>;
 }
@@ -83,6 +86,9 @@ export function useSimulatorAnnouncements({
 	remainingMarqueeItems,
 	departureMajorStationCount,
 	announcementAudioEnabled,
+	autoAnnouncementsInterrupt,
+	announceStationNumberJa,
+	announceStationNumberEn,
 	announcementVolume,
 	announcementAudioOverrides,
 }: UseSimulatorAnnouncementsOptions) {
@@ -101,6 +107,13 @@ export function useSimulatorAnnouncements({
 	}
 	const [currentAudioType, setCurrentAudioType] =
 		React.useState<AnnouncementAudioType | null>(null);
+	const includesStationNumber = React.useCallback(
+		(announcementLang: Lang) =>
+			announcementLang === "ja"
+				? announceStationNumberJa
+				: announceStationNumberEn,
+		[announceStationNumberEn, announceStationNumberJa],
+	);
 	// Reports a sequence starting/ending as the active audio type. The clear only
 	// fires when this type is still current, so a later sequence that already
 	// took over is never wiped by a trailing "finished" from an earlier one.
@@ -111,7 +124,6 @@ export function useSimulatorAnnouncements({
 			),
 		[],
 	);
-	const departurePlaybackIdRef = React.useRef(0);
 	const serviceDestinationIndex =
 		travelDirection > 0 ? serviceEndIndex : serviceStartIndex;
 	const departureStartIndex =
@@ -182,10 +194,11 @@ export function useSimulatorAnnouncements({
 							route,
 							journeyEvent.targetIndex,
 							announcementLang,
+							includesStationNumber(announcementLang),
 						),
 					)
 				: [],
-		[journeyEvent, langs, passingNext, route],
+		[journeyEvent, langs, passingNext, route, includesStationNumber],
 	);
 	// Ticker copy for the "next stop is …" departure announcement. journey.pos is
 	// the station being approached while this plays, so it names the next stop.
@@ -267,6 +280,8 @@ export function useSimulatorAnnouncements({
 					lang: announcementLang,
 					passing: passingNext,
 					terminalIndex: serviceDestinationIndex,
+					includeStationNumber:
+						includesStationNumber(announcementLang),
 					// The doors open once, so only the leading language chimes.
 					doorEffect: index === 0,
 				}),
@@ -278,6 +293,7 @@ export function useSimulatorAnnouncements({
 			passingNext,
 			route,
 			serviceDestinationIndex,
+			includesStationNumber,
 		],
 	);
 	const departureSequence = React.useMemo(
@@ -315,6 +331,7 @@ export function useSimulatorAnnouncements({
 							{
 								id: `announcement:${eventId}`,
 								keys: stationSequence,
+								label: "ARRIVAL",
 								onPlaybackChange: trackAudioType("station"),
 							},
 						];
@@ -324,6 +341,7 @@ export function useSimulatorAnnouncements({
 						id: `tone:${eventId}`,
 						keys: departureToneSequence,
 						priority: true,
+						label: "DEPARTURE CHIME",
 						onPlaybackChange: trackAudioType("tone"),
 					},
 					...(isDepartureAnnouncementStage
@@ -331,6 +349,7 @@ export function useSimulatorAnnouncements({
 								{
 									id: `departure:${eventId}`,
 									keys: departureSequence,
+									label: "DEPARTURE",
 									onPlaybackChange:
 										trackAudioType("departure"),
 								},
@@ -341,6 +360,7 @@ export function useSimulatorAnnouncements({
 								{
 									id: `next:${eventId}`,
 									keys: nextStationDepartureSequence,
+									label: "NEXT STOP",
 									onPlaybackChange: trackAudioType("next"),
 								},
 							]
@@ -352,6 +372,7 @@ export function useSimulatorAnnouncements({
 							{
 								id: `announcement:${eventId}`,
 								keys: stationSequence,
+								label: "APPROACHING",
 								onPlaybackChange: trackAudioType("station"),
 							},
 						]
@@ -453,18 +474,16 @@ export function useSimulatorAnnouncements({
 		],
 	);
 	const playDepartureAnnouncement = React.useCallback(
-		async (announcementLang: Lang) => {
-			const playbackId = ++departurePlaybackIdRef.current;
-			setCurrentAudioType("departure");
-			await audioRef.current?.playKeys(
+		(announcementLang: Lang) => {
+			void audioRef.current?.playKeys(
 				departureSequenceFor(announcementLang),
+				{
+					label: `DEPARTURE · ${announcementLang === "ja" ? "日本語" : "ENGLISH"}`,
+					onPlaybackChange: trackAudioType("departure"),
+				},
 			);
-			if (departurePlaybackIdRef.current === playbackId)
-				setCurrentAudioType((prev) =>
-					prev === "departure" ? null : prev,
-				);
 		},
-		[departureSequenceFor],
+		[departureSequenceFor, trackAudioType],
 	);
 	const [manifestClipKeys, setManifestClipKeys] = React.useState<
 		ReadonlySet<string>
@@ -485,7 +504,6 @@ export function useSimulatorAnnouncements({
 		pending: [],
 	});
 	const stopAnnouncementAudio = React.useCallback(() => {
-		departurePlaybackIdRef.current += 1;
 		setCurrentAudioType(null);
 		audioRef.current?.stop();
 	}, []);
@@ -502,9 +520,14 @@ export function useSimulatorAnnouncements({
 				lang: announcementLang,
 				passing: passingNext,
 				terminalIndex: serviceDestinationIndex,
+				includeStationNumber:
+					includesStationNumber(announcementLang),
 				doorEffect: true,
 			});
-			void audioRef.current?.playKeys(sequence);
+			void audioRef.current?.playKeys(sequence, {
+				label: `REPLAY · ${announcementLang === "ja" ? "日本語" : "ENGLISH"}`,
+				onPlaybackChange: trackAudioType("station"),
+			});
 		},
 		[
 			isDepartureAnnouncementStage,
@@ -514,6 +537,8 @@ export function useSimulatorAnnouncements({
 			playDepartureAnnouncement,
 			route,
 			serviceDestinationIndex,
+			includesStationNumber,
+			trackAudioType,
 		],
 	);
 
@@ -523,14 +548,24 @@ export function useSimulatorAnnouncements({
 			autoSequences,
 			overrides: announcementAudioOverrides,
 			volume: announcementVolume,
+			autoInterrupts: autoAnnouncementsInterrupt,
 			onClipKeysChange: handleClipKeysChange,
 			onQueueChange: setAudioQueue,
 		},
 		isAudioClipAvailable,
+		// The static set of clips the manifest exposes (upload overrides aside).
+		// Surfaced so the split-mode control device can mirror clip availability
+		// without mounting the audio element itself.
+		manifestClipKeys: React.useMemo(
+			() => Array.from(manifestClipKeys),
+			[manifestClipKeys],
+		),
 		audioQueue,
 		tickerItems,
-		playAnnouncementKeys: (keys: string[]) =>
-			void audioRef.current?.playKeys(keys),
+		playAnnouncementKeys: (keys: string[], label?: string) =>
+			void audioRef.current?.playKeys(keys, label ? { label } : undefined),
+		reorderAnnouncementQueue: (id: string, toIndex: number) =>
+			audioRef.current?.moveSequence(id, toIndex),
 		playCurrentAnnouncement,
 		playDepartureAnnouncement,
 		stopAnnouncementAudio,

@@ -11,8 +11,6 @@ interface StationReadingsProps {
 	align?: string;
 }
 
-// Always reserves its row, preventing the station-name block from jumping when
-// the kanji screen adds or removes its katakana reading.
 export function StationReadings({
 	station,
 	visible,
@@ -20,7 +18,8 @@ export function StationReadings({
 	color = "var(--text-muted)",
 	align = "center",
 }: StationReadingsProps) {
-	const reading = visible ? station.kata : "";
+	const reading = visible ? station.kata.trim() : "";
+	if (!reading) return null;
 	return (
 		<div
 			className={[
@@ -31,14 +30,12 @@ export function StationReadings({
 			].join(" ")}
 			style={{ color }}
 		>
-			{reading ? (
-				<div
-					key={reading}
-					style={{ animation: "swipeIn .3s var(--ease-out) both" }}
-				>
-					<Marquee text={reading} align={align} />
-				</div>
-			) : null}
+			<div
+				key={reading}
+				style={{ animation: "swipeIn .3s var(--ease-out) both" }}
+			>
+				<Marquee text={reading} align={align} />
+			</div>
 		</div>
 	);
 }

@@ -6,7 +6,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import "dotenv/config";
 import inquirer from "inquirer";
-import { ROUTES } from "../lib/metro-data";
+import { ROUTES, SIMULATOR_PRESETS } from "../lib/metro-data";
+import { searchableCheckbox } from "./lib/searchable-checkbox";
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const tonesRoot = join(projectRoot, "public/audio/tones");
@@ -26,13 +27,27 @@ const toneFilename = (stationName: string) =>
 	`departure-${createHash("sha256").update(stationName).digest("hex").slice(0, 16)}.mp3`;
 
 async function main() {
-	const stations = new Map<string, string>();
+	const stations = new Map<string, { en: string; terms: Set<string> }>();
+	const linePresetTerms = new Map<string, string[]>();
+	for (const preset of SIMULATOR_PRESETS)
+		for (const lineId of preset.lineIds)
+			linePresetTerms.set(lineId, [preset.id, preset.label]);
 	for (const route of Object.values(ROUTES))
-		for (const station of route.stations)
-			stations.set(station.ja, station.en);
-	const stationChoices = [...stations.entries()].map(([ja, en]) => ({
-		name: `${ja} · ${en}`,
+		for (const station of route.stations) {
+			const entry = stations.get(station.ja) ?? {
+				en: station.en,
+				terms: new Set<string>(),
+			};
+			[station.ja, station.en, station.hira, station.kata, route.line].forEach(
+				(term) => entry.terms.add(term),
+			);
+			for (const term of linePresetTerms.get(route.line) ?? []) entry.terms.add(term);
+			stations.set(station.ja, entry);
+		}
+	const stationChoices = [...stations.entries()].map(([ja, station]) => ({
+		name: `${ja} · ${station.en}`,
 		value: ja,
+		searchTerms: [`tone.departure.${ja}`, ...station.terms],
 		checked: true,
 	}));
 	await mkdir(tonesRoot, { recursive: true });
@@ -69,25 +84,22 @@ async function main() {
 		manifest.generatedAt = new Date().toISOString();
 		await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 	}
-	const { durationSeconds, selectedStations, onlyMissing } =
-		await inquirer.prompt<{
-			durationSeconds: number;
-			selectedStations: string[];
-			onlyMissing: boolean;
-		}>([
+	const { durationSeconds } = await inquirer.prompt<{
+		durationSeconds: number;
+	}>([
 			{
 				type: "number",
 				name: "durationSeconds",
 				message: "How long should each departure melody be?",
 				default: 4,
 			},
-			{
-				type: "checkbox",
-				name: "selectedStations",
-				message: "Choose stations for departure melodies:",
-				choices: stationChoices,
-				pageSize: 16,
-			},
+		]);
+	const selectedStations = await searchableCheckbox({
+		message: "Choose stations for departure melodies:",
+		choices: stationChoices,
+		pageSize: 16,
+	});
+	const { onlyMissing } = await inquirer.prompt<{ onlyMissing: boolean }>([
 			{
 				type: "confirm",
 				name: "onlyMissing",
@@ -102,7 +114,7 @@ async function main() {
 	}
 	if (!token) throw new Error("ELEVEN_API_TOKEN is missing from .env");
 	let generated = 0;
-	for (const [ja, en] of stations) {
+	for (const [ja, station] of stations) {
 		if (!selectedStations.includes(ja)) continue;
 		const filename = toneFilename(ja);
 		const output = join(tonesRoot, filename);
@@ -127,7 +139,7 @@ async function main() {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					text: `A unique, short Japanese railway station departure melody for ${ja} (${en}). Clear bright electronic chime, single instrument, exactly one melodic phrase, no speech, no ambience.`,
+					text: `A unique, short Japanese railway station departure melody for ${ja} (${station.en}). Clear bright electronic chime, single instrument, exactly one melodic phrase, no speech, no ambience.`,
 					model_id: "eleven_text_to_sound_v2",
 					duration_seconds: durationSeconds,
 					prompt_influence: 0.75,

@@ -1,0 +1,523 @@
+{
+	"note": "Catalog of lines and stations for scripts/create-line.ts. This file is UNIONED with lib/data/<preset> to form the pool the picker draws its line and station choices from — either source may contribute a line or station, and lib/data wins on any overlap. Add entries here to widen the choices without touching the live network. Transcribed from the 水下地鐵圖 map; lib/data owns the live routes (station order per line) and is where built lines are written.",
+	"lines": [
+		{
+			"id": "CS",
+			"code": "C",
+			"name": "中心原線",
+			"en": "Chūshingen Line",
+			"jaReading": "ちゅうしんげんせん",
+			"color": "#12318f",
+			"textOnColor": "#fff"
+		},
+		{
+			"id": "MZ",
+			"code": "M",
+			"name": "水野線",
+			"en": "Mizuno Line",
+			"jaReading": "みずのせん",
+			"color": "#22a355",
+			"textOnColor": "#fff"
+		},
+		{
+			"id": "KW",
+			"code": "K",
+			"name": "北野川灣線",
+			"en": "Kitanogawa Bay Line",
+			"jaReading": "きたのがわわんせん",
+			"color": "#e4632a",
+			"textOnColor": "#fff"
+		},
+		{
+			"id": "UK",
+			"code": "U",
+			"name": "私營うかしま線",
+			"en": "Ukashima Line",
+			"jaReading": "しえいうかしません",
+			"color": "#e0359a",
+			"textOnColor": "#fff"
+		},
+		{
+			"id": "SD",
+			"code": "S",
+			"name": "水道上線",
+			"en": "Suidōue Line",
+			"jaReading": "すいどううえせん",
+			"color": "#f2b400",
+			"textOnColor": "#111"
+		},
+		{
+			"id": "AR",
+			"code": "A",
+			"name": "都鐵荒川線",
+			"en": "Toden Arakawa Line",
+			"jaReading": "とてつあらかわせん",
+			"color": "#d0121b",
+			"textOnColor": "#fff"
+		},
+		{
+			"id": "TS",
+			"code": "T",
+			"name": "都鐵東西線",
+			"en": "Toden Tōzai Line",
+			"jaReading": "とてつとうざいせん",
+			"color": "#7d3fb0",
+			"textOnColor": "#fff"
+		},
+		{
+			"id": "KZ",
+			"code": "Z",
+			"name": "私營北野川坂線",
+			"en": "Kitanogawa-zaka Line",
+			"jaReading": "しえいきたのがわざかせん",
+			"color": "#2ba9d8",
+			"textOnColor": "#fff"
+		},
+		{
+			"id": "KH",
+			"code": "H",
+			"name": "北野川本線",
+			"en": "Kitanogawa Main Line",
+			"jaReading": "きたのがわほんせん",
+			"color": "#a8bf2f",
+			"textOnColor": "#111"
+		},
+		{
+			"id": "SG",
+			"code": "G",
+			"name": "水道後線",
+			"en": "Suidōgo Line",
+			"jaReading": "すいどうごせん",
+			"color": "#7d3fb0",
+			"textOnColor": "#fff"
+		},
+		{
+			"id": "MG",
+			"code": "W",
+			"name": "私營水口線",
+			"en": "Mizuguchi Line",
+			"jaReading": "しえいみずぐちせん",
+			"color": "#55c2ad",
+			"textOnColor": "#111"
+		},
+		{
+			"id": "SN",
+			"code": "N",
+			"name": "新水野線",
+			"en": "Shin-Mizuno Line",
+			"jaReading": "しんみずのせん",
+			"color": "#58b7c8",
+			"textOnColor": "#111"
+		}
+	],
+	"stations": [
+		{
+			"ja": "うかしま",
+			"en": "Ukashima",
+			"hira": "うかしま",
+			"kata": "ウカシマ"
+		},
+		{
+			"ja": "うかしま東",
+			"en": "Ukashima-Higashi",
+			"hira": "うかしまひがし",
+			"kata": "ウカシマヒガシ"
+		},
+		{
+			"ja": "中うかしま",
+			"en": "Naka-Ukashima",
+			"hira": "なかうかしま",
+			"kata": "ナカウカシマ"
+		},
+		{
+			"ja": "中心原",
+			"en": "Chūshingen",
+			"hira": "ちゅうしんげん",
+			"kata": "チュウシンゲン"
+		},
+		{
+			"ja": "中心原北",
+			"en": "Chūshingen-Kita",
+			"hira": "ちゅうしんげんきた",
+			"kata": "チュウシンゲンキタ"
+		},
+		{
+			"ja": "中心原南",
+			"en": "Chūshingen-Minami",
+			"hira": "ちゅうしんげんみなみ",
+			"kata": "チュウシンゲンミナミ"
+		},
+		{
+			"ja": "中聖橋",
+			"en": "Naka-Hijiribashi",
+			"hira": "なかひじりばし",
+			"kata": "ナカヒジリバシ"
+		},
+		{
+			"ja": "中聖橋上",
+			"en": "Naka-Hijiribashi-Ue",
+			"hira": "なかひじりばしうえ",
+			"kata": "ナカヒジリバシウエ"
+		},
+		{
+			"ja": "内口",
+			"en": "Uchiguchi",
+			"hira": "うちぐち",
+			"kata": "ウチグチ"
+		},
+		{
+			"ja": "北うかしま",
+			"en": "Kita-Ukashima",
+			"hira": "きたうかしま",
+			"kata": "キタウカシマ"
+		},
+		{
+			"ja": "北野川坂",
+			"en": "Kitanogawa-zaka",
+			"hira": "きたのがわざか",
+			"kata": "キタノガワザカ"
+		},
+		{
+			"ja": "北野川坂北",
+			"en": "Kitanogawa-zaka-Kita",
+			"hira": "きたのがわざかきた",
+			"kata": "キタノガワザカキタ"
+		},
+		{
+			"ja": "北野川灣",
+			"en": "Kitanogawa-Bay",
+			"hira": "きたのがわわん",
+			"kata": "キタノガワワン"
+		},
+		{
+			"ja": "北野川灣北",
+			"en": "Kitanogawa-Bay-Kita",
+			"hira": "きたのがわわんきた",
+			"kata": "キタノガワワンキタ"
+		},
+		{
+			"ja": "北野川灣東",
+			"en": "Kitanogawa-Bay-Higashi",
+			"hira": "きたのがわわんひがし",
+			"kata": "キタノガワワンヒガシ"
+		},
+		{
+			"ja": "北野川灣港前",
+			"en": "Kitanogawa-Bay-Port",
+			"hira": "きたのがわわんこうまえ",
+			"kata": "キタノガワワンコウマエ"
+		},
+		{
+			"ja": "北野川灣轉運站",
+			"en": "Kitanogawa-Bay Transit Center",
+			"hira": "きたのがわわんてんうんえき",
+			"kata": "キタノガワワンテンウンエキ"
+		},
+		{
+			"ja": "南うかしま",
+			"en": "Minami-Ukashima",
+			"hira": "みなみうかしま",
+			"kata": "ミナミウカシマ"
+		},
+		{
+			"ja": "南森原火車站",
+			"en": "Minami-Morihara Rail Terminal",
+			"hira": "みなみもりはらかしゃえき",
+			"kata": "ミナミモリハラカシャエキ"
+		},
+		{
+			"ja": "南聖橋",
+			"en": "Minami-Hijiribashi",
+			"hira": "みなみひじりばし",
+			"kata": "ミナミヒジリバシ"
+		},
+		{
+			"ja": "国会議事堂前",
+			"en": "Kokkai-Gijidō-mae",
+			"hira": "こっかいぎじどうまえ",
+			"kata": "コッカイギジドウマエ"
+		},
+		{
+			"ja": "安涌",
+			"en": "Anyū",
+			"hira": "あんゆう",
+			"kata": "アンユウ"
+		},
+		{
+			"ja": "新中心原北",
+			"en": "Shin-Chūshingen-Kita",
+			"hira": "しんちゅうしんげんきた",
+			"kata": "シンチュウシンゲンキタ"
+		},
+		{
+			"ja": "新中聖橋",
+			"en": "Shin-Naka-Hijiribashi",
+			"hira": "しんなかひじりばし",
+			"kata": "シンナカヒジリバシ"
+		},
+		{
+			"ja": "新北野川",
+			"en": "Shin-Kitanogawa",
+			"hira": "しんきたのがわ",
+			"kata": "シンキタノガワ"
+		},
+		{
+			"ja": "新北野川国際空港",
+			"en": "Shin-Kitanogawa Int'l Airport",
+			"hira": "しんきたのがわこくさいくうこう",
+			"kata": "シンキタノガワコクサイクウコウ"
+		},
+		{
+			"ja": "新南聖橋",
+			"en": "Shin-Minami-Hijiribashi",
+			"hira": "しんみなみひじりばし",
+			"kata": "シンミナミヒジリバシ"
+		},
+		{
+			"ja": "新森原",
+			"en": "Shin-Morihara",
+			"hira": "しんもりはら",
+			"kata": "シンモリハラ"
+		},
+		{
+			"ja": "新森原北",
+			"en": "Shin-Morihara-Kita",
+			"hira": "しんもりはらきた",
+			"kata": "シンモリハラキタ"
+		},
+		{
+			"ja": "新水道上",
+			"en": "Shin-Suidōue",
+			"hira": "しんすいどううえ",
+			"kata": "シンスイドウウエ"
+		},
+		{
+			"ja": "新水道後",
+			"en": "Shin-Suidōgo",
+			"hira": "しんすいどうご",
+			"kata": "シンスイドウゴ"
+		},
+		{
+			"ja": "新水道後北",
+			"en": "Shin-Suidōgo-Kita",
+			"hira": "しんすいどうごきた",
+			"kata": "シンスイドウゴキタ"
+		},
+		{
+			"ja": "新登海",
+			"en": "Shin-Tōkai",
+			"hira": "しんとうかい",
+			"kata": "シントウカイ"
+		},
+		{
+			"ja": "新聖橋",
+			"en": "Shin-Hijiribashi",
+			"hira": "しんひじりばし",
+			"kata": "シンヒジリバシ"
+		},
+		{
+			"ja": "新荒川北",
+			"en": "Shin-Arakawa-Kita",
+			"hira": "しんあらかわきた",
+			"kata": "シンアラカワキタ"
+		},
+		{
+			"ja": "森原",
+			"en": "Morihara",
+			"hira": "もりはら",
+			"kata": "モリハラ"
+		},
+		{
+			"ja": "森原北",
+			"en": "Morihara-Kita",
+			"hira": "もりはらきた",
+			"kata": "モリハラキタ"
+		},
+		{
+			"ja": "森原南",
+			"en": "Morihara-Minami",
+			"hira": "もりはらみなみ",
+			"kata": "モリハラミナミ"
+		},
+		{
+			"ja": "森原小學前",
+			"en": "Morihara-Shōgaku-mae",
+			"hira": "もりはらしょうがくまえ",
+			"kata": "モリハラショウガクマエ"
+		},
+		{
+			"ja": "森原東",
+			"en": "Morihara-Higashi",
+			"hira": "もりはらひがし",
+			"kata": "モリハラヒガシ"
+		},
+		{
+			"ja": "水道上",
+			"en": "Suidōue",
+			"hira": "すいどううえ",
+			"kata": "スイドウウエ"
+		},
+		{
+			"ja": "水道上南",
+			"en": "Suidōue-Minami",
+			"hira": "すいどううえみなみ",
+			"kata": "スイドウウエミナミ"
+		},
+		{
+			"ja": "水道上火車站",
+			"en": "Suidōue Rail Terminal",
+			"hira": "すいどううえかしゃえき",
+			"kata": "スイドウウエカシャエキ"
+		},
+		{
+			"ja": "水道後",
+			"en": "Suidōgo",
+			"hira": "すいどうご",
+			"kata": "スイドウゴ"
+		},
+		{
+			"ja": "水道後北",
+			"en": "Suidōgo-Kita",
+			"hira": "すいどうごきた",
+			"kata": "スイドウゴキタ"
+		},
+		{
+			"ja": "水道後南",
+			"en": "Suidōgo-Minami",
+			"hira": "すいどうごみなみ",
+			"kata": "スイドウゴミナミ"
+		},
+		{
+			"ja": "水道後廣場前",
+			"en": "Suidōgo-Hiroba-mae",
+			"hira": "すいどうごひろばまえ",
+			"kata": "スイドウゴヒロバマエ"
+		},
+		{
+			"ja": "水道後火車站",
+			"en": "Suidōgo Rail Terminal",
+			"hira": "すいどうごかしゃえき",
+			"kata": "スイドウゴカシャエキ"
+		},
+		{
+			"ja": "水道後西",
+			"en": "Suidōgo-Nishi",
+			"hira": "すいどうごにし",
+			"kata": "スイドウゴニシ"
+		},
+		{
+			"ja": "登海",
+			"en": "Tōkai",
+			"hira": "とうかい",
+			"kata": "トウカイ"
+		},
+		{
+			"ja": "登海北",
+			"en": "Tōkai-Kita",
+			"hira": "とうかいきた",
+			"kata": "トウカイキタ"
+		},
+		{
+			"ja": "登海東",
+			"en": "Tōkai-Higashi",
+			"hira": "とうかいひがし",
+			"kata": "トウカイヒガシ"
+		},
+		{
+			"ja": "真海",
+			"en": "Shinkai",
+			"hira": "しんかい",
+			"kata": "シンカイ"
+		},
+		{
+			"ja": "聖橋",
+			"en": "Hijiribashi",
+			"hira": "ひじりばし",
+			"kata": "ヒジリバシ"
+		},
+		{
+			"ja": "聖橋公園",
+			"en": "Hijiribashi-Kōen",
+			"hira": "ひじりばしこうえん",
+			"kata": "ヒジリバシコウエン"
+		},
+		{
+			"ja": "聖橋北",
+			"en": "Hijiribashi-Kita",
+			"hira": "ひじりばしきた",
+			"kata": "ヒジリバシキタ"
+		},
+		{
+			"ja": "聖橋東",
+			"en": "Hijiribashi-Higashi",
+			"hira": "ひじりばしひがし",
+			"kata": "ヒジリバシヒガシ"
+		},
+		{
+			"ja": "聖橋灣",
+			"en": "Hijiribashi-Wan",
+			"hira": "ひじりばしわん",
+			"kata": "ヒジリバシワン"
+		},
+		{
+			"ja": "聖橋西",
+			"en": "Hijiribashi-Nishi",
+			"hira": "ひじりばしにし",
+			"kata": "ヒジリバシニシ"
+		},
+		{
+			"ja": "荒川",
+			"en": "Arakawa",
+			"hira": "あらかわ",
+			"kata": "アラカワ"
+		},
+		{
+			"ja": "荒川公園前",
+			"en": "Arakawa-Kōen-mae",
+			"hira": "あらかわこうえんまえ",
+			"kata": "アラカワコウエンマエ"
+		},
+		{
+			"ja": "荒川北",
+			"en": "Arakawa-Kita",
+			"hira": "あらかわきた",
+			"kata": "アラカワキタ"
+		},
+		{
+			"ja": "荒川火車站",
+			"en": "Arakawa Rail Terminal",
+			"hira": "あらかわかしゃえき",
+			"kata": "アラカワカシャエキ"
+		},
+		{
+			"ja": "西うかしま",
+			"en": "Nishi-Ukashima",
+			"hira": "にしうかしま",
+			"kata": "ニシウカシマ"
+		},
+		{
+			"ja": "西森原",
+			"en": "Nishi-Morihara",
+			"hira": "にしもりはら",
+			"kata": "ニシモリハラ"
+		},
+		{
+			"ja": "都鐵中心原火車站",
+			"en": "Toden Chūshingen Rail Terminal",
+			"hira": "とてつちゅうしんげんかしゃえき",
+			"kata": "トテツチュウシンゲンカシャエキ"
+		},
+		{
+			"ja": "醫學大學前",
+			"en": "Igakudaigaku-mae",
+			"hira": "いがくだいがくまえ",
+			"kata": "イガクダイガクマエ"
+		},
+		{
+			"ja": "重工第一區",
+			"en": "Jūkō Daiichi-ku",
+			"hira": "じゅうこうだいいちく",
+			"kata": "ジュウコウダイイチク"
+		}
+	]
+}

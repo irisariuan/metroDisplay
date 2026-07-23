@@ -1,6 +1,6 @@
 import type React from "react";
 import {
-	DEFAULT_MARQUEE_CONTENT,
+	MARQUEE_CONTENT_PRESETS,
 	SPEED_PRESETS,
 } from "@/lib/constants";
 import type {
@@ -9,7 +9,7 @@ import type {
 	Lang,
 	LineId,
 } from "@/types/metro";
-import type { SimulatorPresetId } from "@/lib/metro-data";
+import { SIMULATOR_PRESETS, type SimulatorPresetId } from "@/lib/metro-data";
 
 export type AlertScope = "marquee" | "lower" | "monitor";
 export type TransferDisplayMode = "auto" | "full" | "split";
@@ -62,6 +62,11 @@ export interface SimulatorControlState {
 	showEditor: boolean;
 	transferDisplayMode: TransferDisplayMode;
 	announcementAudioEnabled: boolean;
+	/** When on, automatic announcements interrupt user-triggered audio; when off
+	 * they wait behind it in the queue. */
+	autoAnnouncementsInterrupt: boolean;
+	announceStationNumberJa: boolean;
+	announceStationNumberEn: boolean;
 	announcementVolume: number;
 	departureMajorStationCount: number;
 }
@@ -92,10 +97,15 @@ export type SimulatorControlAction =
 	| { type: "removeMarqueeItem"; index: number }
 	| { type: "addMarqueeItem" };
 
+const initialPreset = SIMULATOR_PRESETS[0];
+const initialMarqueePreset =
+	MARQUEE_CONTENT_PRESETS.find((preset) => preset.id === initialPreset?.id) ??
+	MARQUEE_CONTENT_PRESETS[0];
+
 export const initialSimulatorControlState: SimulatorControlState = {
-	presetId: "shuika",
-	marqueePresetId: "shuika",
-	lineId: "CS",
+	presetId: initialPreset?.id ?? "",
+	marqueePresetId: initialMarqueePreset?.id ?? "",
+	lineId: initialPreset?.lineId ?? "",
 	serviceId: "local",
 	auto: true,
 	travelDirection: 1,
@@ -118,7 +128,7 @@ export const initialSimulatorControlState: SimulatorControlState = {
 	alertLeaving: false,
 	delayNextMarqueeMessage: true,
 	nextMarqueeThreshold: 70,
-	announcements: DEFAULT_MARQUEE_CONTENT.map((item) => ({
+	announcements: (initialMarqueePreset?.items ?? []).map((item) => ({
 		...item,
 		type: item.type as AnnouncementContentType,
 		ja: item.ja ?? "",
@@ -132,6 +142,9 @@ export const initialSimulatorControlState: SimulatorControlState = {
 	showEditor: false,
 	transferDisplayMode: "auto",
 	announcementAudioEnabled: true,
+	autoAnnouncementsInterrupt: true,
+	announceStationNumberJa: false,
+	announceStationNumberEn: false,
 	announcementVolume: 0.8,
 	departureMajorStationCount: 1,
 };
@@ -189,7 +202,6 @@ export function simulatorControlReducer(
 				en: "New metro notice",
 				ja: "",
 				enabled: true,
-				displayable: true,
 			},
 		],
 	};

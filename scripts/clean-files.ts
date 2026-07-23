@@ -12,10 +12,8 @@
 import { readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import inquirer from "inquirer";
-import shuikaLines from "../lib/data/shuika/lines.json";
-import shuikaRoutes from "../lib/data/shuika/routes.json";
-import tokyoLines from "../lib/data/tokyo/lines.json";
-import tokyoRoutes from "../lib/data/tokyo/routes.json";
+import { ROUTES, SIMULATOR_PRESETS } from "../lib/metro-data";
+import { searchableCheckbox } from "./lib/searchable-checkbox";
 
 const projectRoot = process.cwd();
 const audioRoot = join(projectRoot, "public/audio");
@@ -37,18 +35,27 @@ const AUDIO_EXTENSIONS = [".mp3", ".wav", ".ogg", ".m4a"];
  * Which preset a clip belongs to. Station and line clips trace back through the
  * preset data; framework, content and effect clips are shared by every preset.
  */
-const PRESET_SOURCES = [
-	{ tag: "SHUIKA", lines: shuikaLines, routes: shuikaRoutes },
-	{ tag: "TOKYO", lines: tokyoLines, routes: tokyoRoutes },
-];
 const SHARED_TAG = "SHARED";
 
 const stationPresets = new Map<string, string>();
 const linePresets = new Map<string, string>();
-for (const { tag, lines, routes } of PRESET_SOURCES) {
-	for (const lineId of Object.keys(lines)) linePresets.set(lineId, tag);
-	for (const route of Object.values(routes as Record<string, { stations: { ja: string }[] }>))
-		for (const station of route.stations) stationPresets.set(station.ja, tag);
+const presetSearchTerms = new Map<string, string[]>();
+for (const preset of SIMULATOR_PRESETS) {
+	const tag = preset.id.toUpperCase();
+	for (const lineId of preset.lineIds) {
+		const terms = [preset.id, preset.label];
+		linePresets.set(lineId, tag);
+		presetSearchTerms.set(lineId, terms);
+		for (const station of ROUTES[lineId]?.stations ?? []) {
+			stationPresets.set(station.ja, tag);
+			presetSearchTerms.set(station.ja, [
+				...terms,
+				station.en,
+				station.hira,
+				station.kata,
+			]);
+		}
+	}
 }
 
 function presetTag(key: string): string {
@@ -168,13 +175,18 @@ async function deleteTracked() {
 		return {
 			key,
 			tag,
-			// Everything shown is also what a search term is matched against.
 			name: `[${tag}] ${key}${clip.category ? ` · ${clip.category}` : ""} (${detail})`,
-			haystack: `${tag} ${key} ${clip.category ?? ""}`.toLowerCase(),
+			searchTerms: [
+				tag,
+				key,
+				clip.category ?? "",
+				clip.url,
+				...(presetSearchTerms.get(key.split(".").at(-1) ?? "") ?? []),
+			],
 		};
 	});
 
-	const tags = [...PRESET_SOURCES.map((source) => source.tag), SHARED_TAG];
+	const tags = [...new Set(entries.map((entry) => entry.tag))];
 	const tally = tags
 		.map((tag) => [tag, entries.filter((entry) => entry.tag === tag).length])
 		.filter(([, count]) => count)
@@ -182,55 +194,18 @@ async function deleteTracked() {
 		.join(", ");
 	console.log(`\n${entries.length} tracked clip(s): ${tally}`);
 
-	let selectedKeys: string[] = [];
-	for (;;) {
-		const { query } = await inquirer.prompt<{ query: string }>([
-			{
-				type: "input",
-				name: "query",
-				message: "Search (blank = all, e.g. \"shuika tone\"):",
-			},
-		]);
-		const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-		const matches = entries.filter((entry) =>
-			terms.every((term) => entry.haystack.includes(term)),
-		);
-
-		if (!matches.length) {
-			console.log("No clips matched that search.");
-			continue;
-		}
-
-		const answer = await inquirer.prompt<{ picked: string[] }>([
-			{
-				type: "checkbox",
-				name: "picked",
-				message: `Choose clips to delete (${matches.length} match):`,
-				choices: matches.map((entry) => ({
-					name: entry.name,
-					value: entry.key,
-					checked: false,
-				})),
-				pageSize: 20,
-			},
-		]);
-		if (answer.picked.length) {
-			selectedKeys = answer.picked;
-			break;
-		}
-
-		const { again } = await inquirer.prompt<{ again: boolean }>([
-			{
-				type: "confirm",
-				name: "again",
-				message: "Nothing selected. Search again?",
-				default: true,
-			},
-		]);
-		if (!again) {
-			console.log("Nothing deleted.");
-			return;
-		}
+	const selectedKeys = await searchableCheckbox({
+		message: "Choose tracked clips to delete:",
+		choices: entries.map((entry) => ({
+			name: entry.name,
+			value: entry.key,
+			searchTerms: entry.searchTerms,
+		})),
+		pageSize: 20,
+	});
+	if (!selectedKeys.length) {
+		console.log("Nothing deleted.");
+		return;
 	}
 
 	const { confirmed } = await inquirer.prompt<{ confirmed: boolean }>([

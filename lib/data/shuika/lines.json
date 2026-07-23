@@ -12,8 +12,8 @@
 		"id": "MZ",
 		"code": "M",
 		"ja": "水野線",
-		"jaReading": "みずのせん",
 		"en": "Mizuno Line",
+		"jaReading": "みずのせん",
 		"color": "#22a355",
 		"textOnColor": "#fff"
 	},
@@ -21,7 +21,6 @@
 		"id": "KW",
 		"code": "K",
 		"ja": "北野川灣線",
-		"jaReading": "きたのがわわんせん",
 		"en": "Kitanogawa Bay Line",
 		"color": "#e4632a",
 		"textOnColor": "#fff"
@@ -30,7 +29,6 @@
 		"id": "UK",
 		"code": "U",
 		"ja": "私營うかしま線",
-		"jaReading": "しえいうかしません",
 		"en": "Ukashima Line",
 		"color": "#e0359a",
 		"textOnColor": "#fff"
@@ -39,7 +37,6 @@
 		"id": "SD",
 		"code": "S",
 		"ja": "水道上線",
-		"jaReading": "すいどううえせん",
 		"en": "Suidōue Line",
 		"color": "#f2b400",
 		"textOnColor": "#111"
@@ -48,17 +45,25 @@
 		"id": "AR",
 		"code": "A",
 		"ja": "都鐵荒川線",
-		"jaReading": "とてつあらかわせん",
 		"en": "Toden Arakawa Line",
 		"color": "#d0121b",
+		"textOnColor": "#fff"
+	},
+	"TS": {
+		"id": "TS",
+		"code": "T",
+		"ja": "都鐵東西線",
+		"en": "Toden Tōzai Line",
+		"jaReading": "とてつとうざいせん",
+		"color": "#7d3fb0",
 		"textOnColor": "#fff"
 	},
 	"KZ": {
 		"id": "KZ",
 		"code": "Z",
 		"ja": "私營北野川坂線",
-		"jaReading": "しえいきたのがわざかせん",
 		"en": "Kitanogawa-zaka Line",
+		"jaReading": "しえいきたのがわざかせん",
 		"color": "#2ba9d8",
 		"textOnColor": "#fff"
 	},
@@ -75,8 +80,8 @@
 		"id": "SG",
 		"code": "G",
 		"ja": "水道後線",
-		"jaReading": "すいどうごせん",
 		"en": "Suidōgo Line",
+		"jaReading": "すいどうごせん",
 		"color": "#7d3fb0",
 		"textOnColor": "#fff"
 	},
@@ -84,8 +89,8 @@
 		"id": "MG",
 		"code": "W",
 		"ja": "私營水口線",
-		"jaReading": "しえいみずぐちせん",
 		"en": "Mizuguchi Line",
+		"jaReading": "しえいみずぐちせん",
 		"color": "#55c2ad",
 		"textOnColor": "#111"
 	},
@@ -93,8 +98,8 @@
 		"id": "SN",
 		"code": "N",
 		"ja": "新水野線",
-		"jaReading": "しんみずのせん",
 		"en": "Shin-Mizuno Line",
+		"jaReading": "しんみずのせん",
 		"color": "#58b7c8",
 		"textOnColor": "#111"
 	}

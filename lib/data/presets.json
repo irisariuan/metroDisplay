@@ -8,5 +8,10 @@
 		"id": "yamanote",
 		"label": "TOKYO · YAMANOTE",
 		"lineId": "YM"
+	},
+	{
+		"id": "hongkong",
+		"label": "HONG KONG · MTR",
+		"lineId": "ISL"
 	}
 ]

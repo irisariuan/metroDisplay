@@ -67,6 +67,7 @@ export function StationNameLabel({
 	const nameRef = React.useRef<HTMLSpanElement>(null);
 	const readingRef = React.useRef<HTMLSpanElement>(null);
 	const [layout, setLayout] = React.useState<LabelLayout>(IDLE_LAYOUT);
+	const hasReading = showReadings && Boolean(station.kata.trim());
 	const {
 		fontFamily,
 		fontSize,
@@ -242,7 +243,7 @@ export function StationNameLabel({
 		fontWeight,
 		letterSpacing,
 		maxWidth,
-		showReadings,
+		hasReading,
 		station.kata,
 		text,
 		textTransform,
@@ -315,7 +316,7 @@ export function StationNameLabel({
 							>
 								{text}
 							</span>
-							{showReadings ? (
+							{hasReading ? (
 								<span
 									ref={readingRef}
 									className="mt-0.5 block h-2.75 whitespace-nowrap font-body text-[10px] font-semibold leading-none tracking-normal"

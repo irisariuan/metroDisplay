@@ -88,7 +88,6 @@ export type AnnouncementContentType = "ad" | "notice" | 'sound';
 
 export interface AnnouncementContent {
 	type: AnnouncementContentType;
-	displayable: boolean;
 	en: string;
 	ja?: string;
 	enReading?: string;

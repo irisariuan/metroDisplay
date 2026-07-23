@@ -30,6 +30,9 @@ import type {
 	Station,
 } from "@/types/metro";
 import presetData from "./data/presets.json";
+import hongkongLines from "./data/hongkong/lines.json";
+import hongkongRoutes from "./data/hongkong/routes.json";
+import hongkongReadings from "./data/hongkong/station-readings.json";
 import shuikaLines from "./data/shuika/lines.json";
 import shuikaRoutes from "./data/shuika/routes.json";
 import shuikaReadings from "./data/shuika/station-readings.json";
@@ -77,6 +80,11 @@ const PRESET_DATA: Record<string, PresetData> = {
 		lines: tokyoLines as Record<string, AnnotatedLineMeta>,
 		routes: tokyoRoutes as Record<string, RawRoute>,
 		readings: tokyoReadings as StationReadings,
+	},
+	hongkong: {
+		lines: hongkongLines as Record<string, AnnotatedLineMeta>,
+		routes: hongkongRoutes as Record<string, RawRoute>,
+		readings: hongkongReadings as StationReadings,
 	},
 };
 

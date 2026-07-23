@@ -7,9 +7,14 @@ import { fileURLToPath } from "node:url";
 import "dotenv/config";
 import inquirer from "inquirer";
 import { MARQUEE_CONTENT_PRESETS } from "../lib/constants";
-import { LINES, ROUTES } from "../lib/metro-data";
-import { ANNOUNCEMENT_FRAMEWORK_OPTIONS } from "../lib/announcementAudio";
+import { LINES, ROUTES, SIMULATOR_PRESETS } from "../lib/metro-data";
+import {
+	ANNOUNCEMENT_FRAMEWORK_OPTIONS,
+	STATION_NUMBER_AUDIO_PARTS,
+	stationRouteAudioPart,
+} from "../lib/announcementAudio";
 import type { Station } from "../types/metro";
+import { searchableCheckbox } from "./lib/searchable-checkbox";
 
 type Lang = "ja" | "en";
 type Provider = "replicate" | "elevenlabs";
@@ -42,6 +47,27 @@ function collectClips(): Clip[] {
 		lang: clip.lang,
 		category: "framework",
 	}));
+	clips.push(
+		...STATION_NUMBER_AUDIO_PARTS.map((clip) => ({
+			key: clip.key,
+			text: clip.label,
+			speechText: clip.speechText,
+			lang: clip.lang,
+			category: "station-number",
+		})),
+	);
+	for (const lineId of Object.keys(ROUTES)) {
+		for (const lang of ["ja", "en"] as const) {
+			const clip = stationRouteAudioPart(lineId, lang);
+			clips.push({
+				key: clip.key,
+				text: clip.label,
+				speechText: clip.speechText,
+				lang: clip.lang,
+				category: "station-number",
+			});
+		}
+	}
 	const stations = new Map<string, Station>();
 	for (const route of Object.values(ROUTES))
 		for (const station of route.stations) stations.set(station.ja, station);
@@ -206,12 +232,33 @@ async function exists(path: string) {
 async function main() {
 	const allClips = collectClips();
 	const stations = new Map<string, Station>();
+	const stationSearchTerms = new Map<string, Set<string>>();
+	const linePresetTerms = new Map<string, string[]>();
+	for (const preset of SIMULATOR_PRESETS)
+		for (const lineId of preset.lineIds)
+			linePresetTerms.set(lineId, [preset.id, preset.label]);
 	for (const route of Object.values(ROUTES))
-		for (const station of route.stations) stations.set(station.ja, station);
+		for (const station of route.stations) {
+			stations.set(station.ja, station);
+			const terms = stationSearchTerms.get(station.ja) ?? new Set<string>();
+			terms.add(route.line);
+			for (const term of linePresetTerms.get(route.line) ?? []) terms.add(term);
+			stationSearchTerms.set(station.ja, terms);
+		}
 	const stationChoices = (lang: Lang) =>
 		[...stations.values()].map((station) => ({
 			name: lang === "ja" ? station.ja : station.en,
 			value: `station.${lang}.${station.ja}`,
+			searchTerms: [
+				station.ja,
+				station.en,
+				station.hira,
+				station.kata,
+				...Object.values(station).filter(
+					(value): value is string => typeof value === "string",
+				),
+				...(stationSearchTerms.get(station.ja) ?? []),
+			],
 			checked: true,
 		}));
 	const clipChoices = (category: Clip["category"], lang: Lang) =>
@@ -220,89 +267,87 @@ async function main() {
 			.map((clip) => ({
 				name: clip.text,
 				value: clip.key,
+				searchTerms: [
+					clip.key,
+					clip.speechText,
+					clip.category,
+					clip.lang,
+					...Object.entries(LINES).flatMap(([lineId, line]) =>
+						clip.key.includes(lineId)
+							? [
+								lineId,
+								line.code,
+								line.ja,
+								line.en,
+								line.jaReading ?? "",
+								line.enReading ?? "",
+								...(linePresetTerms.get(lineId) ?? []),
+							]
+							: [],
+					),
+					...Object.values(MARQUEE_CONTENT_PRESETS).flatMap((preset) =>
+						clip.key.includes(`content.${preset.id}.`)
+							? [preset.id, preset.label]
+							: [],
+					),
+				],
 				checked: true,
 			}));
-	const {
-		selectedStationJa,
-		selectedStationEn,
-		selectedFrameworkJa,
-		selectedFrameworkEn,
-		selectedLinesJa,
-		selectedLinesEn,
-		selectedContentJa,
-		selectedContentEn,
-		onlyMissing,
-		speed: speedInput,
-		model,
-	} = await inquirer.prompt<{
-		selectedStationJa: string[];
-		selectedStationEn: string[];
-		selectedFrameworkJa: string[];
-		selectedFrameworkEn: string[];
-		selectedLinesJa: string[];
-		selectedLinesEn: string[];
-		selectedContentJa: string[];
-		selectedContentEn: string[];
+	const selectedStationJa = await searchableCheckbox({
+		message: "Choose Japanese station-name clips:",
+		choices: stationChoices("ja"),
+		pageSize: 16,
+	});
+	const selectedStationEn = await searchableCheckbox({
+		message: "Choose English station-name clips:",
+		choices: stationChoices("en"),
+		pageSize: 16,
+	});
+	const selectedFrameworkJa = await searchableCheckbox({
+		message: "Choose Japanese framework phrases:",
+		choices: clipChoices("framework", "ja"),
+		pageSize: 16,
+	});
+	const selectedFrameworkEn = await searchableCheckbox({
+		message: "Choose English framework phrases:",
+		choices: clipChoices("framework", "en"),
+		pageSize: 16,
+	});
+	const selectedLinesJa = await searchableCheckbox({
+		message: "Choose Japanese line-name clips:",
+		choices: clipChoices("line", "ja"),
+		pageSize: 16,
+	});
+	const selectedLinesEn = await searchableCheckbox({
+		message: "Choose English line-name clips:",
+		choices: clipChoices("line", "en"),
+		pageSize: 16,
+	});
+	const selectedStationNumbersJa = await searchableCheckbox({
+		message: "Choose Japanese station-number parts:",
+		choices: clipChoices("station-number", "ja"),
+		pageSize: 16,
+	});
+	const selectedStationNumbersEn = await searchableCheckbox({
+		message: "Choose English station-number parts:",
+		choices: clipChoices("station-number", "en"),
+		pageSize: 16,
+	});
+	const selectedContentJa = await searchableCheckbox({
+		message: "Choose Japanese lower-marquee clips:",
+		choices: clipChoices("content", "ja"),
+		pageSize: 16,
+	});
+	const selectedContentEn = await searchableCheckbox({
+		message: "Choose English lower-marquee clips:",
+		choices: clipChoices("content", "en"),
+		pageSize: 16,
+	});
+	const { onlyMissing, speed: speedInput, model } = await inquirer.prompt<{
 		onlyMissing: boolean;
 		speed: string;
 		model: string;
 	}>([
-		{
-			type: "checkbox",
-			name: "selectedStationJa",
-			message: "Choose Japanese station-name clips:",
-			choices: stationChoices("ja"),
-			pageSize: 16,
-		},
-		{
-			type: "checkbox",
-			name: "selectedStationEn",
-			message: "Choose English station-name clips:",
-			choices: stationChoices("en"),
-			pageSize: 16,
-		},
-		{
-			type: "checkbox",
-			name: "selectedFrameworkJa",
-			message: "Choose Japanese framework phrases:",
-			choices: clipChoices("framework", "ja"),
-			pageSize: 16,
-		},
-		{
-			type: "checkbox",
-			name: "selectedFrameworkEn",
-			message: "Choose English framework phrases:",
-			choices: clipChoices("framework", "en"),
-			pageSize: 16,
-		},
-		{
-			type: "checkbox",
-			name: "selectedLinesJa",
-			message: "Choose Japanese line-name clips:",
-			choices: clipChoices("line", "ja"),
-			pageSize: 16,
-		},
-		{
-			type: "checkbox",
-			name: "selectedLinesEn",
-			message: "Choose English line-name clips:",
-			choices: clipChoices("line", "en"),
-			pageSize: 16,
-		},
-		{
-			type: "checkbox",
-			name: "selectedContentJa",
-			message: "Choose Japanese lower-marquee clips:",
-			choices: clipChoices("content", "ja"),
-			pageSize: 16,
-		},
-		{
-			type: "checkbox",
-			name: "selectedContentEn",
-			message: "Choose English lower-marquee clips:",
-			choices: clipChoices("content", "en"),
-			pageSize: 16,
-		},
 		{
 			type: "confirm",
 			name: "onlyMissing",
@@ -366,6 +411,8 @@ async function main() {
 		...selectedFrameworkEn,
 		...selectedLinesJa,
 		...selectedLinesEn,
+		...selectedStationNumbersJa,
+		...selectedStationNumbersEn,
 		...selectedContentJa,
 		...selectedContentEn,
 	]);

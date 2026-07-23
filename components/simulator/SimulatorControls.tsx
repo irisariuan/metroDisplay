@@ -7,12 +7,12 @@ import { LineControls } from "@/components/simulator/controls/LineControls";
 import { ServiceControls } from "@/components/simulator/controls/ServiceControls";
 import {
 	ANNOUNCEMENT_FRAMEWORK_OPTIONS,
-	audioKeyLabel,
 	contentAudioKey,
 	departureToneKey,
 	stationAudioKey,
 } from "@/lib/announcementAudio";
 import { SOUND_EFFECTS, soundEffectKey } from "@/lib/soundEffects";
+import type { AnnouncementQueue } from "@/components/simulator/AnnouncementAudio";
 import {
 	setControl,
 	type CustomMarqueePreset,
@@ -77,56 +77,55 @@ function AudioClipControl({
 	);
 }
 
+export interface SimulatorControlsContext {
+	route: EditableRoute;
+	hasCurrentTransfers: boolean;
+	transferExpanded: boolean;
+	currentStation: Station;
+	announcementAudioOverrides: Record<string, string>;
+	addService: () => void;
+	removeService: (id: string) => void;
+	setServiceField: (id: string, field: "ja" | "en", value: string) => void;
+	toggleServiceStop: (index: number) => void;
+	addLine: () => void;
+	presets: SimulatorPreset[];
+	marqueePresets: CustomMarqueePreset[];
+	pickPreset: (presetId: SimulatorPresetId) => void;
+	addPreset: () => void;
+	setPresetLabel: (label: string) => void;
+	togglePresetLine: (lineId: LineId) => void;
+	pickMarqueePreset: (presetId: string) => void;
+	pickLine: (lineId: LineId) => void;
+	setLineField: (field: LineEditorField, value: string) => void;
+	setStationField: (
+		index: number,
+		field: EditableStationField,
+		value: string | number,
+	) => void;
+	toggleSide: (index: number) => void;
+	toggleMajorStation: (index: number) => void;
+	toggleXfer: (index: number, lineId: LineId) => void;
+	addStation: () => void;
+	removeStation: (index: number) => void;
+	moveStation: (index: number, direction: number) => void;
+	setDest: (field: RouteDestinationField, value: string) => void;
+	toggleCircular: () => void;
+	advance: (direction: number) => void;
+	clearAlert: () => void;
+	uploadAnnouncementAudio: (key: string, file: File) => void;
+	playAnnouncementKeys: (keys: string[], label?: string) => void;
+	reorderAnnouncementQueue: (id: string, toIndex: number) => void;
+	playCurrentAnnouncement: (language: "ja" | "en") => void;
+	playDepartureAnnouncement: (language: "ja" | "en") => void;
+	stopAnnouncementAudio: () => void;
+	isAudioClipAvailable: (key: string) => boolean;
+	audioQueue: AnnouncementQueue;
+}
+
 interface SimulatorControlsProps {
 	state: SimulatorControlState;
 	dispatch: React.Dispatch<SimulatorControlAction>;
-	context: {
-		route: EditableRoute;
-		hasCurrentTransfers: boolean;
-		transferExpanded: boolean;
-		currentStation: Station;
-		announcementAudioOverrides: Record<string, string>;
-		addService: () => void;
-		removeService: (id: string) => void;
-		setServiceField: (
-			id: string,
-			field: "ja" | "en",
-			value: string,
-		) => void;
-		toggleServiceStop: (index: number) => void;
-		addLine: () => void;
-		presets: SimulatorPreset[];
-		marqueePresets: CustomMarqueePreset[];
-		pickPreset: (presetId: SimulatorPresetId) => void;
-		addPreset: () => void;
-		setPresetLabel: (label: string) => void;
-		togglePresetLine: (lineId: LineId) => void;
-		pickMarqueePreset: (presetId: string) => void;
-		pickLine: (lineId: LineId) => void;
-		setLineField: (field: LineEditorField, value: string) => void;
-		setStationField: (
-			index: number,
-			field: EditableStationField,
-			value: string | number,
-		) => void;
-		toggleSide: (index: number) => void;
-		toggleMajorStation: (index: number) => void;
-		toggleXfer: (index: number, lineId: LineId) => void;
-		addStation: () => void;
-		removeStation: (index: number) => void;
-		moveStation: (index: number, direction: number) => void;
-		setDest: (field: RouteDestinationField, value: string) => void;
-		toggleCircular: () => void;
-		advance: (direction: number) => void;
-		clearAlert: () => void;
-		uploadAnnouncementAudio: (key: string, file: File) => void;
-		playAnnouncementKeys: (keys: string[]) => void;
-		playCurrentAnnouncement: (language: "ja" | "en") => void;
-		playDepartureAnnouncement: (language: "ja" | "en") => void;
-		stopAnnouncementAudio: () => void;
-		isAudioClipAvailable: (key: string) => boolean;
-		audioQueue: { current: string | null; pending: string[] };
-	};
+	context: SimulatorControlsContext;
 }
 
 // The simulator engine owns state; this component owns its complete control surface.
@@ -165,6 +164,9 @@ export function SimulatorControls({
 		alertScope,
 		alertLeaving,
 		announcementAudioEnabled,
+		autoAnnouncementsInterrupt,
+		announceStationNumberJa,
+		announceStationNumberEn,
 		announcementVolume,
 		departureMajorStationCount,
 		marqueePresetId,
@@ -202,6 +204,7 @@ export function SimulatorControls({
 		clearAlert,
 		uploadAnnouncementAudio,
 		playAnnouncementKeys,
+		reorderAnnouncementQueue,
 		playCurrentAnnouncement,
 		playDepartureAnnouncement,
 		stopAnnouncementAudio,
@@ -270,14 +273,43 @@ export function SimulatorControls({
 	const setAnnouncementAudioEnabled = (
 		value: React.SetStateAction<boolean>,
 	) => set("announcementAudioEnabled", value);
+	const setAutoAnnouncementsInterrupt = (
+		value: React.SetStateAction<boolean>,
+	) => set("autoAnnouncementsInterrupt", value);
 	const setAnnouncementVolume = (value: React.SetStateAction<number>) =>
 		set("announcementVolume", value);
+	const setAnnounceStationNumberJa = (
+		value: React.SetStateAction<boolean>,
+	) => set("announceStationNumberJa", value);
+	const setAnnounceStationNumberEn = (
+		value: React.SetStateAction<boolean>,
+	) => set("announceStationNumberEn", value);
 	const setDepartureMajorStationCount = (
 		value: React.SetStateAction<number>,
 	) => set("departureMajorStationCount", value);
 	const [frameworkAudioKey, setFrameworkAudioKey] = React.useState(
 		ANNOUNCEMENT_FRAMEWORK_OPTIONS[0].key,
 	);
+	// Which queued announcement is being dragged, and the slot it is hovering, so
+	// the pending list can be reordered by drag-and-drop.
+	const [queueDragId, setQueueDragId] = React.useState<string | null>(null);
+	const [queueDragOverId, setQueueDragOverId] = React.useState<string | null>(
+		null,
+	);
+	const endQueueDrag = () => {
+		setQueueDragId(null);
+		setQueueDragOverId(null);
+	};
+	const dropOnQueueItem = (targetId: string) => {
+		if (queueDragId && queueDragId !== targetId) {
+			const targetIndex = audioQueue.pending.findIndex(
+				(item) => item.id === targetId,
+			);
+			if (targetIndex !== -1)
+				reorderAnnouncementQueue(queueDragId, targetIndex);
+		}
+		endQueueDrag();
+	};
 	const toggleAutoLanguageMode = (mode: StationNameMode) =>
 		setAutoLanguageModes((current) => {
 			if (current.includes(mode))
@@ -981,18 +1013,6 @@ export function SimulatorControls({
 											}
 											label=""
 										/>
-										<Switch
-											checked={item.displayable}
-											onChange={(enabled: boolean) =>
-												dispatch({
-													type: "updateAnnouncement",
-													field: "displayable",
-													index,
-													value: enabled,
-												})
-											}
-											label=""
-										/>
 										<select
 											value={item.type}
 											aria-label="Marquee content type"
@@ -1179,6 +1199,24 @@ export function SimulatorControls({
 							</div>
 						</div>
 					</div>
+					<div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-md border-2 border-ink bg-paper-2 p-2">
+						<span className="font-mono text-[10px] font-bold tracking-widest">
+							STATION NUMBER
+						</span>
+						<Switch
+							checked={announceStationNumberJa}
+							onChange={setAnnounceStationNumberJa}
+							label="JA"
+						/>
+						<Switch
+							checked={announceStationNumberEn}
+							onChange={setAnnounceStationNumberEn}
+							label="EN"
+						/>
+						<span className="font-mono text-[10px] font-bold tracking-widest text-muted">
+							COMPOSED FROM ROUTE + NUMBER PARTS
+						</span>
+					</div>
 					<div className="mt-2 flex flex-wrap items-center gap-2">
 						<button
 							type="button"
@@ -1265,25 +1303,53 @@ export function SimulatorControls({
 						</div>
 					) : null}
 					<div className="mt-2 rounded-md border-2 border-ink bg-paper-2 p-2">
-						<div className="mb-1.5 font-mono text-[10px] font-bold tracking-widest">
-							AUDIO QUEUE
-							{audioQueue.pending.length
-								? ` · ${audioQueue.pending.length} WAITING`
-								: ""}
+						<div className="mb-1.5 flex items-center justify-between gap-3">
+							<div className="font-mono text-[10px] font-bold tracking-widest">
+								AUDIO QUEUE
+								{audioQueue.pending.length
+									? ` · ${audioQueue.pending.length} WAITING`
+									: ""}
+							</div>
+							<Switch
+								checked={autoAnnouncementsInterrupt}
+								onChange={setAutoAnnouncementsInterrupt}
+								label="AUTO INTERRUPTS"
+							/>
 						</div>
 						{audioQueue.current || audioQueue.pending.length ? (
 							<div className="flex flex-wrap gap-1.5">
 								{audioQueue.current ? (
 									<span className="rounded-[5px] border-2 border-ink bg-acid px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink">
-										▶ {audioKeyLabel(audioQueue.current)}
+										▶ {audioQueue.current.label}
 									</span>
 								) : null}
-								{audioQueue.pending.map((key, index) => (
+								{audioQueue.pending.map((item, index) => (
 									<span
-										key={`${key}:${index}`}
-										className="rounded-[5px] border-2 border-ink bg-paper px-1.5 py-0.5 font-mono text-[10px] font-bold text-muted"
+										key={item.id}
+										draggable
+										onDragStart={() =>
+											setQueueDragId(item.id)
+										}
+										onDragEnter={() =>
+											setQueueDragOverId(item.id)
+										}
+										onDragOver={(event) =>
+											event.preventDefault()
+										}
+										onDrop={() => dropOnQueueItem(item.id)}
+										onDragEnd={endQueueDrag}
+										className={`flex cursor-grab items-center gap-1 rounded-[5px] border-2 border-ink px-1.5 py-0.5 font-mono text-[10px] font-bold active:cursor-grabbing ${
+											queueDragOverId === item.id &&
+											queueDragId !== item.id
+												? "bg-magenta text-ink"
+												: item.source === "user"
+													? "bg-paper text-ink"
+													: "bg-paper text-muted"
+										} ${queueDragId === item.id ? "opacity-50" : ""}`}
+										title="Drag to reorder"
 									>
-										{index + 1}. {audioKeyLabel(key)}
+										<span aria-hidden>⠿</span>
+										{index + 1}. {item.label}
 									</span>
 								))}
 							</div>
@@ -1450,7 +1516,7 @@ export function SimulatorControls({
 							</button>
 							<button
 								className="lc-btn"
-								onClick={clearAlert}
+								onClick={() => clearAlert()}
 								disabled={!alertActive || alertLeaving}
 								style={{
 									padding: "9px 12px",
