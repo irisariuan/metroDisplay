@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "NODE_ENV=production node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON server.ts --port 3002",
     "lint": "eslint",
+    "edit:lines": "bun scripts/edit-lines.ts",
     "generate:announcement-audio": "bun scripts/generate-announcement-audio.ts",
     "generate:departure-tones": "bun scripts/generate-departure-tones-elevenlabs.ts",
     "generate:sound-effects": "bun scripts/generate-sound-effects-elevenlabs.ts",
