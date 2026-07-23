@@ -177,8 +177,8 @@ async function writeJson(path: string, obj: unknown): Promise<void> {
 	await writeFile(path, `${JSON.stringify(obj, null, TAB)}\n`);
 }
 
-/** Choose from the live data presets instead of hard-coding the menu. */
-async function pickPreset(): Promise<string> {
+/** Read editable presets from the live data directory. */
+async function editablePresetIds(): Promise<string[]> {
 	const dataRoot = join(projectRoot, "lib/data");
 	const entries = await readdir(dataRoot, { withFileTypes: true });
 	const presets = entries
@@ -191,6 +191,12 @@ async function pickPreset(): Promise<string> {
 		)
 		.sort();
 	if (!presets.length) throw new Error(`No editable presets in ${dataRoot}.`);
+	return presets;
+}
+
+/** Choose from the live data presets instead of hard-coding the menu. */
+async function pickPreset(): Promise<string> {
+	const presets = await editablePresetIds();
 	if (presets.length === 1) return presets[0];
 	const { preset } = await inquirer.prompt<{ preset: string }>([
 		{
@@ -198,7 +204,7 @@ async function pickPreset(): Promise<string> {
 			name: "preset",
 			message: "Choose a preset to edit:",
 			choices: presets.map((id) => ({ name: id, value: id })),
-			default: presets.includes("shuika") ? "shuika" : presets[0],
+			default: presets[0],
 		},
 	]);
 	return preset;
@@ -1049,7 +1055,7 @@ async function main() {
 		values.preset ??
 		(!hasBuildInput && !values.clean && !values.out
 			? await pickPreset()
-			: "shuika");
+			: (await editablePresetIds())[0]);
 	const sourcePath = resolve(
 		projectRoot,
 		values.source ?? `scripts/data/${preset}.json`,

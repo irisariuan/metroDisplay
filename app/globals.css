@@ -120,9 +120,11 @@
 	--border-ink: var(--ink);
 	--border-soft: #00000024;
 
-	--font-display: "Anton", "Kiwi Maru", 'Chiron GoRound TC', Impact, sans-serif;
-	--font-body: "Space Grotesk", "Kiwi Maru", system-ui, sans-serif;
-	--font-mono: "Space Mono", "Kiwi Maru", 'Chiron GoRound TC', monospace;
+	--font-display:
+		"Anton", "Kiwi Maru", "Chiron GoRound TC", Impact, sans-serif;
+	--font-body:
+		"Space Grotesk", "Kiwi Maru", "Chiron GoRound TC", system-ui, sans-serif;
+	--font-mono: "Space Mono", "Kiwi Maru", "Chiron GoRound TC", monospace;
 	--size-display-xl: clamp(64px, 12vw, 168px);
 	--size-display-l: clamp(48px, 8vw, 96px);
 	--size-display-m: clamp(32px, 5vw, 56px);

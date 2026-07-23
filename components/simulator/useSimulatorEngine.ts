@@ -122,7 +122,10 @@ export function useSimulatorEngine() {
 		SIMULATOR_PRESETS.map((preset) => ({
 			...preset,
 			lineIds: [...preset.lineIds],
-			marqueePresetId: preset.id === "yamanote" ? "yamanote" : "shuika",
+			marqueePresetId:
+				MARQUEE_CONTENT_PRESETS.find((item) => item.id === preset.id)?.id ??
+				MARQUEE_CONTENT_PRESETS[0]?.id ??
+				"",
 		})),
 	);
 	const [marqueePresets, setMarqueePresets] = useState<CustomMarqueePreset[]>(
@@ -594,38 +597,38 @@ export function useSimulatorEngine() {
 	}
 
 	function setPresetLabel(label: string) {
-		if (!["shuika", "yamanote", "hongkong"].includes(controls.presetId))
-			setPresets((current) => {
-				const nextLabel = label || "UNTITLED PRESET";
-				const edited = current.find(
-					(preset) => preset.id === controls.presetId,
-				);
-				if (edited)
-					setMarqueePresets((items) =>
-						items.map((item) =>
-							item.id === edited.marqueePresetId
-								? { ...item, label: nextLabel }
-								: item,
-						),
-					);
-				return current.map((preset) =>
-					preset.id === controls.presetId
-						? { ...preset, label: nextLabel }
-						: preset,
-				);
-			});
+		const nextLabel = label || "UNTITLED PRESET";
+		const edited = presets.find((preset) => preset.id === controls.presetId);
+		if (!edited) return;
+		setPresets((current) =>
+			current.map((preset) =>
+				preset.id === controls.presetId
+					? { ...preset, label: nextLabel }
+					: preset,
+			),
+		);
+		setMarqueePresets((items) =>
+			items.map((item) =>
+				item.id === edited.marqueePresetId
+					? { ...item, label: nextLabel }
+					: item,
+			),
+		);
 	}
 
 	function togglePresetLine(id: LineId) {
-		if (["shuika", "yamanote", "hongkong"].includes(controls.presetId)) return;
+		const activePreset = presets.find(
+			(preset) => preset.id === controls.presetId,
+		);
+		if (!activePreset) return;
+		const included = activePreset.lineIds.includes(id);
+		if (included && activePreset.lineIds.length === 1) return;
+		const lineIds = included
+			? activePreset.lineIds.filter((item) => item !== id)
+			: [...activePreset.lineIds, id];
 		setPresets((current) =>
 			current.map((preset) => {
 				if (preset.id !== controls.presetId) return preset;
-				const included = preset.lineIds.includes(id);
-				if (included && preset.lineIds.length === 1) return preset;
-				const lineIds = included
-					? preset.lineIds.filter((item) => item !== id)
-					: [...preset.lineIds, id];
 				return {
 					...preset,
 					lineIds,
@@ -633,11 +636,8 @@ export function useSimulatorEngine() {
 				};
 			}),
 		);
-		const activePreset = presets.find(
-			(preset) => preset.id === controls.presetId,
-		);
-		if (activePreset?.lineId === id && activePreset.lineIds.length > 1) {
-			const nextLineId = activePreset.lineIds.find((item) => item !== id);
+		if (!lineIds.includes(lineId)) {
+			const nextLineId = lineIds[0];
 			if (nextLineId) {
 				setLineId(nextLineId);
 				updateControl("serviceId", "local");

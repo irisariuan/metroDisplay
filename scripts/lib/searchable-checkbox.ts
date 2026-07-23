@@ -79,6 +79,21 @@ export const searchableCheckbox = createPrompt<
 			done(config.choices.filter((choice) => selected.has(choice.value)).map((choice) => choice.value));
 			return;
 		}
+		if (key.ctrl && key.name === "a") {
+			const next = new Set(selected);
+			for (const choice of filtered) next.add(choice.value);
+			setSelected(next);
+			return;
+		}
+		if (key.ctrl && key.name === "i") {
+			const next = new Set(selected);
+			for (const choice of filtered) {
+				if (next.has(choice.value)) next.delete(choice.value);
+				else next.add(choice.value);
+			}
+			setSelected(next);
+			return;
+		}
 		if (isUpKey(key) || isDownKey(key)) {
 			if (!filtered.length) return;
 			setActive(
@@ -148,7 +163,7 @@ export const searchableCheckbox = createPrompt<
 		`  ${theme.muted("Search:")} ${theme.query(query || "…")}  ${theme.muted(`(${results})`)}`,
 		items || "  No choices match the search.",
 		theme.muted(
-			"  Type to search · backspace clear · ↑/↓ move · ← clear · → select · enter confirm",
+			"  Type to search · backspace clear · ↑/↓ move · ← clear · → select · ctrl+a all · ctrl+i invert · enter confirm",
 		),
 	].join("\n");
 });

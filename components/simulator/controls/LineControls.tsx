@@ -74,7 +74,6 @@ export function LineControls({
 	const visibleLineIds = activePreset
 		? activePreset.lineIds
 		: (Object.keys(LINES) as LineId[]);
-	const customPreset = Boolean(activePreset && !["shuika", "yamanote", "hongkong"].includes(activePreset.id));
 
 	return (
 		<>
@@ -112,10 +111,10 @@ export function LineControls({
 					</button>
 				</div>
 			</div>
-			{customPreset && activePreset ? (
+			{activePreset ? (
 				<div className="rounded-lg border-2 border-ink bg-paper-2 p-2.5">
 					<div className="mb-2 font-mono text-[11px] font-bold tracking-widest text-muted">
-						CUSTOM PRESET
+						PRESET SETTINGS
 					</div>
 					<input
 						value={activePreset.label}
