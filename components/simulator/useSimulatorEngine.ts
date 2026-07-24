@@ -975,6 +975,12 @@ export function useSimulatorEngine() {
 		playAnnouncementKeys: announcementContents.playAnnouncementKeys,
 		reorderAnnouncementQueue:
 			announcementContents.reorderAnnouncementQueue,
+		removeAnnouncementFromQueue:
+			announcementContents.removeAnnouncementFromQueue,
+		reorderAnnouncementClip:
+			announcementContents.reorderAnnouncementClip,
+		removeAnnouncementClip:
+			announcementContents.removeAnnouncementClip,
 		playCurrentAnnouncement: announcementContents.playCurrentAnnouncement,
 		playDepartureAnnouncement:
 			announcementContents.playDepartureAnnouncement,

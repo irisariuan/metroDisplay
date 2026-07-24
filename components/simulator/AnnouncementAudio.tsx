@@ -5,6 +5,9 @@ import { announcementQueueLabel } from "@/lib/announcementAudio";
 
 interface ManifestClip {
 	url: string;
+	text?: string;
+	lang?: string;
+	category?: string;
 }
 
 interface AnnouncementManifest {
@@ -25,6 +28,12 @@ export interface AnnouncementAudioHandle {
 	playKeys: (keys: string[], opts?: PlayKeysOptions) => Promise<void>;
 	/** Move a pending sequence to a new slot in the queue (drag reorder). */
 	moveSequence: (id: string, toIndex: number) => void;
+	/** Remove one pending sequence without interrupting the active one. */
+	removeSequence: (id: string) => void;
+	/** Move a pending clip, including an upcoming clip in the active sequence. */
+	moveClip: (sequenceId: string, fromIndex: number, toIndex: number) => void;
+	/** Remove a pending clip, including an upcoming clip in the active sequence. */
+	removeClip: (sequenceId: string, clipIndex: number) => void;
 	stop: () => void;
 }
 
@@ -56,6 +65,20 @@ export interface AnnouncementQueueItem {
 	source: AnnouncementSource;
 	/** How many of its clips actually resolved to a playable URL. */
 	clipCount: number;
+	clips: AnnouncementQueueClip[];
+}
+
+export interface AnnouncementQueueClip {
+	/** Position in the underlying sequence, including unavailable clips. */
+	index: number;
+	key: string;
+	label: string;
+	lang?: string;
+	category?: string;
+	playable: boolean;
+	state: "played" | "playing" | "upcoming";
+	/** Active playback locks completed/current clips; future clips stay editable. */
+	editable: boolean;
 }
 
 export interface AnnouncementQueue {
@@ -71,10 +94,6 @@ const PLAYED_HISTORY_LIMIT = 64;
 const MANIFEST_MAX_ATTEMPTS = 5;
 const PRELOAD_MAX_ATTEMPTS = 3;
 const PRELOAD_RETRY_MS = 1500;
-/** Lead time before the first clip of a sequence sounds, so every clip's start
- * is scheduled on the audio clock before playback begins (keeps it gapless). */
-const SCHEDULE_LEAD_S = 0.06;
-
 interface DecodeEntry {
 	buffer: AudioBuffer | null;
 	attempts: number;
@@ -128,6 +147,9 @@ export const AnnouncementAudio = React.forwardRef<
 	// ref so publishing the queue and computing "is user audio active" never
 	// depends on a re-render.
 	const activeSequence = React.useRef<QueuedSequence | null>(null);
+	// Position sounding inside activeSequence. Past/current clips are locked;
+	// later clips may be reordered or removed before the drain reaches them.
+	const activeClipIndex = React.useRef<number | null>(null);
 	// Monotonic id source for queued sequences (stable across reorders).
 	const sequenceCounter = React.useRef(0);
 	// Insertion-ordered history of auto sequences already played. Kept as a
@@ -234,18 +256,46 @@ export const AnnouncementAudio = React.forwardRef<
 		if (!listener) return;
 		const { manifest: current, overrides: currentOverrides } =
 			clipResolver.current;
-		const toItem = (sequence: QueuedSequence): AnnouncementQueueItem => ({
-			id: sequence.id,
-			label: sequence.label,
-			source: sequence.source,
-			clipCount: current
-				? playableKeys(sequence.keys, currentOverrides, current).length
-				: sequence.keys.length,
-		});
+		const toItem = (
+			sequence: QueuedSequence,
+			isActive: boolean,
+		): AnnouncementQueueItem => {
+			const playingIndex = isActive ? activeClipIndex.current : null;
+			const clips = sequence.keys.map((key, index) => {
+				const manifestClip = current?.clips[key];
+				const state: AnnouncementQueueClip["state"] =
+					playingIndex === null || index > playingIndex
+						? "upcoming"
+						: index === playingIndex
+							? "playing"
+							: "played";
+				return {
+					index,
+					key,
+					label: manifestClip?.text?.trim() || key,
+					lang: manifestClip?.lang,
+					category: manifestClip?.category,
+					playable: Boolean(currentOverrides[key] ?? manifestClip?.url),
+					state,
+					editable: !isActive || state === "upcoming",
+				};
+			});
+			return {
+				id: sequence.id,
+				label: sequence.label,
+				source: sequence.source,
+				clipCount: current
+					? clips.filter((clip) => clip.playable).length
+					: sequence.keys.length,
+				clips,
+			};
+		};
 		const active = activeSequence.current;
 		listener({
-			current: active ? toItem(active) : null,
-			pending: pendingSequences.current.map(toItem),
+			current: active ? toItem(active, true) : null,
+			pending: pendingSequences.current.map((sequence) =>
+				toItem(sequence, false),
+			),
 		});
 	}, []);
 
@@ -281,14 +331,13 @@ export const AnnouncementAudio = React.forwardRef<
 		};
 	}, []);
 
-	// Play one sequence's clips back-to-back on the audio clock so a multi-part
-	// announcement (station name + number parts) has no seam between clips. All
-	// buffers are decoded first, then every clip is scheduled ahead of time; the
-	// returned promise resolves when the last clip ends or the sequence is
-	// interrupted (stop()/interruptWith() call finishCurrentClip).
+	// Drain one sequence clip by clip. Keeping only the sounding clip scheduled
+	// lets the expanded editor safely reorder/remove every later clip while this
+	// announcement is active. Buffers are still decoded up front, so advancing
+	// between clips only creates the minimal Web Audio handoff delay.
 	const playSequence = React.useCallback(
 		async (
-			clips: { key: string; url: string }[],
+			sequence: QueuedSequence,
 			generation: number,
 		): Promise<void> => {
 			const ctx = ensureContext();
@@ -305,53 +354,64 @@ export const AnnouncementAudio = React.forwardRef<
 			}
 			if (ctx.state !== "running" || generation !== queueGeneration.current)
 				return;
-			const buffers = await Promise.all(
-				clips.map((clip) => decodeUrl(clip.url)),
+			const { manifest: current, overrides: currentOverrides } =
+				clipResolver.current;
+			if (!current) return;
+			const initialClips = playableKeys(
+				sequence.keys,
+				currentOverrides,
+				current,
 			);
+			await Promise.all(initialClips.map((clip) => decodeUrl(clip.url)));
 			if (generation !== queueGeneration.current) return;
-			const ready = clips
-				.map((clip, index) => ({ key: clip.key, buffer: buffers[index] }))
-				.filter(
-					(clip): clip is { key: string; buffer: AudioBuffer } =>
-						clip.buffer !== null,
-				);
-			if (!ready.length) return;
-			const sources: AudioBufferSourceNode[] = [];
-			await new Promise<void>((resolve) => {
-				let done = false;
-				const finish = () => {
-					if (done) return;
-					done = true;
-					for (const source of sources) {
-						source.onended = null;
-						try {
-							source.stop();
-						} catch {
-							/* already stopped */
-						}
-						source.disconnect();
-					}
-					if (finishCurrentClip.current === finish)
-						finishCurrentClip.current = null;
-					resolve();
-				};
-				finishCurrentClip.current = finish;
-				let when = ctx.currentTime + SCHEDULE_LEAD_S;
-				ready.forEach((clip, index) => {
-					const source = ctx.createBufferSource();
-					source.buffer = clip.buffer;
-					source.connect(gain);
-					source.onended = () => {
-						if (done) return;
-						if (index === ready.length - 1) finish();
-					};
-					source.start(when);
-					when += clip.buffer.duration;
-					sources.push(source);
-				});
-			});
+
+			let clipIndex = 0;
+			while (
+				generation === queueGeneration.current &&
+				activeSequence.current === sequence &&
+				clipIndex < sequence.keys.length
+			) {
+				activeClipIndex.current = clipIndex;
+				publishQueue();
+				const key = sequence.keys[clipIndex];
+				const resolver = clipResolver.current;
+				const url =
+					resolver.overrides[key] ?? resolver.manifest?.clips[key]?.url;
+				const buffer = url ? await decodeUrl(url) : null;
+				if (
+					buffer &&
+					generation === queueGeneration.current &&
+					activeSequence.current === sequence
+				) {
+					await new Promise<void>((resolve) => {
+						const source = ctx.createBufferSource();
+						let done = false;
+						const finish = () => {
+							if (done) return;
+							done = true;
+							source.onended = null;
+							try {
+								source.stop();
+							} catch {
+								/* already stopped */
+							}
+							source.disconnect();
+							if (finishCurrentClip.current === finish)
+								finishCurrentClip.current = null;
+							resolve();
+						};
+						finishCurrentClip.current = finish;
+						source.buffer = buffer;
+						source.connect(gain);
+						source.onended = finish;
+						source.start();
+					});
+				}
+				clipIndex += 1;
+			}
+			activeClipIndex.current = null;
 		},
-		[decodeUrl, ensureContext],
+		[decodeUrl, ensureContext, publishQueue],
 	);
 
 	const drainQueue = React.useCallback(
@@ -366,15 +426,17 @@ export const AnnouncementAudio = React.forwardRef<
 				const pending = pendingSequences.current.shift();
 				if (!pending) continue;
 				activeSequence.current = pending;
+				activeClipIndex.current = null;
 				publishQueue();
 				const clips = playableKeys(pending.keys, overrides, manifest);
 				if (clips.length) pending.onPlaybackChange?.(true);
-				await playSequence(clips, generation);
+				await playSequence(pending, generation);
 				pending.onPlaybackChange?.(false);
 				// Only clear if a newer interrupt hasn't already taken the slot,
 				// so a stale drain can't blank out the sequence now playing.
 				if (activeSequence.current === pending) {
 					activeSequence.current = null;
+					activeClipIndex.current = null;
 					publishQueue();
 				}
 			}
@@ -419,6 +481,7 @@ export const AnnouncementAudio = React.forwardRef<
 			const generation = ++queueGeneration.current;
 			pendingSequences.current = [sequence];
 			activeSequence.current = null;
+			activeClipIndex.current = null;
 			publishQueue();
 			finishCurrentClip.current?.();
 			await drainQueue(generation);
@@ -461,19 +524,94 @@ export const AnnouncementAudio = React.forwardRef<
 		[publishQueue],
 	);
 
+	const removeSequence = React.useCallback(
+		(id: string) => {
+			const nextQueue = pendingSequences.current.filter(
+				(sequence) => sequence.id !== id,
+			);
+			if (nextQueue.length === pendingSequences.current.length) return;
+			pendingSequences.current = nextQueue;
+			publishQueue();
+		},
+		[publishQueue],
+	);
+
+	const moveClip = React.useCallback(
+		(sequenceId: string, fromIndex: number, toIndex: number) => {
+			let sequence = pendingSequences.current.find(
+				(item) => item.id === sequenceId,
+			);
+			let firstEditableIndex = 0;
+			if (!sequence && activeSequence.current?.id === sequenceId) {
+				sequence = activeSequence.current;
+				firstEditableIndex = (activeClipIndex.current ?? -1) + 1;
+			}
+			if (!sequence || fromIndex < 0 || fromIndex >= sequence.keys.length)
+				return;
+			if (fromIndex < firstEditableIndex || toIndex < firstEditableIndex)
+				return;
+			const clamped = Math.max(
+				firstEditableIndex,
+				Math.min(sequence.keys.length - 1, toIndex),
+			);
+			if (clamped === fromIndex) return;
+			const [moved] = sequence.keys.splice(fromIndex, 1);
+			sequence.keys.splice(clamped, 0, moved);
+			preloadKeys(sequence.keys);
+			publishQueue();
+		},
+		[preloadKeys, publishQueue],
+	);
+
+	const removeClip = React.useCallback(
+		(sequenceId: string, clipIndex: number) => {
+			const sequenceIndex = pendingSequences.current.findIndex(
+				(item) => item.id === sequenceId,
+			);
+			const pending =
+				sequenceIndex === -1
+					? null
+					: pendingSequences.current[sequenceIndex];
+			const active =
+				activeSequence.current?.id === sequenceId
+					? activeSequence.current
+					: null;
+			const sequence = pending ?? active;
+			if (!sequence) return;
+			const firstEditableIndex = active
+				? (activeClipIndex.current ?? -1) + 1
+				: 0;
+			if (clipIndex < firstEditableIndex) return;
+			if (clipIndex < 0 || clipIndex >= sequence.keys.length) return;
+			sequence.keys.splice(clipIndex, 1);
+			if (pending && !sequence.keys.length)
+				pendingSequences.current.splice(sequenceIndex, 1);
+			publishQueue();
+		},
+		[publishQueue],
+	);
+
 	const stop = React.useCallback(() => {
 		queueGeneration.current += 1;
 		pendingSequences.current = [];
 		activeSequence.current = null;
+		activeClipIndex.current = null;
 		finishCurrentClip.current?.();
 		publishQueue();
 	}, [publishQueue]);
 
-	React.useImperativeHandle(ref, () => ({ playKeys, moveSequence, stop }), [
-		playKeys,
-		moveSequence,
-		stop,
-	]);
+	React.useImperativeHandle(
+		ref,
+		() => ({
+			playKeys,
+			moveSequence,
+			removeSequence,
+			moveClip,
+			removeClip,
+			stop,
+		}),
+		[playKeys, moveSequence, removeSequence, moveClip, removeClip, stop],
+	);
 
 	React.useEffect(() => {
 		if (!manifest) return;

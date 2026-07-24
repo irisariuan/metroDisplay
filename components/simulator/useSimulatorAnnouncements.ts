@@ -566,6 +566,15 @@ export function useSimulatorAnnouncements({
 			void audioRef.current?.playKeys(keys, label ? { label } : undefined),
 		reorderAnnouncementQueue: (id: string, toIndex: number) =>
 			audioRef.current?.moveSequence(id, toIndex),
+		removeAnnouncementFromQueue: (id: string) =>
+			audioRef.current?.removeSequence(id),
+		reorderAnnouncementClip: (
+			sequenceId: string,
+			fromIndex: number,
+			toIndex: number,
+		) => audioRef.current?.moveClip(sequenceId, fromIndex, toIndex),
+		removeAnnouncementClip: (sequenceId: string, clipIndex: number) =>
+			audioRef.current?.removeClip(sequenceId, clipIndex),
 		playCurrentAnnouncement,
 		playDepartureAnnouncement,
 		stopAnnouncementAudio,

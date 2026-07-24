@@ -49,6 +49,9 @@ export const REMOTE_COMMANDS = [
 	"clearAlert",
 	"playAnnouncementKeys",
 	"reorderAnnouncementQueue",
+	"removeAnnouncementFromQueue",
+	"reorderAnnouncementClip",
+	"removeAnnouncementClip",
 	"playCurrentAnnouncement",
 	"playDepartureAnnouncement",
 ] as const;

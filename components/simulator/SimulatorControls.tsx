@@ -13,6 +13,7 @@ import {
 } from "@/lib/announcementAudio";
 import { SOUND_EFFECTS, soundEffectKey } from "@/lib/soundEffects";
 import type { AnnouncementQueue } from "@/components/simulator/AnnouncementAudio";
+import { AudioQueueEditor } from "@/components/simulator/AudioQueueEditor";
 import {
 	setControl,
 	type CustomMarqueePreset,
@@ -115,6 +116,13 @@ export interface SimulatorControlsContext {
 	uploadAnnouncementAudio: (key: string, file: File) => void;
 	playAnnouncementKeys: (keys: string[], label?: string) => void;
 	reorderAnnouncementQueue: (id: string, toIndex: number) => void;
+	removeAnnouncementFromQueue: (id: string) => void;
+	reorderAnnouncementClip: (
+		sequenceId: string,
+		fromIndex: number,
+		toIndex: number,
+	) => void;
+	removeAnnouncementClip: (sequenceId: string, clipIndex: number) => void;
 	playCurrentAnnouncement: (language: "ja" | "en") => void;
 	playDepartureAnnouncement: (language: "ja" | "en") => void;
 	stopAnnouncementAudio: () => void;
@@ -205,6 +213,9 @@ export function SimulatorControls({
 		uploadAnnouncementAudio,
 		playAnnouncementKeys,
 		reorderAnnouncementQueue,
+		removeAnnouncementFromQueue,
+		reorderAnnouncementClip,
+		removeAnnouncementClip,
 		playCurrentAnnouncement,
 		playDepartureAnnouncement,
 		stopAnnouncementAudio,
@@ -1310,11 +1321,21 @@ export function SimulatorControls({
 									? ` · ${audioQueue.pending.length} WAITING`
 									: ""}
 							</div>
-							<Switch
-								checked={autoAnnouncementsInterrupt}
-								onChange={setAutoAnnouncementsInterrupt}
-								label="AUTO INTERRUPTS"
-							/>
+							<div className="flex flex-wrap items-center justify-end gap-2">
+								<AudioQueueEditor
+									queue={audioQueue}
+									onMove={reorderAnnouncementQueue}
+									onRemove={removeAnnouncementFromQueue}
+									onMoveClip={reorderAnnouncementClip}
+									onRemoveClip={removeAnnouncementClip}
+									onStopAll={stopAnnouncementAudio}
+								/>
+								<Switch
+									checked={autoAnnouncementsInterrupt}
+									onChange={setAutoAnnouncementsInterrupt}
+									label="AUTO INTERRUPTS"
+								/>
+							</div>
 						</div>
 						{audioQueue.current || audioQueue.pending.length ? (
 							<div className="flex flex-wrap gap-1.5">
